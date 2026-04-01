@@ -21,20 +21,22 @@ loggers:
 
 root:
   level: INFO
-  handlers: [console, file]
+  handlers: [console]
 
 handlers:
   console:
     class: logging.StreamHandler
     stream: ext://sys.stdout
     formatter: structlog
-  file:
-    class: logging.handlers.RotatingFileHandler
-    filename: logs/sana.log   # la carpeta se crea automáticamente desde logger.py
-    maxBytes: 10485760         # 10 MB por archivo
-    backupCount: 5             # máximo 5 archivos → 50 MB total
-    encoding: utf-8
-    formatter: structlog
+
+  # Descomenta para guardar logs en archivo (útil en desarrollo sin Loki)
+  # file:
+  #   class: logging.handlers.RotatingFileHandler
+  #   filename: logs/sana.log
+  #   maxBytes: 10485760   # 10 MB por archivo
+  #   backupCount: 5       # máximo 5 archivos → 50 MB total
+  #   encoding: utf-8
+  #   formatter: structlog
 
 formatters:
   structlog:

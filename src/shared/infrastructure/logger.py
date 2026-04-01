@@ -8,7 +8,7 @@ from pathlib import Path
 import structlog
 import yaml
 
-_ROOT = Path(__file__).parents[4]
+_ROOT = Path(__file__).parents[3]
 
 
 def _load_yaml_config() -> dict:
