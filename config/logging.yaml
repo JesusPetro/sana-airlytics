@@ -1,0 +1,49 @@
+# logging.yaml — configuración de logging para sana-airlytics
+# Procesado por logging.config.dictConfig + structlog como renderer
+# LOG_FORMAT=json|pretty controla el output (default: pretty)
+# LOG_LEVEL=DEBUG|INFO|WARNING|ERROR|CRITICAL (default: INFO)
+
+version: 1
+disable_existing_loggers: false
+
+loggers:
+  # Silenciar librerías ruidosas de terceros
+  urllib3:
+    level: WARNING
+  httpx:
+    level: WARNING
+  paho:
+    level: WARNING
+  sqlalchemy:
+    level: WARNING
+  sqlalchemy.engine:
+    level: WARNING
+
+root:
+  level: INFO
+  handlers: [console, file]
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    stream: ext://sys.stdout
+    formatter: structlog
+  file:
+    class: logging.handlers.RotatingFileHandler
+    filename: logs/sana.log   # la carpeta se crea automáticamente desde logger.py
+    maxBytes: 10485760         # 10 MB por archivo
+    backupCount: 5             # máximo 5 archivos → 50 MB total
+    encoding: utf-8
+    formatter: structlog
+
+formatters:
+  structlog:
+    (): structlog.stdlib.ProcessorFormatter
+    processor: structlog.dev.ConsoleRenderer
+    # Normaliza logs de librerías externas (httpx, paho, sqlalchemy, etc.)
+    # para que salgan con el mismo formato que los logs propios
+    foreign_pre_chain:
+      - structlog.contextvars.merge_contextvars
+      - structlog.stdlib.add_logger_name
+      - structlog.stdlib.add_log_level
+      - structlog.processors.TimeStamper
