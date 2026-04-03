@@ -8,8 +8,11 @@ version = "0.1.0"
 description = "Air quality analytics for Sensirion SEN66"
 requires-python = ">=3.14"
 dependencies = [
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
     "pyyaml>=6.0.3",
     "sentry-sdk>=2.57.0",
+    "sqlalchemy>=2.0.48",
     "structlog>=25.5.0",
 ]
 
