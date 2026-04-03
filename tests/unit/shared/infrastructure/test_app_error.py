@@ -86,4 +86,7 @@ class TestMeasurementOutOfRangeError:
 
     def test_is_catchable_as_app_error(self):
         with pytest.raises(AppError):
-            raise MeasurementOutOfRangeError(unit="CO2", value=50000.0, min_value=0.0, max_value=40000.0)
+            raise MeasurementOutOfRangeError(unit="CO2",
+                                             value=50000.0,
+                                             min_value=0.0,
+                                             max_value=40000.0)

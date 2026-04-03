@@ -4,8 +4,6 @@ import logging
 import logging.handlers
 from pathlib import Path
 
-import pytest
-
 from src.shared.infrastructure.logger import (
     disable_logger,
     enable_logger,
