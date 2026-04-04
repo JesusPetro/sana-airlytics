@@ -46,7 +46,10 @@ class DatastreamModel(Base):
     observations: Mapped[list[ObservationModel]] = relationship(back_populates="datastream")
 
     __table_args__ = (
-        UniqueConstraint("sensor_id", "observed_property_id", "unit_id", "processing_level_id"),
+        UniqueConstraint(
+            "sensor_id", "observed_property_id", "unit_id", "processing_level_id",
+            name="uq_datastreams_sensor_property_unit_level",
+        ),
     )
 
 
@@ -74,7 +77,9 @@ class DatastreamTagModel(Base):
     key: Mapped[str] = mapped_column(String)
     value: Mapped[str] = mapped_column(String)
 
-    __table_args__ = (UniqueConstraint("datastream_id", "key"),)
+    __table_args__ = (
+        UniqueConstraint("datastream_id", "key", name="uq_datastream_tags_stream_key"),
+    )
 
 
 class ObservedPropertyModel(Base):
@@ -137,7 +142,11 @@ class SensorModelPropertyModel(Base):
     )
     unit_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("units.id"))
 
-    __table_args__ = (UniqueConstraint("model", "observed_property_id"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "model", "observed_property_id", name="uq_sensor_model_props_model_property"
+        ),
+    )
 
 
 class ProcessedMessageModel(Base):
