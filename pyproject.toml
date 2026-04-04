@@ -18,6 +18,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "psycopg2-binary>=2.9.11",
     "pytest>=8.0",
     "ruff>=0.4",
 ]
