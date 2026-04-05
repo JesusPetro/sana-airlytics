@@ -5,10 +5,11 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Coordinate:
-    """Par latitud/longitud validado. Value Object inmutable"""
+    """Par latitud/longitud/altitud validado. Value Object inmutable"""
 
     latitude: float
     longitude: float
+    altitude: float | None = None
 
     def __post_init__(self) -> None:
         if not -90 <= self.latitude <= 90:
