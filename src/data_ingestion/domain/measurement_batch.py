@@ -18,6 +18,7 @@ class HardwareMetadata:
     uptime_s: int
     gps: Coordinate | None
 
+
 @dataclass(frozen=True)
 class MeasurementBatch:
     message_id: UUID
@@ -25,3 +26,8 @@ class MeasurementBatch:
     received_at: datetime
     readings: list[SensorReading]
     metadata: HardwareMetadata
+
+    def __post_init__(self):
+        if self.received_at.tzinfo is None:
+            raise ValueError("received_at must be timezone-aware")
+

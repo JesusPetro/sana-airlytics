@@ -17,8 +17,12 @@ class Observation:
     result_time: datetime
     result: float
     processing_level: ProcessingLevel
-    qualifier: ResultQualifier
+    qualifier: ResultQualifier | None
 
     def __post_init__(self):
         if not math.isfinite(self.result):
             raise ValueError(f"result must be finite, got {self.result}")
+        if self.phenomenon_time.tzinfo is None:
+            raise ValueError("phenomenon_time must be timezone-aware")
+        if self.result_time.tzinfo is None:
+            raise ValueError("result_time must be timezone-aware")

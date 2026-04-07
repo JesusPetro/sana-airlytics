@@ -10,3 +10,7 @@ class SensorReading:
     value: float
     phenomenon_time: datetime
     has_error: bool
+
+    def __post_init__(self):
+        if self.phenomenon_time.tzinfo is None:
+            raise ValueError("phenomenon_time must be timezone-aware")
