@@ -5,7 +5,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 import access_control.infrastructure.orm_models  # noqa: F401
-import analytics.infrastructure.orm_models  # noqa: F401
 import data_ingestion.infrastructure.orm_models  # noqa: F401
 import device_management.infrastructure.orm_models  # noqa: F401
 import shared.infrastructure.orm_models  # noqa: F401

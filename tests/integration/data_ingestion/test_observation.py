@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -7,10 +7,8 @@ from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
 from data_ingestion.infrastructure.orm_models import (
     DatastreamModel,
     ObservationModel,
-    ObservationQualifierModel,
     ObservedPropertyModel,
     ProcessingLevelModel,
-    ResultQualifierModel,
     UnitModel,
 )
 from device_management.infrastructure.orm_models import SensorModel
@@ -55,7 +53,7 @@ def datastream(session):
 
 
 def test_create_observation(session, datastream):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     obs = ObservationModel(
         datastream_id=datastream.id,
         phenomenon_time=now,
@@ -75,7 +73,7 @@ def test_create_observation(session, datastream):
 def test_observation_nullable_result(session, datastream):
     obs = ObservationModel(
         datastream_id=datastream.id,
-        phenomenon_time=datetime.now(timezone.utc),
+        phenomenon_time=datetime.now(UTC),
         result=None,
     )
     session.add(obs)
@@ -88,39 +86,25 @@ def test_observation_nullable_result(session, datastream):
     assert result.result is None
 
 
-def test_observation_qualifier(session, datastream):
-    qualifier = ResultQualifierModel(code="LOW_BATTERY", description="Low battery")
-    session.add(qualifier)
-    session.flush()
-
-    now = datetime.now(timezone.utc)
+def test_observation_with_qualifier(session, datastream):
     obs = ObservationModel(
         datastream_id=datastream.id,
-        phenomenon_time=now,
+        phenomenon_time=datetime.now(UTC),
         result=5.0,
+        qualifier="SUSPICIOUS_VALUE",
     )
     session.add(obs)
     session.flush()
 
-    oq = ObservationQualifierModel(
-        observation_id=obs.id,
-        phenomenon_time=now,
-        qualifier_id=qualifier.id,
-    )
-    session.add(oq)
-    session.flush()
-
     from sqlalchemy import select
     result = session.execute(
-        select(ObservationQualifierModel).where(
-            ObservationQualifierModel.observation_id == obs.id
-        )
+        select(ObservationModel).where(ObservationModel.id == obs.id)
     ).scalar_one()
-    assert result.qualifier_id == qualifier.id
+    assert result.qualifier == "SUSPICIOUS_VALUE"
 
 
 def test_duplicate_pk_fails(session, datastream):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     obs = ObservationModel(
         datastream_id=datastream.id,
         phenomenon_time=now,
@@ -129,6 +113,7 @@ def test_duplicate_pk_fails(session, datastream):
     session.add(obs)
     session.flush()
 
+    session.expunge(obs)
     with pytest.raises(IntegrityError):
         with session.begin_nested():
             session.add(ObservationModel(
