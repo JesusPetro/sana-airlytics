@@ -34,7 +34,7 @@ class PostgresLocationUpdater:
                 latitude=current.latitude,
                 longitude=current.longitude,
                 elevation=current.elevation,
-                recorded_at=timestamp,
+                recorded_at=current.updated_at,
             ))
 
         stmt = (
