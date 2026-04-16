@@ -7,7 +7,6 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
-    PrimaryKeyConstraint,
     String,
     UniqueConstraint,
     func,
@@ -56,13 +55,12 @@ class DatastreamModel(Base):
 class ObservationModel(Base):
     __tablename__ = "observations"
 
-    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=False, default=uuid7)
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
     datastream_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("datastreams.id"))
-    phenomenon_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    phenomenon_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
     result: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
     result_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    __table_args__ = (PrimaryKeyConstraint("id", "phenomenon_time"),)
+    qualifier: Mapped[str | None] = mapped_column(String, nullable=True)
 
     datastream: Mapped[DatastreamModel] = relationship(back_populates="observations")
 
@@ -118,18 +116,6 @@ class ResultQualifierModel(Base):
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
     code: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[str] = mapped_column(String)
-
-
-class ObservationQualifierModel(Base):
-    __tablename__ = "observation_qualifiers"
-
-    observation_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
-    phenomenon_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    qualifier_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("result_qualifiers.id", ondelete="CASCADE")
-    )
-
-    __table_args__ = (PrimaryKeyConstraint("observation_id", "phenomenon_time", "qualifier_id"),)
 
 
 class SensorModelPropertyModel(Base):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid7
 
 from shared.domain.coordinate import Coordinate
@@ -64,7 +64,7 @@ class IngestMeasurementBatch:
         if await self._processed.exists(message_id):
             return
 
-        result_time = datetime.now(datetime.UTC)
+        result_time = datetime.now(UTC)
         observations = await self._build_observations(device_id, dto, result_time)
 
         # Si no se encontró ningún datastream para este device, no hay nada que persistir.
@@ -143,7 +143,7 @@ class IngestMeasurementBatch:
                     result_time=result_time,
                     result=reading.value,
                     processing_level=ProcessingLevel.L1,
-                    qualifier=validation.qualifier,
+                    qualifier=validation,
                 )
             )
 
