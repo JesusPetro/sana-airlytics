@@ -8,6 +8,8 @@ from shared.domain.device_id import DeviceId
 
 from ..domain.measurement_validator import MeasurementValidator
 from ..domain.observation import Observation
+from shared.infrastructure.logger import get_logger
+
 from ..domain.ports.repositories import (
     DatastreamRepository,
     LocationUpdater,
@@ -20,6 +22,8 @@ from .dtos import IngestBatchDTO
 
 # Códigos de las 9 variables del SEN66, en el mismo orden que SensorReadingDTO.
 # Los atributos del DTO están en snake_case; el dominio los espera en uppercase.
+_logger = get_logger(__name__)
+
 _SEN66_VARIABLE_CODES: tuple[str, ...] = (
     "pm1",
     "pm2_5",
@@ -69,6 +73,11 @@ class IngestMeasurementBatch:
 
         # Si no se encontró ningún datastream para este device, no hay nada que persistir.
         if not observations:
+            _logger.warning(
+                "no_datastreams_found",
+                device_id=str(device_id),
+                message_id=str(message_id),
+            )
             return
 
         await self._update_location_if_present(device_id, dto, result_time)
