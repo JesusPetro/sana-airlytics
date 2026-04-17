@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from .processing_level import ProcessingLevel
 from .result_qualifier import ResultQualifier
 
 
@@ -16,8 +15,7 @@ class Observation:
     phenomenon_time: datetime
     result_time: datetime
     result: float
-    processing_level: ProcessingLevel
-    qualifier: ResultQualifier | None
+    qualifier: ResultQualifier
 
     def __post_init__(self):
         if not math.isfinite(self.result):
