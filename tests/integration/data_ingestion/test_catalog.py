@@ -1,6 +1,5 @@
 from data_ingestion.infrastructure.orm_models import (
     ObservedPropertyModel,
-    ProcessingLevelModel,
     ResultQualifierModel,
     UnitModel,
 )
@@ -36,16 +35,6 @@ def test_create_unit(session):
 
     result = session.get(UnitModel, unit.id)
     assert result.symbol == "µg/m³"
-
-
-def test_create_processing_level(session):
-    level = ProcessingLevelModel(code="L0", definition="Raw data", order_index=0)
-    session.add(level)
-    session.flush()
-
-    result = session.get(ProcessingLevelModel, level.id)
-    assert result.code == "L0"
-    assert result.order_index == 0
 
 
 def test_create_result_qualifier(session):

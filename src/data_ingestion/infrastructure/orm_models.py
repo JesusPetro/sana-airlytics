@@ -6,7 +6,6 @@ from uuid import UUID, uuid7
 from sqlalchemy import (
     DateTime,
     ForeignKey,
-    Integer,
     String,
     UniqueConstraint,
     func,
@@ -29,9 +28,6 @@ class DatastreamModel(Base):
         PG_UUID(as_uuid=True), ForeignKey("observed_properties.id")
     )
     unit_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("units.id"))
-    processing_level_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("processing_levels.id")
-    )
     observation_type: Mapped[str] = mapped_column(String, default="Measurement")
     sampled_medium: Mapped[str | None] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="active")
@@ -46,8 +42,8 @@ class DatastreamModel(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "sensor_id", "observed_property_id", "unit_id", "processing_level_id",
-            name="uq_datastreams_sensor_property_unit_level",
+            "sensor_id", "observed_property_id", "unit_id",
+            name="uq_datastreams_sensor_property_unit",
         ),
     )
 
@@ -100,14 +96,6 @@ class UnitModel(Base):
     symbol: Mapped[str] = mapped_column(String)
     type: Mapped[str | None] = mapped_column(String)
 
-
-class ProcessingLevelModel(Base):
-    __tablename__ = "processing_levels"
-
-    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
-    code: Mapped[str] = mapped_column(String, unique=True)
-    definition: Mapped[str] = mapped_column(String)
-    order_index: Mapped[int] = mapped_column(Integer)
 
 
 class ResultQualifierModel(Base):

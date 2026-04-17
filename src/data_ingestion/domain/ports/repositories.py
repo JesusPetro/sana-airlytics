@@ -9,7 +9,6 @@ from shared.domain.device_id import DeviceId
 
 from ..datastream import Datastream
 from ..observation import Observation
-from ..processing_level import ProcessingLevel
 
 
 class ObservationRepository(Protocol):
@@ -26,7 +25,6 @@ class DatastreamRepository(Protocol):
         self,
         device_id: DeviceId,
         property_code: str,
-        level: ProcessingLevel,
     ) -> Datastream | None: ...
 
     async def find_all_by_device(self, device_id: DeviceId) -> list[Datastream]: ...

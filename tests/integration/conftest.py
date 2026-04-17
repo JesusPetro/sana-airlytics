@@ -13,7 +13,7 @@ from shared.infrastructure.orm_base import Base
 
 @pytest.fixture(scope="session")
 def engine():
-    url = os.environ["DATABASE_URL"]
+    url = os.environ["DATABASE_URL"].replace("+asyncpg", "")
     return create_engine(url)
 
 

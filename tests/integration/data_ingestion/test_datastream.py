@@ -5,7 +5,6 @@ from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
 from data_ingestion.infrastructure.orm_models import (
     DatastreamModel,
     ObservedPropertyModel,
-    ProcessingLevelModel,
     UnitModel,
 )
 from device_management.infrastructure.orm_models import SensorModel
@@ -15,10 +14,9 @@ from device_management.infrastructure.orm_models import SensorModel
 def catalog(session):
     prop = ObservedPropertyModel(code="PM2_5", name="PM2.5")
     unit = UnitModel(code="UG_M3", name="Micrograms per cubic meter", symbol="µg/m³")
-    level = ProcessingLevelModel(code="L0", definition="Raw data", order_index=0)
-    session.add_all([prop, unit, level])
+    session.add_all([prop, unit])
     session.flush()
-    return {"property": prop, "unit": unit, "level": level}
+    return {"property": prop, "unit": unit}
 
 
 @pytest.fixture
@@ -49,39 +47,36 @@ def sensor(session):
 
 def test_create_datastream(session, sensor, catalog):
     ds = DatastreamModel(
-        name="PM2.5 Raw",
+        name="PM2.5",
         sensor_id=sensor.id,
         observed_property_id=catalog["property"].id,
         unit_id=catalog["unit"].id,
-        processing_level_id=catalog["level"].id,
     )
     session.add(ds)
     session.flush()
 
     result = session.get(DatastreamModel, ds.id)
-    assert result.name == "PM2.5 Raw"
+    assert result.name == "PM2.5"
     assert result.observation_type == "Measurement"
     assert result.status == "active"
 
 
 def test_datastream_unique_constraint(session, sensor, catalog):
     session.add(DatastreamModel(
-        name="PM2.5 Raw",
+        name="PM2.5",
         sensor_id=sensor.id,
         observed_property_id=catalog["property"].id,
         unit_id=catalog["unit"].id,
-        processing_level_id=catalog["level"].id,
     ))
     session.flush()
 
     with pytest.raises(IntegrityError):
         with session.begin_nested():
             session.add(DatastreamModel(
-                name="PM2.5 Raw Duplicate",
+                name="PM2.5 Duplicate",
                 sensor_id=sensor.id,
                 observed_property_id=catalog["property"].id,
                 unit_id=catalog["unit"].id,
-                processing_level_id=catalog["level"].id,
             ))
             session.flush()
 
@@ -92,18 +87,16 @@ def test_datastream_same_sensor_different_property(session, sensor, catalog):
     session.flush()
 
     session.add(DatastreamModel(
-        name="PM2.5 Raw",
+        name="PM2.5",
         sensor_id=sensor.id,
         observed_property_id=catalog["property"].id,
         unit_id=catalog["unit"].id,
-        processing_level_id=catalog["level"].id,
     ))
     session.add(DatastreamModel(
-        name="CO2 Raw",
+        name="CO2",
         sensor_id=sensor.id,
         observed_property_id=prop2.id,
         unit_id=catalog["unit"].id,
-        processing_level_id=catalog["level"].id,
     ))
     session.flush()
 

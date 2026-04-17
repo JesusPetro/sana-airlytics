@@ -15,7 +15,6 @@ from src.data_ingestion.application.dtos import (
 )
 from src.data_ingestion.application.ingest_measurement_batch import IngestMeasurementBatch
 from src.data_ingestion.domain.datastream import Datastream
-from src.data_ingestion.domain.processing_level import ProcessingLevel
 from src.data_ingestion.domain.result_qualifier import ResultQualifier
 from src.shared.domain.device_id import DeviceId
 
@@ -53,12 +52,11 @@ def _dto(readings: list[SensorReadingDTO] | None = None, gps: GpsDTO | None = No
     )
 
 
-def _make_datastream(code: str, level: ProcessingLevel) -> Datastream:
+def _make_datastream(code: str) -> Datastream:
     return Datastream(
         id=uuid7(),
         device_id=DeviceId(_DEVICE_ID),
         observed_property_code=code,
-        processing_level=level,
     )
 
 
@@ -107,8 +105,8 @@ async def test_no_datastreams_skips_persistence():
 # --- flujo nominal ---
 
 @pytest.mark.asyncio
-async def test_creates_l0_and_l1_per_variable():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
+async def test_creates_one_observation_per_variable():
+    ds = _make_datastream("PM1")
     use_case, obs_repo, _, _, _ = _make_use_case(datastream=ds)
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
@@ -117,14 +115,13 @@ async def test_creates_l0_and_l1_per_variable():
         await use_case.execute(_dto())
 
     saved = obs_repo.save_batch.call_args[0][0]
-    levels = [obs.processing_level for obs in saved]
-    assert ProcessingLevel.L0 in levels
-    assert ProcessingLevel.L1 in levels
+    # 1 lectura × 9 variables = 9 observaciones
+    assert len(saved) == 9
 
 
 @pytest.mark.asyncio
-async def test_l0_has_no_qualifier():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
+async def test_observation_always_has_qualifier():
+    ds = _make_datastream("PM1")
     use_case, obs_repo, _, _, _ = _make_use_case(datastream=ds)
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
@@ -133,28 +130,12 @@ async def test_l0_has_no_qualifier():
         await use_case.execute(_dto())
 
     saved = obs_repo.save_batch.call_args[0][0]
-    l0_obs = [o for o in saved if o.processing_level == ProcessingLevel.L0]
-    assert all(o.qualifier is None for o in l0_obs)
-
-
-@pytest.mark.asyncio
-async def test_l1_has_qualifier():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
-    use_case, obs_repo, _, _, _ = _make_use_case(datastream=ds)
-
-    with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
-        mock_dt.now.return_value = _NOW
-        mock_dt.UTC = UTC
-        await use_case.execute(_dto())
-
-    saved = obs_repo.save_batch.call_args[0][0]
-    l1_obs = [o for o in saved if o.processing_level == ProcessingLevel.L1]
-    assert all(o.qualifier is not None for o in l1_obs)
+    assert all(o.qualifier is not None for o in saved)
 
 
 @pytest.mark.asyncio
 async def test_mark_as_processed_called_after_save():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
+    ds = _make_datastream("PM1")
     use_case, obs_repo, processed_repo, _, _ = _make_use_case(datastream=ds)
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
@@ -168,7 +149,7 @@ async def test_mark_as_processed_called_after_save():
 
 @pytest.mark.asyncio
 async def test_multiple_readings_all_persisted():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
+    ds = _make_datastream("PM1")
     use_case, obs_repo, _, _, _ = _make_use_case(datastream=ds)
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
@@ -177,15 +158,15 @@ async def test_multiple_readings_all_persisted():
         await use_case.execute(_dto(readings=[_reading(), _reading()]))
 
     saved = obs_repo.save_batch.call_args[0][0]
-    # 2 lecturas × 9 variables × 2 niveles = 36 observaciones
-    assert len(saved) == 36
+    # 2 lecturas × 9 variables = 18 observaciones
+    assert len(saved) == 18
 
 
 # --- GPS ---
 
 @pytest.mark.asyncio
 async def test_gps_present_calls_location_updater():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
+    ds = _make_datastream("PM1")
     gps = GpsDTO(lat=10.39, lon=-75.47, alt=12.0)
     use_case, _, _, _, location_updater = _make_use_case(datastream=ds)
 
@@ -199,7 +180,7 @@ async def test_gps_present_calls_location_updater():
 
 @pytest.mark.asyncio
 async def test_no_gps_skips_location_updater():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
+    ds = _make_datastream("PM1")
     use_case, _, _, _, location_updater = _make_use_case(datastream=ds)
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
@@ -214,7 +195,7 @@ async def test_no_gps_skips_location_updater():
 
 @pytest.mark.asyncio
 async def test_sensor_error_produces_out_of_range_qualifier():
-    ds = _make_datastream("PM1", ProcessingLevel.L0)
+    ds = _make_datastream("PM1")
     use_case, obs_repo, _, _, _ = _make_use_case(datastream=ds)
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
@@ -223,10 +204,6 @@ async def test_sensor_error_produces_out_of_range_qualifier():
         await use_case.execute(_dto(readings=[_reading(pm2_5=_var(error=True))]))
 
     saved = obs_repo.save_batch.call_args[0][0]
-    l1_pm25 = [
-        o for o in saved
-        if o.processing_level == ProcessingLevel.L1
-        and o.phenomenon_time == _PHENOMENON_TIME
-    ]
-    out_of_range = [o for o in l1_pm25 if o.qualifier == ResultQualifier.SENSOR_OUT_OF_RANGE]
+    pm25_obs = [o for o in saved if o.phenomenon_time == _PHENOMENON_TIME]
+    out_of_range = [o for o in pm25_obs if o.qualifier == ResultQualifier.SENSOR_OUT_OF_RANGE]
     assert len(out_of_range) >= 1

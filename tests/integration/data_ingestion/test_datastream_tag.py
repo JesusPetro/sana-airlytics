@@ -6,7 +6,6 @@ from data_ingestion.infrastructure.orm_models import (
     DatastreamModel,
     DatastreamTagModel,
     ObservedPropertyModel,
-    ProcessingLevelModel,
     UnitModel,
 )
 from device_management.infrastructure.orm_models import SensorModel
@@ -34,16 +33,14 @@ def datastream(session):
 
     prop = ObservedPropertyModel(code="PM2_5", name="PM2.5")
     unit = UnitModel(code="UG_M3", name="Micrograms per cubic meter", symbol="µg/m³")
-    level = ProcessingLevelModel(code="L0", definition="Raw data", order_index=0)
-    session.add_all([prop, unit, level])
+    session.add_all([prop, unit])
     session.flush()
 
     ds = DatastreamModel(
-        name="PM2.5 Raw",
+        name="PM2.5",
         sensor_id=sensor.id,
         observed_property_id=prop.id,
         unit_id=unit.id,
-        processing_level_id=level.id,
     )
     session.add(ds)
     session.flush()
@@ -84,14 +81,12 @@ def test_same_key_different_datastream(session, datastream):
     session.flush()
 
     unit = session.get(UnitModel, datastream.unit_id)
-    level = session.get(ProcessingLevelModel, datastream.processing_level_id)
 
     ds2 = DatastreamModel(
-        name="CO2 Raw",
+        name="CO2",
         sensor_id=datastream.sensor_id,
         observed_property_id=prop2.id,
         unit_id=unit.id,
-        processing_level_id=level.id,
     )
     session.add(ds2)
     session.flush()

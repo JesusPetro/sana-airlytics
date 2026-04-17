@@ -16,7 +16,6 @@ from ..domain.ports.repositories import (
     ObservationRepository,
     ProcessedMessageRepository,
 )
-from ..domain.processing_level import ProcessingLevel
 from ..domain.sensor_reading import SensorReading
 from .dtos import IngestBatchDTO
 
@@ -94,7 +93,7 @@ class IngestMeasurementBatch:
         dto: IngestBatchDTO,
         result_time: datetime,
     ) -> list[Observation]:
-        """Construye las observaciones L0 y L1 para todas las lecturas del batch."""
+        """Construye las observaciones para todas las lecturas del batch."""
         observations: list[Observation] = []
 
         for reading_dto in dto.readings:
@@ -106,55 +105,39 @@ class IngestMeasurementBatch:
                     phenomenon_time=reading_dto.timestamp,
                     has_error=var_dto.error,
                 )
-                await self._append_l0_and_l1(observations, device_id, reading, result_time)
+                await self._append_observation(observations, device_id, reading, result_time)
 
         return observations
 
-    async def _append_l0_and_l1(
+    async def _append_observation(
         self,
         observations: list[Observation],
         device_id: DeviceId,
         reading: SensorReading,
         result_time: datetime,
     ) -> None:
-        """Agrega las observaciones L0 y L1 de una lectura a la lista acumulada.
+        """Agrega la observación de una lectura a la lista acumulada.
 
         Si no existe el datastream correspondiente para este device y variable,
-        omite ese nivel sin lanzar error (device sin datastreams registrados).
+        omite sin lanzar error (device sin datastreams registrados).
         """
-        ds_l0 = await self._datastreams.find_by_device_and_property(
-            device_id, reading.variable_code, ProcessingLevel.L0
+        ds = await self._datastreams.find_by_device_and_property(
+            device_id, reading.variable_code
         )
-        if ds_l0 is not None:
-            observations.append(
-                Observation(
-                    id=UUID(str(uuid7())),
-                    datastream_id=ds_l0.id,
-                    phenomenon_time=reading.phenomenon_time,
-                    result_time=result_time,
-                    result=reading.value,
-                    processing_level=ProcessingLevel.L0,
-                    qualifier=None,
-                )
+        if ds is None:
+            return
+
+        qualifier = self._validator.validate(reading)
+        observations.append(
+            Observation(
+                id=UUID(str(uuid7())),
+                datastream_id=ds.id,
+                phenomenon_time=reading.phenomenon_time,
+                result_time=result_time,
+                result=reading.value,
+                qualifier=qualifier,
             )
-
-        validation = self._validator.validate(reading)
-
-        ds_l1 = await self._datastreams.find_by_device_and_property(
-            device_id, reading.variable_code, ProcessingLevel.L1
         )
-        if ds_l1 is not None:
-            observations.append(
-                Observation(
-                    id=UUID(str(uuid7())),
-                    datastream_id=ds_l1.id,
-                    phenomenon_time=reading.phenomenon_time,
-                    result_time=result_time,
-                    result=reading.value,
-                    processing_level=ProcessingLevel.L1,
-                    qualifier=validation,
-                )
-            )
 
     async def _update_location_if_present(
         self,

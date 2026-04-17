@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 import pytest
 
 from src.data_ingestion.domain.observation import Observation
-from src.data_ingestion.domain.processing_level import ProcessingLevel
 from src.data_ingestion.domain.result_qualifier import ResultQualifier
 
 
@@ -22,8 +21,7 @@ def _obs(**kwargs):
         phenomenon_time=_dt(),
         result_time=_dt(),
         result=25.0,
-        processing_level=ProcessingLevel.L0,
-        qualifier=None,
+        qualifier=ResultQualifier.VALID,
     )
     return Observation(**{**defaults, **kwargs})
 
@@ -31,7 +29,7 @@ def _obs(**kwargs):
 def test_valid_observation():
     obs = _obs()
     assert obs.result == 25.0
-    assert obs.qualifier is None
+    assert obs.qualifier == ResultQualifier.VALID
 
 
 def test_observation_with_qualifier():
