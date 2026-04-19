@@ -11,3 +11,4 @@ class Datastream:
     id: UUID
     device_id: DeviceId
     observed_property_code: str
+    unit_code: str

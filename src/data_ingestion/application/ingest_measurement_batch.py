@@ -5,11 +5,10 @@ from uuid import UUID, uuid7
 
 from shared.domain.coordinate import Coordinate
 from shared.domain.device_id import DeviceId
+from shared.infrastructure.logger import get_logger
 
 from ..domain.measurement_validator import MeasurementValidator
 from ..domain.observation import Observation
-from shared.infrastructure.logger import get_logger
-
 from ..domain.ports.repositories import (
     DatastreamRepository,
     LocationUpdater,
@@ -17,10 +16,9 @@ from ..domain.ports.repositories import (
     ProcessedMessageRepository,
 )
 from ..domain.sensor_reading import SensorReading
-from .dtos import IngestBatchDTO
+from .create_datastreams_for_device import CreateDatastreamsForDevice
+from .dtos import DeviceRegisteredEventDTO, IngestBatchDTO
 
-# Códigos de las 9 variables del SEN66, en el mismo orden que SensorReadingDTO.
-# Los atributos del DTO están en snake_case; el dominio los espera en uppercase.
 _logger = get_logger(__name__)
 
 _SEN66_VARIABLE_CODES: tuple[str, ...] = (
@@ -37,28 +35,23 @@ _SEN66_VARIABLE_CODES: tuple[str, ...] = (
 
 
 class IngestMeasurementBatch:
-    """Caso de uso: procesa un batch de mediciones MQTT y lo persiste."""
-
     def __init__(
         self,
         observation_repo: ObservationRepository,
         processed_msg_repo: ProcessedMessageRepository,
         datastream_repo: DatastreamRepository,
         location_updater: LocationUpdater,
+        known_devices: set[str],
     ) -> None:
         self._observations = observation_repo
         self._processed = processed_msg_repo
         self._datastreams = datastream_repo
         self._location = location_updater
+        self._known_devices = known_devices
         self._validator = MeasurementValidator()
+        self._create_datastreams = CreateDatastreamsForDevice(datastream_repo)
 
     async def execute(self, dto: IngestBatchDTO) -> None:
-        """Procesa y persiste un batch de mediciones.
-
-        Descarta silenciosamente el batch si el message_id ya fue procesado
-        (idempotencia). Si ningún datastream está registrado para el device,
-        no se genera ninguna observación y el batch se descarta sin error.
-        """
         message_id = UUID(dto.message_id)
         device_id = DeviceId(dto.device_id)
 
@@ -67,17 +60,19 @@ class IngestMeasurementBatch:
         if await self._processed.exists(message_id):
             return
 
-        result_time = datetime.now(UTC)
-        observations = await self._build_observations(device_id, dto, result_time)
-
-        # Si no se encontró ningún datastream para este device, no hay nada que persistir.
-        if not observations:
-            _logger.warning(
-                "no_datastreams_found",
-                device_id=str(device_id),
+        if dto.device_id not in self._known_devices:
+            await self._create_datastreams.execute(
+                DeviceRegisteredEventDTO(device_id=dto.device_id, model="SEN66")
+            )
+            self._known_devices.add(dto.device_id)
+            _logger.info(
+                "device_registered_on_demand",
+                device_id=dto.device_id,
                 message_id=str(message_id),
             )
-            return
+
+        result_time = datetime.now(UTC)
+        observations = await self._build_observations(device_id, dto, result_time)
 
         await self._update_location_if_present(device_id, dto, result_time)
 

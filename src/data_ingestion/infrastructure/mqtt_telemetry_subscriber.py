@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import ssl
 from dataclasses import dataclass
 from datetime import UTC, datetime
-
-import ssl
 
 import aiomqtt
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -52,8 +51,13 @@ class MqttTelemetrySubscriber:
         self._config = config
         self._session_factory = session_factory
         self._semaphore = asyncio.Semaphore(config.max_concurrent_batches)
+        self._known_devices: set[str] = set()
 
     async def run(self) -> None:
+        async with self._session_factory() as session:
+            self._known_devices = await PostgresDatastreamRepository(session).find_all_device_ids()
+        logger.info("device_cache_loaded", count=len(self._known_devices))
+
         tls_context: ssl.SSLContext | None = None
         if self._config.tls_ca_cert:
             tls_context = ssl.create_default_context(cafile=self._config.tls_ca_cert)
@@ -104,6 +108,7 @@ class MqttTelemetrySubscriber:
                         processed_msg_repo=PostgresProcessedMessageRepository(session),
                         datastream_repo=PostgresDatastreamRepository(session),
                         location_updater=PostgresLocationUpdater(session),
+                        known_devices=self._known_devices,
                     )
                     await use_case.execute(dto)
                     await session.commit()

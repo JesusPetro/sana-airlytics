@@ -3,14 +3,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data_ingestion.domain.datastream import Datastream
-from data_ingestion.domain.ports.repositories import DatastreamRepository
-from device_management.infrastructure.orm_models import SensorModel
 from shared.domain.device_id import DeviceId
 
-from .orm_models import DatastreamModel, ObservedPropertyModel
+from .orm_models import DatastreamModel, ObservedPropertyModel, UnitModel
 
 
 class PostgresDatastreamRepository:
@@ -23,36 +22,37 @@ class PostgresDatastreamRepository:
         property_code: str,
     ) -> Datastream | None:
         stmt = (
-            select(DatastreamModel)
-            .join(SensorModel, DatastreamModel.sensor_id == SensorModel.id)
+            select(DatastreamModel, ObservedPropertyModel.code, UnitModel.code)
             .join(
                 ObservedPropertyModel,
                 DatastreamModel.observed_property_id == ObservedPropertyModel.id,
             )
+            .join(UnitModel, DatastreamModel.unit_id == UnitModel.id)
             .where(
-                SensorModel.id == UUID(device_id.value),
+                DatastreamModel.sensor_id == UUID(device_id.value),
                 ObservedPropertyModel.code == property_code,
             )
         )
-        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        row = (await self._session.execute(stmt)).one_or_none()
         if row is None:
             return None
+        ds, prop_code, unit_code = row
         return Datastream(
-            id=row.id,
+            id=ds.id,
             device_id=device_id,
-            observed_property_code=property_code,
+            observed_property_code=prop_code,
+            unit_code=unit_code,
         )
 
     async def find_all_by_device(self, device_id: DeviceId) -> list[Datastream]:
         stmt = (
-            select(DatastreamModel)
-            .join(SensorModel, DatastreamModel.sensor_id == SensorModel.id)
+            select(DatastreamModel, ObservedPropertyModel.code, UnitModel.code)
             .join(
                 ObservedPropertyModel,
                 DatastreamModel.observed_property_id == ObservedPropertyModel.id,
             )
-            .where(SensorModel.id == UUID(device_id.value))
-            .add_columns(ObservedPropertyModel.code)
+            .join(UnitModel, DatastreamModel.unit_id == UnitModel.id)
+            .where(DatastreamModel.sensor_id == UUID(device_id.value))
         )
         rows = (await self._session.execute(stmt)).all()
         return [
@@ -60,27 +60,59 @@ class PostgresDatastreamRepository:
                 id=ds.id,
                 device_id=device_id,
                 observed_property_code=prop_code,
+                unit_code=unit_code,
             )
-            for ds, prop_code in rows
+            for ds, prop_code, unit_code in rows
         ]
 
-    async def save(self, datastream: Datastream) -> None:
-        observed_property_id = await self._resolve_observed_property_id(
-            datastream.observed_property_code
-        )
-        model = DatastreamModel(
-            id=datastream.id,
-            sensor_id=UUID(datastream.device_id.value),
-            observed_property_id=observed_property_id,
-            name=datastream.observed_property_code,
-        )
-        self._session.add(model)
-        await self._session.flush()
+    async def find_all_device_ids(self) -> set[str]:
+        stmt = select(DatastreamModel.sensor_id).distinct()
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return {str(row) for row in rows}
 
-    async def _resolve_observed_property_id(self, code: str) -> UUID:
-        stmt = select(ObservedPropertyModel.id).where(ObservedPropertyModel.code == code)
-        result = await self._session.execute(stmt)
-        row = result.scalar_one_or_none()
-        if row is None:
-            raise ValueError(f"ObservedProperty not found: {code!r}")
-        return row
+    async def save_batch(self, datastreams: list[Datastream]) -> None:
+        if not datastreams:
+            return
+
+        property_codes = {ds.observed_property_code for ds in datastreams}
+        unit_codes = {ds.unit_code for ds in datastreams}
+
+        prop_rows = (
+            await self._session.execute(
+                select(ObservedPropertyModel.code, ObservedPropertyModel.id)
+                .where(ObservedPropertyModel.code.in_(property_codes))
+            )
+        ).all()
+        prop_map: dict[str, UUID] = {code: id_ for code, id_ in prop_rows}
+
+        unit_rows = (
+            await self._session.execute(
+                select(UnitModel.code, UnitModel.id)
+                .where(UnitModel.code.in_(unit_codes))
+            )
+        ).all()
+        unit_map: dict[str, UUID] = {code: id_ for code, id_ in unit_rows}
+
+        missing_props = property_codes - prop_map.keys()
+        if missing_props:
+            raise ValueError(f"ObservedProperties not found: {missing_props}")
+        missing_units = unit_codes - unit_map.keys()
+        if missing_units:
+            raise ValueError(f"Units not found: {missing_units}")
+
+        stmt = (
+            insert(DatastreamModel)
+            .values([
+                {
+                    "id": ds.id,
+                    "sensor_id": UUID(ds.device_id.value),
+                    "observed_property_id": prop_map[ds.observed_property_code],
+                    "unit_id": unit_map[ds.unit_code],
+                    "name": ds.observed_property_code,
+                }
+                for ds in datastreams
+            ])
+            .on_conflict_do_nothing()
+        )
+        await self._session.execute(stmt)
+        await self._session.flush()

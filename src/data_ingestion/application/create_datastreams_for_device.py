@@ -17,34 +17,17 @@ class CreateDatastreamsForDevice:
         self._datastreams = datastream_repo
 
     async def execute(self, dto: DeviceRegisteredEventDTO) -> None:
-        """Crea 9 datastreams (uno por variable del SEN66).
-
-        Idempotente: si los datastreams ya existen no se recrean.
-        Puede ejecutarse múltiples veces sin efectos secundarios.
-        """
-        device_id = DeviceId(dto.device_id)
-
-        # MVP scope: solo SEN66. Ignorar otros modelos hasta implementar multi-modelo.
         if dto.model != "SEN66":
-            return
+            raise NotImplementedError(f"Unsupported sensor model: {dto.model!r}")
 
-        for code in SEN66_CATALOG:
-            await self._create_if_not_exists(device_id, code.upper())
-
-    async def _create_if_not_exists(
-        self,
-        device_id: DeviceId,
-        property_code: str,
-    ) -> None:
-        """Crea el datastream solo si no existe para este device y variable."""
-        existing = await self._datastreams.find_by_device_and_property(
-            device_id, property_code
-        )
-        if existing is not None:
-            return
-
-        await self._datastreams.save(Datastream(
-            id=UUID(str(uuid7())),
-            device_id=device_id,
-            observed_property_code=property_code,
-        ))
+        device_id = DeviceId(dto.device_id)
+        datastreams = [
+            Datastream(
+                id=UUID(str(uuid7())),
+                device_id=device_id,
+                observed_property_code=code.upper(),
+                unit_code=limits.observed_property.unit_code,
+            )
+            for code, limits in SEN66_CATALOG.items()
+        ]
+        await self._datastreams.save_batch(datastreams)
