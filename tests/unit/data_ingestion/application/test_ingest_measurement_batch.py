@@ -57,6 +57,7 @@ def _make_datastream(code: str) -> Datastream:
         id=uuid7(),
         device_id=DeviceId(_DEVICE_ID),
         observed_property_code=code,
+        unit_code="UG_M3",
     )
 
 
@@ -64,6 +65,7 @@ def _make_use_case(
     *,
     already_processed: bool = False,
     datastream: Datastream | None = None,
+    known_devices: set[str] | None = None,
 ) -> tuple[IngestMeasurementBatch, AsyncMock, AsyncMock, AsyncMock, AsyncMock]:
     obs_repo = AsyncMock()
     processed_repo = AsyncMock()
@@ -73,11 +75,15 @@ def _make_use_case(
     processed_repo.exists.return_value = already_processed
     datastream_repo.find_by_device_and_property.return_value = datastream
 
+    if known_devices is None:
+        known_devices = {_DEVICE_ID}
+
     use_case = IngestMeasurementBatch(
         observation_repo=obs_repo,
         processed_msg_repo=processed_repo,
         datastream_repo=datastream_repo,
         location_updater=location_updater,
+        known_devices=known_devices,
     )
     return use_case, obs_repo, processed_repo, datastream_repo, location_updater
 
@@ -92,14 +98,52 @@ async def test_duplicate_message_is_discarded():
     processed_repo.mark_as_processed.assert_not_called()
 
 
-# --- sin datastreams ---
+# --- on-demand device registration ---
 
 @pytest.mark.asyncio
-async def test_no_datastreams_skips_persistence():
-    use_case, obs_repo, processed_repo, _, _ = _make_use_case(datastream=None)
-    await use_case.execute(_dto())
-    obs_repo.save_batch.assert_not_called()
-    processed_repo.mark_as_processed.assert_not_called()
+async def test_unknown_device_triggers_datastream_creation():
+    ds = _make_datastream("PM1")
+    use_case, _, _, datastream_repo, _ = _make_use_case(
+        datastream=ds,
+        known_devices=set(),
+    )
+
+    with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
+        mock_dt.now.return_value = _NOW
+        mock_dt.UTC = UTC
+        await use_case.execute(_dto())
+
+    datastream_repo.save_batch.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_unknown_device_is_added_to_known_devices():
+    ds = _make_datastream("PM1")
+    known_devices: set[str] = set()
+    use_case, _, _, _, _ = _make_use_case(datastream=ds, known_devices=known_devices)
+
+    with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
+        mock_dt.now.return_value = _NOW
+        mock_dt.UTC = UTC
+        await use_case.execute(_dto())
+
+    assert _DEVICE_ID in known_devices
+
+
+@pytest.mark.asyncio
+async def test_known_device_skips_datastream_creation():
+    ds = _make_datastream("PM1")
+    use_case, _, _, datastream_repo, _ = _make_use_case(
+        datastream=ds,
+        known_devices={_DEVICE_ID},
+    )
+
+    with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
+        mock_dt.now.return_value = _NOW
+        mock_dt.UTC = UTC
+        await use_case.execute(_dto())
+
+    datastream_repo.save_batch.assert_not_called()
 
 
 # --- flujo nominal ---
@@ -115,7 +159,6 @@ async def test_creates_one_observation_per_variable():
         await use_case.execute(_dto())
 
     saved = obs_repo.save_batch.call_args[0][0]
-    # 1 lectura × 9 variables = 9 observaciones
     assert len(saved) == 9
 
 
@@ -158,7 +201,6 @@ async def test_multiple_readings_all_persisted():
         await use_case.execute(_dto(readings=[_reading(), _reading()]))
 
     saved = obs_repo.save_batch.call_args[0][0]
-    # 2 lecturas × 9 variables = 18 observaciones
     assert len(saved) == 18
 
 
@@ -204,6 +246,5 @@ async def test_sensor_error_produces_out_of_range_qualifier():
         await use_case.execute(_dto(readings=[_reading(pm2_5=_var(error=True))]))
 
     saved = obs_repo.save_batch.call_args[0][0]
-    pm25_obs = [o for o in saved if o.phenomenon_time == _PHENOMENON_TIME]
-    out_of_range = [o for o in pm25_obs if o.qualifier == ResultQualifier.SENSOR_OUT_OF_RANGE]
+    out_of_range = [o for o in saved if o.qualifier == ResultQualifier.SENSOR_OUT_OF_RANGE]
     assert len(out_of_range) >= 1

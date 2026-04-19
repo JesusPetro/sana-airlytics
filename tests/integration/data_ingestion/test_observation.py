@@ -33,10 +33,9 @@ def datastream(session):
     session.add(sensor)
     session.flush()
 
-    prop = ObservedPropertyModel(code="PM2_5", name="PM2.5")
-    unit = UnitModel(code="UG_M3", name="Micrograms per cubic meter", symbol="µg/m³")
-    session.add_all([prop, unit])
-    session.flush()
+    from sqlalchemy import select
+    prop = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "PM2_5")).scalar_one()
+    unit = session.execute(select(UnitModel).where(UnitModel.code == "UG_M3")).scalar_one()
 
     ds = DatastreamModel(
         name="PM2.5",

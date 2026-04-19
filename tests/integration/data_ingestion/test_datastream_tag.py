@@ -31,10 +31,9 @@ def datastream(session):
     session.add(sensor)
     session.flush()
 
-    prop = ObservedPropertyModel(code="PM2_5", name="PM2.5")
-    unit = UnitModel(code="UG_M3", name="Micrograms per cubic meter", symbol="µg/m³")
-    session.add_all([prop, unit])
-    session.flush()
+    from sqlalchemy import select
+    prop = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "PM2_5")).scalar_one()
+    unit = session.execute(select(UnitModel).where(UnitModel.code == "UG_M3")).scalar_one()
 
     ds = DatastreamModel(
         name="PM2.5",
@@ -76,9 +75,8 @@ def test_duplicate_key_same_datastream_fails(session, datastream):
 
 
 def test_same_key_different_datastream(session, datastream):
-    prop2 = ObservedPropertyModel(code="CO2", name="Carbon Dioxide")
-    session.add(prop2)
-    session.flush()
+    from sqlalchemy import select
+    prop2 = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "CO2")).scalar_one()
 
     unit = session.get(UnitModel, datastream.unit_id)
 

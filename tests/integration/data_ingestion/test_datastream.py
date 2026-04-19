@@ -12,10 +12,9 @@ from device_management.infrastructure.orm_models import SensorModel
 
 @pytest.fixture
 def catalog(session):
-    prop = ObservedPropertyModel(code="PM2_5", name="PM2.5")
-    unit = UnitModel(code="UG_M3", name="Micrograms per cubic meter", symbol="µg/m³")
-    session.add_all([prop, unit])
-    session.flush()
+    from sqlalchemy import select
+    prop = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "PM2_5")).scalar_one()
+    unit = session.execute(select(UnitModel).where(UnitModel.code == "UG_M3")).scalar_one()
     return {"property": prop, "unit": unit}
 
 
@@ -82,8 +81,8 @@ def test_datastream_unique_constraint(session, sensor, catalog):
 
 
 def test_datastream_same_sensor_different_property(session, sensor, catalog):
-    prop2 = ObservedPropertyModel(code="CO2", name="Carbon Dioxide")
-    session.add(prop2)
+    from sqlalchemy import select
+    prop2 = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "CO2")).scalar_one()
     session.flush()
 
     session.add(DatastreamModel(
