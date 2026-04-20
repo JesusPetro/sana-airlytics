@@ -7,6 +7,7 @@ from .sensor_reading import SensorReading
 
 class MeasurementValidator:
     def validate(self, reading: SensorReading) -> ResultQualifier:
+        """Clasifica una lectura en VALID, SUSPICIOUS_VALUE o SENSOR_OUT_OF_RANGE."""
         limits = SEN66_CATALOG.get(reading.variable_code.lower())
         if limits is None:
             return ResultQualifier.VALID

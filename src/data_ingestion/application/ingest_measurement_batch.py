@@ -35,6 +35,8 @@ _SEN66_VARIABLE_CODES: tuple[str, ...] = (
 
 
 class IngestMeasurementBatch:
+    """Caso de uso: persiste un batch de mediciones y actualiza la ubicacion del device."""
+
     def __init__(
         self,
         observation_repo: ObservationRepository,
@@ -52,6 +54,7 @@ class IngestMeasurementBatch:
         self._create_datastreams = CreateDatastreamsForDevice(datastream_repo)
 
     async def execute(self, dto: IngestBatchDTO) -> None:
+        """Procesa e ingesta un batch; no-op si el mensaje ya fue procesado."""
         message_id = UUID(dto.message_id)
         device_id = DeviceId(dto.device_id)
 
@@ -120,6 +123,11 @@ class IngestMeasurementBatch:
             device_id, reading.variable_code
         )
         if ds is None:
+            _logger.error(
+                "datastream_not_found",
+                device_id=str(device_id),
+                variable_code=reading.variable_code,
+            )
             return
 
         qualifier = self._validator.validate(reading)

@@ -7,6 +7,8 @@ from shared.domain.observed_property import ObservedProperty
 
 @dataclass(frozen=True)
 class Sen66Limits:
+    """Limites de validacion en tres niveles: datasheet, plausibilidad local y centinelas de firmware."""
+
     observed_property: (
         ObservedProperty  # tiene hard_min y max del datasheet (de los sensores individuales).
     )
