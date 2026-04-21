@@ -101,6 +101,7 @@ class MqttTelemetrySubscriber:
             # Sesión propia por mensaje — evita conflictos entre tareas concurrentes.
             # Si el caso de uso lanza excepcion, la tarea falla sin ACK
             # y EMQX reentrega el mensaje. La idempotencia por message_id previene duplicados.
+            message_id = payload.get("message_id")
             try:
                 async with self._session_factory() as session:
                     use_case = IngestMeasurementBatch(
@@ -112,9 +113,18 @@ class MqttTelemetrySubscriber:
                     )
                     await use_case.execute(dto)
                     await session.commit()
-                    logger.info("batch_ingested", message_id=payload.get("message_id"))
+                logger.info(
+                    "batch_ingested",
+                    message_id=message_id,
+                    device_id=dto.device_id,
+                    reading_count=len(dto.readings),
+                )
             except Exception:
-                logger.exception("batch_ingest_failed", message_id=payload.get("message_id"))
+                logger.exception(
+                    "batch_ingest_failed",
+                    message_id=message_id,
+                    device_id=dto.device_id,
+                )
 
 
 def _parse(payload: dict) -> IngestBatchDTO:
