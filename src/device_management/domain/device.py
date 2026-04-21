@@ -15,6 +15,7 @@ from .device_events import (
 from .device_limits import DeviceConfigLimits
 from .device_location import DeviceLocation
 from .device_status import DeviceStatus
+from .site_type import SiteType
 
 
 class Device(AggregateRoot):
@@ -31,6 +32,7 @@ class Device(AggregateRoot):
         name: str,
         model: str,
         workspace_id: str,
+        site_type: SiteType | None = None,
         config: DeviceConfig | None = None,
         location: DeviceLocation | None = None,
     ) -> None:
@@ -55,6 +57,7 @@ class Device(AggregateRoot):
         self._model = model.strip()
         self._workspace_id = workspace_id
         self._status = DeviceStatus.PENDING
+        self._site_type = site_type
         self._config = config or DeviceConfig(
             sampling_interval_seconds=DeviceConfigLimits.SAMPLING_INTERVAL_DEFAULT_SECONDS,
             transmission_interval_seconds=DeviceConfigLimits.TRANSMISSION_INTERVAL_DEFAULT_SECONDS,
@@ -82,6 +85,7 @@ class Device(AggregateRoot):
         model: str,
         workspace_id: str,
         status: DeviceStatus,
+        site_type: SiteType | None,
         config: DeviceConfig,
         location: DeviceLocation | None,
         last_seen: datetime | None,
@@ -97,6 +101,7 @@ class Device(AggregateRoot):
         obj._model = model
         obj._workspace_id = workspace_id
         obj._status = status
+        obj._site_type = site_type
         obj._config = config
         obj._location = location
         obj._last_seen = last_seen
@@ -133,6 +138,11 @@ class Device(AggregateRoot):
     def status(self) -> DeviceStatus:
         """Estado actual del device en su ciclo de vida."""
         return self._status
+
+    @property
+    def site_type(self) -> SiteType | None:
+        """Tipo de emplazamiento del device (INDOOR, OUTDOOR, MOBILE)."""
+        return self._site_type
 
     @property
     def config(self) -> DeviceConfig:
