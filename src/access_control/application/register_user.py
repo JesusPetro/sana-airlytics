@@ -1,0 +1,52 @@
+from __future__ import annotations
+
+from uuid import uuid7
+
+from ..domain.ports.repositories import AuditLogger, UserRepository
+from ..domain.user import User
+from .dtos import RegisterUserInput, RegisterUserOutput
+
+
+class EmailAlreadyRegisteredError(Exception):
+    """El email ya esta registrado en la plataforma."""
+
+
+class RegisterUserUseCase:
+    """Caso de uso: registrar un nuevo usuario individual."""
+
+    def __init__(
+        self,
+        user_repo: UserRepository,
+        audit_logger: AuditLogger,
+    ) -> None:
+        self._users = user_repo
+        self._audit = audit_logger
+
+    async def execute(self, cmd: RegisterUserInput) -> RegisterUserOutput:
+        """
+        Registra un nuevo usuario verificando unicidad del email.
+        Hashea la contrasena antes de persistir.
+        """
+        existing = await self._users.find_by_email(cmd.email)
+        if existing is not None:
+            raise EmailAlreadyRegisteredError(
+                f"El email {cmd.email!r} ya esta registrado"
+            )
+
+        user = User.create(
+            id=uuid7(),
+            email=cmd.email,
+            plain_password=cmd.password,
+            first_name=cmd.first_name,
+            last_name=cmd.last_name,
+        )
+        await self._users.save(user)
+        await self._audit.log(
+            user_id=str(user.id),
+            action="REGISTER",
+            resource_type="user",
+            resource_id=str(user.id),
+            success=True,
+            ip_address=None,
+        )
+        return RegisterUserOutput(user_id=str(user.id), type=user.type)
