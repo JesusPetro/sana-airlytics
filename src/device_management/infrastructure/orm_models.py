@@ -19,7 +19,7 @@ class SensorModel(Base):
     name: Mapped[str] = mapped_column(String)
     model: Mapped[str] = mapped_column(String)
     site_type: Mapped[str | None] = mapped_column(String)
-    status: Mapped[str] = mapped_column(String, default="active")
+    status: Mapped[str] = mapped_column(String, default="ACTIVE")
     workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("workspaces.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

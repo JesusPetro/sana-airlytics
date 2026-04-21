@@ -36,4 +36,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     loop = asyncio.SelectorEventLoop()
-    loop.run_until_complete(main())
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        pass

@@ -96,33 +96,6 @@ class UnitModel(Base):
     symbol: Mapped[str] = mapped_column(String)
     type: Mapped[str | None] = mapped_column(String)
 
-
-
-class ResultQualifierModel(Base):
-    __tablename__ = "result_qualifiers"
-
-    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
-    code: Mapped[str] = mapped_column(String, unique=True)
-    description: Mapped[str] = mapped_column(String)
-
-
-class SensorModelPropertyModel(Base):
-    __tablename__ = "sensor_model_properties"
-
-    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
-    model: Mapped[str] = mapped_column(String)
-    observed_property_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("observed_properties.id")
-    )
-    unit_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("units.id"))
-
-    __table_args__ = (
-        UniqueConstraint(
-            "model", "observed_property_id", name="uq_sensor_model_props_model_property"
-        ),
-    )
-
-
 class ProcessedMessageModel(Base):
     __tablename__ = "processed_messages"
 
