@@ -88,7 +88,6 @@ class Device(AggregateRoot):
         site_type: SiteType | None,
         config: DeviceConfig,
         location: DeviceLocation | None,
-        last_seen: datetime | None,
         created_at: datetime,
         deactivated_at: datetime | None,
     ) -> Device:
@@ -104,7 +103,7 @@ class Device(AggregateRoot):
         obj._site_type = site_type
         obj._config = config
         obj._location = location
-        obj._last_seen = last_seen
+        obj._last_seen = None
         obj._created_at = created_at
         obj._deactivated_at = deactivated_at
         return obj
