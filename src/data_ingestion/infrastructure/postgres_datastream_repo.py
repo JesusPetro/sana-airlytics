@@ -65,10 +65,10 @@ class PostgresDatastreamRepository:
             for ds, prop_code, unit_code in rows
         ]
 
-    async def find_all_device_ids(self) -> set[str]:
+    async def find_all_device_ids(self) -> set[UUID]:
         stmt = select(DatastreamModel.sensor_id).distinct()
         rows = (await self._session.execute(stmt)).scalars().all()
-        return {str(row) for row in rows}
+        return set(rows)
 
     async def save_batch(self, datastreams: list[Datastream]) -> None:
         if not datastreams:

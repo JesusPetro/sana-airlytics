@@ -1,7 +1,10 @@
 import os
 
 import pytest
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
+
+load_dotenv()
 from sqlalchemy.orm import Session
 
 import access_control.infrastructure.orm_models  # noqa: F401
