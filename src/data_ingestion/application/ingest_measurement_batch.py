@@ -43,7 +43,7 @@ class IngestMeasurementBatch:
         processed_msg_repo: ProcessedMessageRepository,
         datastream_repo: DatastreamRepository,
         location_updater: LocationUpdater,
-        known_devices: set[str],
+        known_devices: set[UUID],
     ) -> None:
         self._observations = observation_repo
         self._processed = processed_msg_repo
@@ -63,11 +63,12 @@ class IngestMeasurementBatch:
         if await self._processed.exists(message_id):
             return
 
-        if dto.device_id not in self._known_devices:
+        device_uuid = UUID(dto.device_id)
+        if device_uuid not in self._known_devices:
             await self._create_datastreams.execute(
                 DeviceRegisteredEventDTO(device_id=dto.device_id, model="SEN66")
             )
-            self._known_devices.add(dto.device_id)
+            self._known_devices.add(device_uuid)
             _logger.info(
                 "device_registered_on_demand",
                 device_id=dto.device_id,

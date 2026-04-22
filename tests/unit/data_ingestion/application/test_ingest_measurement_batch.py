@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 import pytest
 
@@ -65,7 +65,7 @@ def _make_use_case(
     *,
     already_processed: bool = False,
     datastream: Datastream | None = None,
-    known_devices: set[str] | None = None,
+    known_devices: set[UUID] | None = None,
 ) -> tuple[IngestMeasurementBatch, AsyncMock, AsyncMock, AsyncMock, AsyncMock]:
     obs_repo = AsyncMock()
     processed_repo = AsyncMock()
@@ -76,7 +76,7 @@ def _make_use_case(
     datastream_repo.find_by_device_and_property.return_value = datastream
 
     if known_devices is None:
-        known_devices = {_DEVICE_ID}
+        known_devices = {UUID(_DEVICE_ID)}
 
     use_case = IngestMeasurementBatch(
         observation_repo=obs_repo,
@@ -119,7 +119,7 @@ async def test_unknown_device_triggers_datastream_creation():
 @pytest.mark.asyncio
 async def test_unknown_device_is_added_to_known_devices():
     ds = _make_datastream("PM1")
-    known_devices: set[str] = set()
+    known_devices: set[UUID] = set()
     use_case, _, _, _, _ = _make_use_case(datastream=ds, known_devices=known_devices)
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:
@@ -127,7 +127,7 @@ async def test_unknown_device_is_added_to_known_devices():
         mock_dt.UTC = UTC
         await use_case.execute(_dto())
 
-    assert _DEVICE_ID in known_devices
+    assert UUID(_DEVICE_ID) in known_devices
 
 
 @pytest.mark.asyncio
@@ -135,7 +135,7 @@ async def test_known_device_skips_datastream_creation():
     ds = _make_datastream("PM1")
     use_case, _, _, datastream_repo, _ = _make_use_case(
         datastream=ds,
-        known_devices={_DEVICE_ID},
+        known_devices={UUID(_DEVICE_ID)},
     )
 
     with patch("src.data_ingestion.application.ingest_measurement_batch.datetime") as mock_dt:

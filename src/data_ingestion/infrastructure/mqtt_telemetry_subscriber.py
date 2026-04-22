@@ -4,33 +4,19 @@ import asyncio
 import json
 import ssl
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from typing import Callable
+from uuid import UUID
 
 import aiomqtt
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from data_ingestion.application.dtos import (
-    GpsDTO,
-    HardwareMetadataDTO,
-    IngestBatchDTO,
-    SensorReadingDTO,
-    VariableReadingDTO,
-)
 from data_ingestion.application.ingest_measurement_batch import IngestMeasurementBatch
 from data_ingestion.infrastructure.postgres_datastream_repo import PostgresDatastreamRepository
-from data_ingestion.infrastructure.postgres_location_updater import PostgresLocationUpdater
-from data_ingestion.infrastructure.postgres_processed_message_repo import (
-    PostgresProcessedMessageRepository,
-)
-from data_ingestion.infrastructure.timescale_observation_repo import TimescaleObservationRepository
+from data_ingestion.infrastructure.sen66_payload_parser import SEN66PayloadParser
 from shared.infrastructure.logger import get_logger
 
 logger = get_logger(__name__)
-
-_SEN66_VARIABLES = (
-    "pm1", "pm2_5", "pm4", "pm10",
-    "temperature", "humidity", "voc_index", "nox_index", "co2",
-)
 
 
 @dataclass
@@ -46,12 +32,16 @@ class MqttConfig:
 
 class MqttTelemetrySubscriber:
     def __init__(
-        self, config: MqttConfig, session_factory: async_sessionmaker[AsyncSession]
+        self,
+        config: MqttConfig,
+        session_factory: async_sessionmaker[AsyncSession],
+        use_case_factory: Callable[[AsyncSession, set[UUID]], IngestMeasurementBatch],
     ) -> None:
         self._config = config
         self._session_factory = session_factory
+        self._use_case_factory = use_case_factory
         self._semaphore = asyncio.Semaphore(config.max_concurrent_batches)
-        self._known_devices: set[str] = set()
+        self._known_devices: set[UUID] = set()
 
     async def run(self) -> None:
         async with self._session_factory() as session:
@@ -89,7 +79,7 @@ class MqttTelemetrySubscriber:
                 return
 
             try:
-                dto = _parse(payload)
+                dto = SEN66PayloadParser.parse(payload)
             except (KeyError, TypeError, ValueError):
                 logger.error(
                     "invalid_payload_structure",
@@ -98,19 +88,10 @@ class MqttTelemetrySubscriber:
                 )
                 return
 
-            # Sesión propia por mensaje — evita conflictos entre tareas concurrentes.
-            # Si el caso de uso lanza excepcion, la tarea falla sin ACK
-            # y EMQX reentrega el mensaje. La idempotencia por message_id previene duplicados.
             message_id = payload.get("message_id")
             try:
                 async with self._session_factory() as session:
-                    use_case = IngestMeasurementBatch(
-                        observation_repo=TimescaleObservationRepository(session),
-                        processed_msg_repo=PostgresProcessedMessageRepository(session),
-                        datastream_repo=PostgresDatastreamRepository(session),
-                        location_updater=PostgresLocationUpdater(session),
-                        known_devices=self._known_devices,
-                    )
+                    use_case = self._use_case_factory(session, self._known_devices)
                     await use_case.execute(dto)
                     await session.commit()
                 logger.info(
@@ -119,39 +100,15 @@ class MqttTelemetrySubscriber:
                     device_id=dto.device_id,
                     reading_count=len(dto.readings),
                 )
+            except IntegrityError:
+                logger.warning(
+                    "device_not_registered",
+                    message_id=message_id,
+                    device_id=dto.device_id,
+                )
             except Exception:
                 logger.exception(
                     "batch_ingest_failed",
                     message_id=message_id,
                     device_id=dto.device_id,
                 )
-
-
-def _parse(payload: dict) -> IngestBatchDTO:
-    raw_meta = payload["metadata"]
-    raw_gps = raw_meta.get("gps")
-    gps = (
-        GpsDTO(lat=raw_gps["lat"], lon=raw_gps["lon"], alt=raw_gps["alt"])
-        if raw_gps is not None
-        else None
-    )
-    metadata = HardwareMetadataDTO(
-        battery_pct=raw_meta["battery_pct"],
-        rssi_dbm=raw_meta["rssi_dbm"],
-        uptime_s=raw_meta["uptime_s"],
-        gps=gps,
-    )
-    readings = [_parse_reading(r) for r in payload["readings"]]
-    return IngestBatchDTO(
-        message_id=payload["message_id"],
-        device_id=payload["device_id"],
-        readings=readings,
-        metadata=metadata,
-    )
-
-
-def _parse_reading(raw: dict) -> SensorReadingDTO:
-    return SensorReadingDTO(
-        timestamp=datetime.fromisoformat(raw["timestamp"]).replace(tzinfo=UTC),
-        **{code: VariableReadingDTO(**raw[code]) for code in _SEN66_VARIABLES},
-    )
