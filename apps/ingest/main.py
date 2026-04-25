@@ -1,10 +1,14 @@
+# ruff: noqa: E402, I001
 from __future__ import annotations
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 import asyncio
 import os
 from uuid import UUID
 
-from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from data_ingestion.application.ingest_measurement_batch import IngestMeasurementBatch
@@ -19,8 +23,6 @@ from data_ingestion.infrastructure.postgres_processed_message_repo import (
 )
 from data_ingestion.infrastructure.timescale_observation_repo import TimescaleObservationRepository
 from shared.infrastructure.logger import get_logger
-
-load_dotenv(override=True)
 
 logger = get_logger(__name__)
 
