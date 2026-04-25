@@ -36,6 +36,7 @@ def _init_sentry() -> None:
         ],
         traces_sample_rate=0.0,
     )
+    structlog.get_logger(__name__).info("sentry_initialized")
 
 
 def _configure() -> None:

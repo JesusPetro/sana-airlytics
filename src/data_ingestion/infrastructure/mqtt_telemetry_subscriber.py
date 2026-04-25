@@ -74,17 +74,24 @@ class MqttTelemetrySubscriber:
             logger.info("mqtt_message_received", topic=str(message.topic))
             try:
                 payload = json.loads(message.payload)
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                logger.error("malformed_mqtt_payload", topic=str(message.topic))
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                logger.error(
+                    "malformed_mqtt_payload",
+                    topic=str(message.topic),
+                    error=str(exc),
+                    exc_info=True,
+                )
                 return
 
             try:
                 dto = SEN66PayloadParser.parse(payload)
-            except (KeyError, TypeError, ValueError):
+            except (KeyError, TypeError, ValueError) as exc:
                 logger.error(
                     "invalid_payload_structure",
                     topic=str(message.topic),
                     message_id=payload.get("message_id"),
+                    error=str(exc),
+                    exc_info=True,
                 )
                 return
 
