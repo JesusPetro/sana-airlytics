@@ -74,3 +74,38 @@ class AuthorizeActionInput:
     action: str             # ej. "sensor:register", "observation:read"
     workspace_id: str
     ip_address: str | None = None
+
+
+@dataclass(frozen=True)
+class RequestPasswordResetInput:
+    """Datos de entrada para solicitar un reset de contrasena."""
+
+    email: str
+
+
+@dataclass(frozen=True)
+class RequestPasswordResetOutput:
+    """
+    Resultado de la solicitud de reset.
+    Siempre exitoso para no revelar si el email existe.
+    En development sin SMTP configurado, expone el token para testing.
+    """
+
+    message: str
+    reset_token: str | None = None   # None en production y en dev con SMTP configurado
+    dev_note: str | None = None
+
+
+@dataclass(frozen=True)
+class ResetPasswordInput:
+    """Datos de entrada para confirmar el reset de contrasena."""
+
+    token: str
+    new_password: str
+
+
+@dataclass(frozen=True)
+class ResetPasswordOutput:
+    """Resultado de confirmar el reset de contrasena."""
+
+    message: str

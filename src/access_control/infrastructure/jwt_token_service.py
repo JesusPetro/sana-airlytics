@@ -4,11 +4,8 @@ from datetime import UTC, datetime, timedelta
 
 from jose import JWTError, jwt
 
-from ..domain.ports.token_service import TokenClaims
-
-
-class TokenInvalidError(Exception):
-    """El token es invalido, ha expirado o fue manipulado."""
+from ..domain.ports.token_service import TokenClaims, TokenInvalidError
+from .security.token_factory import create_reset_token, decode_token
 
 
 class JwtTokenService:
@@ -22,8 +19,16 @@ class JwtTokenService:
     ACCESS_TOKEN_EXPIRE_MINUTES = 60
     REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-    def __init__(self, secret_key: str) -> None:
+    def __init__(
+        self,
+        secret_key: str,
+        algorithm: str = "HS256",
+        access_expire_minutes: int = 60,
+        refresh_expire_days: int = 7,
+        reset_expire_minutes: int = 15,
+    ) -> None:
         self._secret_key = secret_key
+        self._reset_exp = reset_expire_minutes
 
     def generate_token(self, claims: TokenClaims) -> str:
         """Genera un JWT de acceso con expiracion de 60 minutos."""
@@ -55,3 +60,23 @@ class JwtTokenService:
             "exp": datetime.now(UTC) + timedelta(days=self.REFRESH_TOKEN_EXPIRE_DAYS),
         }
         return jwt.encode(payload, self._secret_key, algorithm=self.ALGORITHM)
+
+    def generate_reset_token(self, email: str) -> str:
+        """Genera un JWT de reset de contrasena con TTL de 15 minutos."""
+        return create_reset_token(
+            email=email,
+            secret_key=self._secret_key,
+            algorithm=self.ALGORITHM,
+            expire_minutes=self._reset_exp,
+        )
+
+    def validate_reset_token(self, token: str) -> str:
+        """
+        Valida el JWT de reset y retorna el email del usuario.
+        Lanza TokenInvalidError si el token es invalido, expirado
+        o si su claim type no es 'password_reset'.
+        """
+        payload = decode_token(token, self._secret_key, self.ALGORITHM)
+        if payload.get("type") != "password_reset":
+            raise TokenInvalidError("Token no es de tipo password_reset.")
+        return payload["sub"]

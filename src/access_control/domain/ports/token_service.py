@@ -10,13 +10,17 @@ class TokenClaims:
 
     user_id: str
     email: str
-    type: str | None    # valor informativo de users.type
+    type: str | None  # valor informativo de users.type
+
+
+class TokenInvalidError(Exception):
+    """Se lanza cuando el token JWT es invalido, expirado o malformado."""
 
 
 class TokenService(Protocol):
     """
     Puerto para generacion y validacion de tokens de sesion.
-    Implementado por JwtTokenService (JWT propio) o por un adaptador externo.
+    Implementado por JwtTokenService en infrastructure/security/.
     El dominio y la aplicacion solo conocen este Protocol.
     """
 
@@ -33,4 +37,20 @@ class TokenService(Protocol):
 
     def generate_refresh_token(self, user_id: str) -> str:
         """Genera un token de refresh de larga duracion."""
+        ...
+
+    def generate_reset_token(self, email: str) -> str:
+        """
+        Genera un token JWT de 15 minutos para reset de contrasena.
+        El token incluye el claim type='password_reset' para diferenciarlo
+        de un access token normal.
+        """
+        ...
+
+    def validate_reset_token(self, token: str) -> str:
+        """
+        Valida el token de reset y retorna el email del usuario.
+        Lanza TokenInvalidError si el token es invalido, expirado
+        o si su claim type no es 'password_reset'.
+        """
         ...

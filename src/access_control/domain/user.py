@@ -6,6 +6,10 @@ from uuid import UUID
 import bcrypt
 
 
+class PasswordTooWeakError(Exception):
+    """La contrasena no cumple los requisitos minimos de seguridad."""
+
+
 class User:
     """
     Agregado raiz del BC access_control.
@@ -97,3 +101,32 @@ class User:
     @property
     def full_name(self) -> str:
         return f"{self._first_name} {self._last_name}"
+
+    def change_password(self, new_plain_password: str) -> None:
+        """
+        Actualiza la contrasena del usuario aplicando hash bcrypt.
+        Lanza PasswordTooWeakError si la contrasena no cumple los requisitos minimos.
+        Los requisitos: >= 8 caracteres, al menos una mayuscula, una minuscula,
+        un digito y un caracter especial.
+        """
+        import re
+        if len(new_plain_password) < 8:
+            raise PasswordTooWeakError("La contrasena debe tener al menos 8 caracteres.")
+        if not re.search(r"[A-Z]", new_plain_password):
+            raise PasswordTooWeakError(
+                "La contrasena debe contener al menos una letra mayuscula."
+            )
+        if not re.search(r"[a-z]", new_plain_password):
+            raise PasswordTooWeakError(
+                "La contrasena debe contener al menos una letra minuscula."
+            )
+        if not re.search(r"\d", new_plain_password):
+            raise PasswordTooWeakError(
+                "La contrasena debe contener al menos un numero."
+            )
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_plain_password):
+            raise PasswordTooWeakError(
+                "La contrasena debe contener al menos un caracter especial."
+            )
+        from ..infrastructure.security.password_hasher import hash_password
+        self._password_hash = hash_password(new_plain_password)
