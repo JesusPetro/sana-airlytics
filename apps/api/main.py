@@ -16,7 +16,10 @@ from .routers.auth.router import router as auth_router
 
 logger = logging.getLogger(__name__)
 
-_limiter = Limiter(key_func=get_remote_address)
+_limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=settings.is_production,
+)
 
 _TAGS_METADATA = [
     {

@@ -27,16 +27,15 @@ _AsyncSessionLocal = async_sessionmaker(
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Dependencia FastAPI que provee una sesion asincrona de SQLAlchemy por request.
-    Garantiza el cierre correcto de la sesion al finalizar la request,
-    incluso si ocurre una excepcion durante el procesamiento.
-
-    Uso en un endpoint:
-        async def my_endpoint(db: AsyncSession = Depends(get_async_session)):
+    Dependencia FastAPI que provee una sesion asincrona de SQLAlchemy
+    por request. Hace commit automaticamente al finalizar la request
+    si no hubo excepciones. Hace rollback si ocurre cualquier error.
+    Garantiza el cierre correcto de la sesion en todos los casos.
     """
     async with _AsyncSessionLocal() as session:
         try:
             yield session
+            await session.commit()
         except Exception:
             await session.rollback()
             raise

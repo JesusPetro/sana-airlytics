@@ -51,7 +51,7 @@ from .schemas import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
+router = APIRouter(prefix="/api/auth", tags=["Auth"])
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -142,12 +142,10 @@ def _build_reset_password_use_case(db: AsyncSession) -> ResetPasswordUseCase:
 async def register(
     request: Request,
     body: RegisterRequest,
-    response: Response,
     db: AsyncSession = Depends(get_async_session),
-    token_service: JwtTokenService = Depends(get_token_service),
 ) -> RegisterResponse:
     """
-    Registra un nuevo usuario en la plataforma y establece la cookie de sesion.
+    Registra un nuevo usuario en la plataforma.
 
     La contrasena debe tener al menos 8 caracteres, una mayuscula, una minuscula,
     un numero y un caracter especial. El email debe ser unico en el sistema.
@@ -171,15 +169,6 @@ async def register(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         )
-
-    # Emitir cookies de sesion tras el registro exitoso
-    access_token = token_service.generate_token(
-        TokenClaims(user_id=output.user_id, email=str(body.email), type=output.type)
-    )
-    refresh_token = token_service.generate_refresh_token(output.user_id)
-
-    response.set_cookie(value=access_token, **settings.cookie_config)
-    response.set_cookie(value=refresh_token, **settings.refresh_cookie_config)
 
     logger.info("Usuario registrado correctamente.", extra={"user_id": output.user_id})
     return RegisterResponse(
