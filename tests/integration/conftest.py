@@ -4,7 +4,7 @@ import pytest
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
-load_dotenv()
+load_dotenv(encoding='utf-8')
 from sqlalchemy.orm import Session
 
 import access_control.infrastructure.orm_models  # noqa: F401
@@ -16,7 +16,7 @@ from shared.infrastructure.orm_base import Base
 
 @pytest.fixture(scope="session")
 def engine():
-    url = os.environ["DATABASE_URL"].replace("+asyncpg", "")
+    url = os.environ["DATABASE_URL"].replace("+asyncpg", "+psycopg")
     return create_engine(url)
 
 

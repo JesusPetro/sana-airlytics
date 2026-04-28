@@ -1,0 +1,125 @@
+from __future__ import annotations
+
+import logging
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+from .config.settings import settings
+from .middleware.refresh_token import RefreshTokenMiddleware
+from .middleware.security_headers import SecurityHeadersMiddleware
+from .routers.auth.router import router as auth_router
+
+logger = logging.getLogger(__name__)
+
+_limiter = Limiter(key_func=get_remote_address)
+
+_TAGS_METADATA = [
+    {
+        "name": "Auth",
+        "description": (
+            "Autenticacion y gestion de sesion. "
+            "Los tokens se almacenan en cookies httponly — "
+            "el cliente nunca recibe el JWT directamente en production."
+        ),
+    },
+]
+
+
+def create_app() -> FastAPI:
+    """
+    Factory que construye la instancia FastAPI con todos sus middlewares y routers.
+    Usar el patron factory facilita la creacion de instancias de test.
+    """
+    app = FastAPI(
+        title=settings.API_TITLE,
+        version=settings.API_VERSION,
+        docs_url=settings.docs_url,
+        redoc_url=settings.redoc_url,
+        openapi_tags=_TAGS_METADATA,
+    )
+
+    # --- Rate limiting ---
+    app.state.limiter = _limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # --- CORS (debe ir antes de los custom middlewares) ---
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # --- Security headers ---
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    # --- Renovacion automatica de cookie ---
+    app.add_middleware(RefreshTokenMiddleware)
+
+    # --- Routers ---
+    app.include_router(auth_router)
+
+    # --- Swagger con soporte Bearer para development ---
+    if settings.is_development:
+        _configure_swagger_bearer(app)
+
+    logger.info(
+        "API iniciada.",
+        extra={"environment": settings.ENVIRONMENT, "version": settings.API_VERSION},
+    )
+    return app
+
+
+def _configure_swagger_bearer(app: FastAPI) -> None:
+    """
+    Agrega el esquema de seguridad Bearer a Swagger UI.
+    Solo se activa en development para facilitar el testing manual.
+    """
+
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+        schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description or "",
+            routes=app.routes,
+        )
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})[
+            "HTTPBearer"
+        ] = {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": (
+                "Solo para development/Swagger. "
+                "Usar POST /api/v1/auth/token para obtener el token."
+            ),
+        }
+        app.openapi_schema = schema
+        return schema
+
+    app.openapi = custom_openapi  # type: ignore[method-assign]
+
+
+app = create_app()
+
+
+@app.get("/health", tags=["Health"])
+async def health() -> dict:
+    """
+    Verifica que la API esta corriendo correctamente.
+    Usado por monitoreo de contenedores y load balancers.
+    """
+    return {
+        "status": "healthy",
+        "service": settings.API_TITLE,
+        "version": settings.API_VERSION,
+        "environment": settings.ENVIRONMENT,
+    }
