@@ -1,10 +1,6 @@
 import os
 from logging.config import fileConfig
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 import access_control.infrastructure.orm_models  # noqa: F401
 import data_ingestion.infrastructure.orm_models  # noqa: F401
 import device_management.infrastructure.orm_models  # noqa: F401
