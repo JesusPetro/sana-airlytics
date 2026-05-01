@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data_ingestion.domain.ports.repositories import LocationUpdater
-from device_management.infrastructure.orm_models import HistoricalLocationModel, LocationModel
+from shared.infrastructure.orm_models import HistoricalLocationModel, LocationModel
 from shared.domain.coordinate import Coordinate
 from shared.domain.device_id import DeviceId
 

@@ -7,7 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
-from device_management.infrastructure.orm_models import LocationModel, SensorModel
+from device_management.infrastructure.orm_models import SensorModel
+from shared.infrastructure.orm_models import LocationModel
 
 
 @pytest.fixture

@@ -13,7 +13,9 @@ from device_management.domain.device_status import DeviceStatus
 from device_management.domain.site_type import SiteType
 from shared.domain.device_id import DeviceId
 
-from .orm_models import LocationModel, SensorModel
+from shared.infrastructure.orm_models import LocationModel
+
+from .orm_models import SensorModel
 
 
 class PostgresDeviceRepository:

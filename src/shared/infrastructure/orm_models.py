@@ -11,6 +11,34 @@ from sqlalchemy.orm import Mapped, mapped_column
 from shared.infrastructure.orm_base import Base
 
 
+class LocationModel(Base):
+    __tablename__ = "locations"
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
+    sensor_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("sensors.id"), unique=True
+    )
+    latitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
+    longitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
+    elevation: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class HistoricalLocationModel(Base):
+    __tablename__ = "historical_locations"
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
+    sensor_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("sensors.id"))
+    latitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
+    longitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
+    elevation: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 class ObservationModel(Base):
     __tablename__ = "observations"
 
