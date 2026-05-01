@@ -3,8 +3,9 @@ from __future__ import annotations
 from uuid import uuid7
 
 from ..domain.ports.repositories import AuditLogger, UserRepository
-from ..domain.user import User
+from ..domain.user import PasswordTooWeakError as _DomainWeakPassword, User
 from .dtos import RegisterUserInput, RegisterUserOutput
+from .errors import WeakPasswordError
 
 
 class EmailAlreadyRegisteredError(Exception):
@@ -33,13 +34,16 @@ class RegisterUserUseCase:
                 f"El email {cmd.email!r} ya esta registrado"
             )
 
-        user = User.create(
-            id=uuid7(),
-            email=cmd.email,
-            plain_password=cmd.password,
-            first_name=cmd.first_name,
-            last_name=cmd.last_name,
-        )
+        try:
+            user = User.create(
+                id=uuid7(),
+                email=cmd.email,
+                plain_password=cmd.password,
+                first_name=cmd.first_name,
+                last_name=cmd.last_name,
+            )
+        except _DomainWeakPassword as e:
+            raise WeakPasswordError(str(e)) from e
         await self._users.save(user)
         await self._audit.log(
             user_id=str(user.id),

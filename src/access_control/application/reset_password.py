@@ -4,8 +4,9 @@ import logging
 
 from ..domain.ports.repositories import UserRepository
 from ..domain.ports.token_service import TokenInvalidError, TokenService
-from ..domain.user import PasswordTooWeakError
+from ..domain.user import PasswordTooWeakError as _DomainWeakPassword
 from .dtos import ResetPasswordInput, ResetPasswordOutput
+from .errors import WeakPasswordError
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +48,10 @@ class ResetPasswordUseCase:
             )
             raise ResetPasswordError("User not found.")
 
-        # Delegar la validacion de fortaleza al agregado User
-        user.change_password(cmd.new_password)
+        try:
+            user.change_password(cmd.new_password)
+        except _DomainWeakPassword as e:
+            raise WeakPasswordError(str(e)) from e
 
         await self._users.save(user)
 

@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+
+from src.access_control.application.errors import WeakPasswordError
 
 from .config.settings import settings
 from .middleware.refresh_token import RefreshTokenMiddleware
@@ -112,6 +115,11 @@ def _configure_swagger_bearer(app: FastAPI) -> None:
 
 
 app = create_app()
+
+
+@app.exception_handler(WeakPasswordError)
+async def weak_password_handler(_: Request, exc: WeakPasswordError) -> JSONResponse:
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
 @app.get("/health", tags=["Health"])
