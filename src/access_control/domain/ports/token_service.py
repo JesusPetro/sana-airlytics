@@ -54,3 +54,11 @@ class TokenService(Protocol):
         o si su claim type no es 'password_reset'.
         """
         ...
+
+    def validate_refresh_token(self, token: str) -> str:
+        """
+        Valida el token de refresh y retorna el user_id.
+        Lanza TokenInvalidError si el token es invalido, expirado
+        o si su claim type no es 'refresh'.
+        """
+        ...

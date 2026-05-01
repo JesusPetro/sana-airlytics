@@ -70,6 +70,20 @@ class JwtTokenService:
             expire_minutes=self._reset_exp,
         )
 
+    def validate_refresh_token(self, token: str) -> str:
+        """
+        Valida el JWT de refresh y retorna el user_id.
+        Lanza TokenInvalidError si el token es invalido, expirado
+        o si su claim type no es 'refresh'.
+        """
+        try:
+            payload = jwt.decode(token, self._secret_key, algorithms=[self.ALGORITHM])
+        except JWTError as exc:
+            raise TokenInvalidError(str(exc)) from exc
+        if payload.get("type") != "refresh":
+            raise TokenInvalidError("Token no es de tipo refresh.")
+        return payload["sub"]
+
     def validate_reset_token(self, token: str) -> str:
         """
         Valida el JWT de reset y retorna el email del usuario.
