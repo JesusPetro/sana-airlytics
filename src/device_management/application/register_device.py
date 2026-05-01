@@ -34,7 +34,6 @@ class RegisterDeviceUseCase:
                 code=dto.code,
                 name=dto.name,
                 model=dto.model,
-                workspace_id=dto.workspace_id,
                 site_type=site_type,
             )
         except ValueError:
@@ -49,7 +48,6 @@ class RegisterDeviceUseCase:
             device_id=str(device_id),
             code=device.code,
             model=device.model,
-            workspace_id=dto.workspace_id,
         )
 
         return RegisterDeviceOutput(device_id=str(device_id), code=device.code)

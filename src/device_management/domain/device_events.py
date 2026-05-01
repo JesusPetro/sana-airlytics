@@ -10,14 +10,14 @@ from shared.domain.domain_event import DomainEvent
 @dataclass(frozen=True)
 class DeviceRegisteredEvent(DomainEvent):
     device_id: DeviceId
-    workspace_id: str
     code: str
     model: str
 
 
 @dataclass(frozen=True)
-class DeviceActivatedEvent(DomainEvent):
+class DeviceClaimedEvent(DomainEvent):
     device_id: DeviceId
+    workspace_id: str
 
 
 @dataclass(frozen=True)

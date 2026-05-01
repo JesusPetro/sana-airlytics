@@ -9,10 +9,15 @@ class RegisterDeviceInput:
     code: str
     name: str
     model: str
-    workspace_id: str
     site_type: str | None = None
     sampling_interval_seconds: int = 30
     transmission_interval_seconds: int = 60
+
+
+@dataclass(frozen=True)
+class ClaimDeviceInput:
+    code: str
+    workspace_id: str
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,7 @@ from shared.domain.device_id import DeviceId
 
 from .device_config import DeviceConfig
 from .device_events import (
-    DeviceActivatedEvent,
+    DeviceClaimedEvent,
     DeviceConfigUpdatedEvent,
     DeviceOfflineEvent,
     DeviceRegisteredEvent,
@@ -31,7 +31,6 @@ class Device(AggregateRoot):
         code: str,
         name: str,
         model: str,
-        workspace_id: str,
         site_type: SiteType | None = None,
         config: DeviceConfig | None = None,
         location: DeviceLocation | None = None,
@@ -55,7 +54,7 @@ class Device(AggregateRoot):
         self._code = code.strip().upper()
         self._name = name.strip()
         self._model = model.strip()
-        self._workspace_id = workspace_id
+        self._workspace_id: str | None = None
         self._status = DeviceStatus.PENDING
         self._site_type = site_type
         self._config = config or DeviceConfig(
@@ -70,7 +69,6 @@ class Device(AggregateRoot):
         self._record_event(
             DeviceRegisteredEvent(
                 device_id=self._id,
-                workspace_id=self._workspace_id,
                 code=self._code,
                 model=self._model,
             )
@@ -83,7 +81,7 @@ class Device(AggregateRoot):
         code: str,
         name: str,
         model: str,
-        workspace_id: str,
+        workspace_id: str | None,
         status: DeviceStatus,
         site_type: SiteType | None,
         config: DeviceConfig,
@@ -129,8 +127,8 @@ class Device(AggregateRoot):
         return self._model
 
     @property
-    def workspace_id(self) -> str:
-        """Workspace al que pertenece el device."""
+    def workspace_id(self) -> str | None:
+        """Workspace al que pertenece el device. None si aún no fue reclamado."""
         return self._workspace_id
 
     @property
@@ -168,13 +166,14 @@ class Device(AggregateRoot):
         """Timestamp de desactivacion. None si el device esta activo."""
         return self._deactivated_at
 
-    def activate(self) -> None:
-        """Transiciona a ACTIVE. Idempotente si ya esta ACTIVE."""
-        if self._status == DeviceStatus.ACTIVE:
+    def claim(self, workspace_id: str) -> None:
+        """Asigna workspace y transiciona a ACTIVE. Idempotente si ya esta ACTIVE con el mismo workspace."""
+        if self._status == DeviceStatus.ACTIVE and self._workspace_id == workspace_id:
             return
+        self._workspace_id = workspace_id
         self._status = DeviceStatus.ACTIVE
         self._deactivated_at = None
-        self._record_event(DeviceActivatedEvent(device_id=self._id))
+        self._record_event(DeviceClaimedEvent(device_id=self._id, workspace_id=workspace_id))
 
     def mark_offline(self) -> None:
         """Transiciona a INACTIVE al recibir LWT del broker. Idempotente."""
@@ -201,7 +200,8 @@ class Device(AggregateRoot):
         )
 
     def record_heartbeat(self, timestamp: datetime) -> None:
-        """Registra actividad reciente y reactiva el device si estaba INACTIVE."""
+        """Registra actividad reciente. Reactiva si estaba INACTIVE y ya tiene workspace."""
         self._last_seen = timestamp
-        if self._status == DeviceStatus.INACTIVE:
-            self.activate()
+        if self._status == DeviceStatus.INACTIVE and self._workspace_id is not None:
+            self._status = DeviceStatus.ACTIVE
+            self._deactivated_at = None
