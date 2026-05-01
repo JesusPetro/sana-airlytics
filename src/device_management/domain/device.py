@@ -167,7 +167,7 @@ class Device(AggregateRoot):
         return self._deactivated_at
 
     def claim(self, workspace_id: str) -> None:
-        """Asigna workspace y transiciona a ACTIVE. Idempotente si ya esta ACTIVE con el mismo workspace."""
+        """Asigna workspace y transiciona a ACTIVE. Idempotente si ya esta ACTIVE con el mismo workspace."""  # noqa: E501
         if self._status == DeviceStatus.ACTIVE and self._workspace_id == workspace_id:
             return
         self._workspace_id = workspace_id

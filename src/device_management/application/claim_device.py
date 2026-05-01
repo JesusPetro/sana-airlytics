@@ -23,8 +23,12 @@ class ClaimDeviceUseCase:
             raise DeviceNotFoundError(f"Device with code {dto.code!r} not found")
 
         if device.workspace_id is not None:
-            _logger.warning("device_already_claimed", code=dto.code, workspace_id=device.workspace_id)
-            raise DeviceAlreadyExistsError(f"Device {dto.code!r} is already claimed by another workspace")
+            _logger.warning(
+                "device_already_claimed", code=dto.code, workspace_id=device.workspace_id
+            )
+            raise DeviceAlreadyExistsError(
+                f"Device {dto.code!r} is already claimed by another workspace"
+            )
 
         device.claim(dto.workspace_id)
         await self._repo.save(device)
