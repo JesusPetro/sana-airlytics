@@ -19,11 +19,13 @@ class SensorModel(Base):
     name: Mapped[str] = mapped_column(String)
     model: Mapped[str] = mapped_column(String)
     site_type: Mapped[str | None] = mapped_column(String)
-    status: Mapped[str] = mapped_column(String, default="ACTIVE")
+    status: Mapped[str] = mapped_column(String, default="PENDING")
     deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     sampling_interval_seconds: Mapped[int] = mapped_column(Integer, server_default=text("60"))
     transmission_interval_seconds: Mapped[int] = mapped_column(Integer, server_default=text("300"))
-    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("workspaces.id"))
+    workspace_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("workspaces.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
