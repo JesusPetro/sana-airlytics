@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from jose import JWTError
+from jose import jwt as jose_jwt
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.access_control.application.authenticate_user import (
     AuthenticateUserUseCase,
     AuthenticationError,
+)
+from src.access_control.application.dtos import (
+    LoginInput,
+    RegisterUserInput,
+    RequestPasswordResetInput,
+    ResetPasswordInput,
 )
 from src.access_control.application.register_user import (
     EmailAlreadyRegisteredError,
@@ -22,22 +32,19 @@ from src.access_control.application.reset_password import (
     ResetPasswordError,
     ResetPasswordUseCase,
 )
-from src.access_control.application.dtos import (
-    LoginInput,
-    RegisterUserInput,
-    RequestPasswordResetInput,
-    ResetPasswordInput,
-)
-from src.access_control.domain.user import PasswordTooWeakError
-from src.access_control.infrastructure.jwt_token_service import JwtTokenService
-from src.access_control.infrastructure.no_op_audit_logger import NoOpAuditLogger
-from src.access_control.infrastructure.postgres_user_repo import PostgresUserRepository
 from src.access_control.domain.ports.token_service import TokenClaims
+from src.access_control.infrastructure.jwt_token_service import JwtTokenService
+from src.access_control.infrastructure.postgres_user_repo import PostgresUserRepository
 from src.shared.email.email_service import EmailService
 
 from ...config.settings import settings
 from ...dependencies.auth import get_current_user, get_token_service
 from ...dependencies.database import get_async_session
+from ...dependencies.use_cases import (
+    get_authenticate_use_case,
+    get_register_use_case,
+    get_reset_password_use_case,
+)
 from .schemas import (
     LoginRequest,
     LoginResponse,
@@ -54,36 +61,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 limiter = Limiter(key_func=get_remote_address)
 
-
-# ---------------------------------------------------------------------------
-# Helpers de construccion de casos de uso
-# Cada helper construye el caso de uso inyectando sus dependencias.
-# ---------------------------------------------------------------------------
-
-def _build_register_use_case(
-    db: AsyncSession,
-) -> RegisterUserUseCase:
-    """Construye el caso de uso de registro con sus dependencias."""
-    return RegisterUserUseCase(
-        user_repo=PostgresUserRepository(db),
-        audit_logger=NoOpAuditLogger(),
-    )
-
-
-def _build_authenticate_use_case(
-    db: AsyncSession,
-    token_service: JwtTokenService,
-) -> AuthenticateUserUseCase:
-    """Construye el caso de uso de autenticacion con sus dependencias."""
-    return AuthenticateUserUseCase(
-        user_repo=PostgresUserRepository(db),
-        token_service=token_service,
-        audit_logger=NoOpAuditLogger(),
-    )
+_RegisterUC = Annotated[RegisterUserUseCase, Depends(get_register_use_case)]
+_AuthenticateUC = Annotated[AuthenticateUserUseCase, Depends(get_authenticate_use_case)]
+_ResetPasswordUC = Annotated[ResetPasswordUseCase, Depends(get_reset_password_use_case)]
+_TokenSvc = Annotated[JwtTokenService, Depends(get_token_service)]
+_CurrentUser = Annotated[TokenClaims, Depends(get_current_user)]
+_Session = Annotated[AsyncSession, Depends(get_async_session)]
 
 
 def _build_request_reset_use_case(db: AsyncSession) -> RequestPasswordResetUseCase:
-    """Construye el caso de uso de solicitud de reset con sus dependencias."""
     token_service = JwtTokenService(
         secret_key=settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
@@ -109,25 +95,6 @@ def _build_request_reset_use_case(db: AsyncSession) -> RequestPasswordResetUseCa
     )
 
 
-def _build_reset_password_use_case(db: AsyncSession) -> ResetPasswordUseCase:
-    """Construye el caso de uso de confirmacion de reset con sus dependencias."""
-    token_service = JwtTokenService(
-        secret_key=settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM,
-        access_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
-        refresh_expire_days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS,
-        reset_expire_minutes=settings.JWT_RESET_TOKEN_EXPIRE_MINUTES,
-    )
-    return ResetPasswordUseCase(
-        user_repo=PostgresUserRepository(db),
-        token_service=token_service,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
-
 @router.post(
     "/register",
     response_model=RegisterResponse,
@@ -142,15 +109,9 @@ def _build_reset_password_use_case(db: AsyncSession) -> ResetPasswordUseCase:
 async def register(
     request: Request,
     body: RegisterRequest,
-    db: AsyncSession = Depends(get_async_session),
+    use_case: _RegisterUC,
 ) -> RegisterResponse:
-    """
-    Registra un nuevo usuario en la plataforma.
-
-    La contrasena debe tener al menos 8 caracteres, una mayuscula, una minuscula,
-    un numero y un caracter especial. El email debe ser unico en el sistema.
-    """
-    use_case = _build_register_use_case(db)
+    """Registra un nuevo usuario; el email debe ser unico en el sistema."""
     cmd = RegisterUserInput(
         email=str(body.email),
         password=body.password,
@@ -159,16 +120,11 @@ async def register(
     )
     try:
         output = await use_case.execute(cmd)
-    except EmailAlreadyRegisteredError:
+    except EmailAlreadyRegisteredError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered.",
-        )
-    except PasswordTooWeakError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(exc),
-        )
+        ) from exc
 
     logger.info("Usuario registrado correctamente.", extra={"user_id": output.user_id})
     return RegisterResponse(
@@ -190,28 +146,17 @@ async def login(
     request: Request,
     body: LoginRequest,
     response: Response,
-    db: AsyncSession = Depends(get_async_session),
-    token_service: JwtTokenService = Depends(get_token_service),
+    use_case: _AuthenticateUC,
 ) -> LoginResponse:
-    """
-    Autentica al usuario y establece las cookies de sesion httponly.
-
-    El JWT nunca se expone en el body del response en production.
-    El navegador enviara la cookie automaticamente en cada request posterior.
-    """
-    use_case = _build_authenticate_use_case(db, token_service)
-    cmd = LoginInput(email=str(body.email), password=body.password)
-
+    """Autentica al usuario y establece cookies httponly; el JWT no se expone en el body."""
     try:
-        output = await use_case.execute(cmd)
-    except AuthenticationError:
-        logger.warning(
-            "Intento de login fallido.", extra={"email": str(body.email)}
-        )
+        output = await use_case.execute(LoginInput(email=str(body.email), password=body.password))
+    except AuthenticationError as exc:
+        logger.warning("Intento de login fallido.", extra={"email": str(body.email)})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password.",
-        )
+        ) from exc
 
     response.set_cookie(value=output.access_token, **settings.cookie_config)
     response.set_cookie(value=output.refresh_token, **settings.refresh_cookie_config)
@@ -231,18 +176,10 @@ async def login(
 )
 async def logout(
     response: Response,
-    current_user: TokenClaims = Depends(get_current_user),
+    current_user: _CurrentUser,
 ) -> dict:
-    """
-    Cierra la sesion del usuario eliminando ambas cookies httponly.
-    Requiere estar autenticado.
-    """
-    response.delete_cookie(
-        key=settings.COOKIE_NAME,
-        path="/",
-        httponly=True,
-        samesite="lax",
-    )
+    """Elimina ambas cookies httponly cerrando la sesion."""
+    response.delete_cookie(key=settings.COOKIE_NAME, path="/", httponly=True, samesite="lax")
     response.delete_cookie(
         key=settings.COOKIE_REFRESH_NAME,
         path="/api/v1/auth/refresh",
@@ -265,16 +202,10 @@ async def logout(
 async def refresh(
     request: Request,
     response: Response,
-    token_service: JwtTokenService = Depends(get_token_service),
-    db: AsyncSession = Depends(get_async_session),
+    token_service: _TokenSvc,
+    db: _Session,
 ) -> dict:
-    """
-    Genera un nuevo access token usando el refresh token de la cookie.
-    El refresh token no se rota — solo se emite un nuevo access token.
-    """
-    from src.access_control.domain.ports.token_service import TokenInvalidError
-    from jose import jwt as jose_jwt, JWTError
-
+    """Genera un nuevo access token usando el refresh token de la cookie."""
     refresh_token = request.cookies.get(settings.COOKIE_REFRESH_NAME)
     if not refresh_token:
         raise HTTPException(
@@ -293,17 +224,14 @@ async def refresh(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token type.",
             )
-    except JWTError:
+    except JWTError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token.",
-        )
+        ) from exc
 
     user_id = payload["sub"]
-
-    # Recuperar datos del usuario para construir el nuevo access token
     user_repo = PostgresUserRepository(db)
-    from uuid import UUID
     user = await user_repo.find_by_id(UUID(user_id))
     if user is None:
         raise HTTPException(
@@ -328,19 +256,11 @@ async def refresh(
 async def request_reset(
     request: Request,
     body: RequestResetRequest,
-    db: AsyncSession = Depends(get_async_session),
+    db: _Session,
 ) -> dict:
-    """
-    Inicia el flujo de reset de contrasena.
-
-    Envia un email con un link de reset valido por 15 minutos.
-    La respuesta es siempre generica para no revelar si el email existe.
-    En development sin SMTP configurado, incluye el token en el response.
-    """
+    """Envia el email de reset; la respuesta es generica para no revelar si el email existe."""
     use_case = _build_request_reset_use_case(db)
-    output = await use_case.execute(
-        RequestPasswordResetInput(email=str(body.email))
-    )
+    output = await use_case.execute(RequestPasswordResetInput(email=str(body.email)))
     result: dict = {"message": output.message}
     if output.reset_token is not None:
         result["reset_token"] = output.reset_token
@@ -362,13 +282,9 @@ async def request_reset(
 async def reset_password(
     request: Request,
     body: ResetPasswordRequest,
-    db: AsyncSession = Depends(get_async_session),
+    use_case: _ResetPasswordUC,
 ) -> dict:
-    """
-    Confirma el reset de contrasena usando el token recibido por email.
-    El token tiene un TTL de 15 minutos y solo puede usarse una vez.
-    """
-    use_case = _build_reset_password_use_case(db)
+    """Confirma el reset de contrasena usando el token recibido por email."""
     try:
         output = await use_case.execute(
             ResetPasswordInput(token=body.token, new_password=body.new_password)
@@ -376,11 +292,7 @@ async def reset_password(
     except ResetPasswordError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
-        )
-    except PasswordTooWeakError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
-        )
+        ) from exc
     return {"message": output.message}
 
 
@@ -392,23 +304,14 @@ async def reset_password(
         401: {"description": "No autenticado o token invalido."},
     },
 )
-async def me(
-    current_user: TokenClaims = Depends(get_current_user),
-) -> MeResponse:
-    """
-    Retorna los datos del usuario actualmente autenticado.
-    Lee los claims directamente del JWT — sin consultar la base de datos.
-    """
+async def me(current_user: _CurrentUser) -> MeResponse:
+    """Retorna claims del usuario autenticado; lee del JWT sin consultar la base de datos."""
     return MeResponse(
         user_id=current_user.user_id,
         email=current_user.email,
         type=current_user.type,
     )
 
-
-# ---------------------------------------------------------------------------
-# Endpoint de desarrollo — solo disponible en environment != production
-# ---------------------------------------------------------------------------
 
 @router.post(
     "/token",
@@ -420,25 +323,19 @@ async def me(
 async def token_dev(
     request: Request,
     body: LoginRequest,
-    db: AsyncSession = Depends(get_async_session),
-    token_service: JwtTokenService = Depends(get_token_service),
+    use_case: _AuthenticateUC,
 ) -> TokenDevResponse:
-    """
-    Retorna el JWT en el body del response para facilitar pruebas con Swagger UI.
-    Este endpoint retorna HTTP 404 en production.
-    No usar en el flujo de autenticacion de production.
-    """
+    """Retorna el JWT en el body para Swagger; responde 404 en production."""
     if not settings.is_development:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    use_case = _build_authenticate_use_case(db, token_service)
     try:
         output = await use_case.execute(
             LoginInput(email=str(body.email), password=body.password)
         )
-    except Exception:
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password.",
-        )
+        ) from exc
     return TokenDevResponse(access_token=output.access_token)
