@@ -1,16 +1,18 @@
 from uuid import uuid7
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from access_control.infrastructure.orm_models import UserModel
 from shared.infrastructure.orm_models import AnnotationModel
 
 
-def test_create_annotation(session):
+async def test_create_annotation(session: AsyncSession):
     user = UserModel(
         first_name="Jesus", last_name="Petro",
         email="jesus@sana.com", password_hash="hash",
     )
     session.add(user)
-    session.flush()
+    await session.flush()
 
     annotation = AnnotationModel(
         entity_type="sensor",
@@ -19,9 +21,9 @@ def test_create_annotation(session):
         created_by=user.id,
     )
     session.add(annotation)
-    session.flush()
+    await session.flush()
 
-    result = session.get(AnnotationModel, annotation.id)
+    result = await session.get(AnnotationModel, annotation.id)
     assert result.entity_type == "sensor"
     assert result.body == "Sensor recalibrado manualmente"
     assert result.created_by == user.id

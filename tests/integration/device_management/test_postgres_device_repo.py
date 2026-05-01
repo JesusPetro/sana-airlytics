@@ -3,163 +3,173 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
-from device_management.infrastructure.orm_models import SensorModel
-from shared.infrastructure.orm_models import LocationModel
+from device_management.domain.device import Device
+from device_management.domain.device_config import DeviceConfig
+from device_management.domain.device_location import DeviceLocation
+from device_management.domain.device_status import DeviceStatus
+from device_management.infrastructure.postgres_device_repo import PostgresDeviceRepository
+from shared.domain.device_id import DeviceId
 
 
 @pytest.fixture
-def workspace(session: Session):
+async def workspace_id(session: AsyncSession) -> str:
     user = UserModel(
-        first_name="Jesus",
-        last_name="Petro",
-        email="jesus@sana.com",
-        password_hash="hash",
+        first_name="Jesus", last_name="Petro",
+        email="jesus@sana.com", password_hash="hash",
     )
     session.add(user)
-    session.flush()
+    await session.flush()
 
     ws = WorkspaceModel(name="Test Workspace", owner_user_id=user.id)
     session.add(ws)
-    session.flush()
-    return ws
+    await session.flush()
+    return str(ws.id)
 
 
 @pytest.fixture
-def sensor(session: Session, workspace):
-    s = SensorModel(
-        code="SANA-001",
+def repo(session: AsyncSession) -> PostgresDeviceRepository:
+    return PostgresDeviceRepository(session)
+
+
+def _make_device(workspace_id: str, code: str = "SANA-001") -> Device:
+    return Device.reconstitute(
+        id=DeviceId.generate(),
+        code=code,
         name="Sensor Patio",
         model="SEN66",
-        workspace_id=workspace.id,
-        status="PENDING",
-        sampling_interval_seconds=60,
-        transmission_interval_seconds=300,
+        workspace_id=workspace_id,
+        status=DeviceStatus.PENDING,
+        site_type=None,
+        config=DeviceConfig(
+            sampling_interval_seconds=60,
+            transmission_interval_seconds=300,
+        ),
+        location=None,
+        created_at=datetime.now(UTC),
+        deactivated_at=None,
     )
-    session.add(s)
-    session.flush()
-    return s
 
 
-# --- save + find_by_id roundtrip ---
+async def test_save_and_find_by_id(repo: PostgresDeviceRepository, workspace_id: str):
+    device = _make_device(workspace_id)
+    await repo.save(device)
 
-def test_sensor_persists_new_columns(session: Session, workspace):
-    s = SensorModel(
-        code="SANA-002",
-        name="Sensor Techo",
-        model="SEN66",
-        workspace_id=workspace.id,
-        status="PENDING",
-        sampling_interval_seconds=120,
-        transmission_interval_seconds=600,
-    )
-    session.add(s)
-    session.flush()
-
-    result = session.get(SensorModel, s.id)
-    assert result.sampling_interval_seconds == 120
-    assert result.transmission_interval_seconds == 600
-    assert result.deactivated_at is None
-
-
-def test_deactivated_at_persists(session: Session, sensor):
-    now = datetime.now(UTC)
-    sensor.deactivated_at = now
-    session.flush()
-
-    result = session.get(SensorModel, sensor.id)
-    assert result.deactivated_at is not None
-
-
-def test_default_sampling_and_transmission(session: Session, workspace):
-    s = SensorModel(
-        code="SANA-003",
-        name="Sensor Default",
-        model="SEN66",
-        workspace_id=workspace.id,
-    )
-    session.add(s)
-    session.flush()
-
-    session.expire(s)
-    result = session.get(SensorModel, s.id)
-    assert result.sampling_interval_seconds == 60
-    assert result.transmission_interval_seconds == 300
-
-
-# --- find_by_code (uppercase) ---
-
-def test_find_by_code_uppercase(session: Session, sensor):
-    result = session.execute(
-        select(SensorModel).where(SensorModel.code == "SANA-001")
-    ).scalar_one_or_none()
+    result = await repo.find_by_id(DeviceId(device.id.value))
     assert result is not None
-    assert result.id == sensor.id
+    assert result.id.value == device.id.value
+    assert result.code == "SANA-001"
+    assert result.status == DeviceStatus.PENDING
 
 
-def test_find_by_code_lowercase_returns_nothing(session: Session, sensor):
-    result = session.execute(
-        select(SensorModel).where(SensorModel.code == "sana-001")
-    ).scalar_one_or_none()
+async def test_find_by_id_returns_none_when_missing(repo: PostgresDeviceRepository):
+    result = await repo.find_by_id(DeviceId.generate())
     assert result is None
 
 
-# --- find_by_workspace excluye soft-deleted ---
+async def test_save_and_find_by_code(repo: PostgresDeviceRepository, workspace_id: str):
+    device = _make_device(workspace_id, code="SANA-002")
+    await repo.save(device)
 
-def test_find_by_workspace_excludes_soft_deleted(session: Session, workspace):
-    active = SensorModel(
-        code="ACTIVE-001",
-        name="Active",
-        model="SEN66",
-        workspace_id=workspace.id,
+    result = await repo.find_by_code("SANA-002")
+    assert result is not None
+    assert result.id.value == device.id.value
+
+
+async def test_find_by_code_case_insensitive(repo: PostgresDeviceRepository, workspace_id: str):
+    device = _make_device(workspace_id, code="SANA-003")
+    await repo.save(device)
+
+    result = await repo.find_by_code("sana-003")
+    assert result is not None
+    assert result.id.value == device.id.value
+
+
+async def test_find_by_code_returns_none_when_missing(repo: PostgresDeviceRepository):
+    result = await repo.find_by_code("NONEXISTENT")
+    assert result is None
+
+
+async def test_save_upserts_existing_device(repo: PostgresDeviceRepository, workspace_id: str):
+    device = _make_device(workspace_id)
+    await repo.save(device)
+
+    updated = Device.reconstitute(
+        id=device.id,
+        code=device.code,
+        name="Sensor Techo",
+        model=device.model,
+        workspace_id=workspace_id,
+        status=DeviceStatus.ACTIVE,
+        site_type=None,
+        config=device.config,
+        location=None,
+        created_at=device.created_at,
+        deactivated_at=None,
     )
-    deleted = SensorModel(
+    await repo.save(updated)
+
+    result = await repo.find_by_id(device.id)
+    assert result.name == "Sensor Techo"
+    assert result.status == DeviceStatus.ACTIVE
+
+
+async def test_save_with_location(repo: PostgresDeviceRepository, workspace_id: str):
+    device = Device.reconstitute(
+        id=DeviceId.generate(),
+        code="SANA-LOC",
+        name="Sensor con ubicación",
+        model="SEN66",
+        workspace_id=workspace_id,
+        status=DeviceStatus.PENDING,
+        site_type=None,
+        config=DeviceConfig(
+            sampling_interval_seconds=60,
+            transmission_interval_seconds=300,
+        ),
+        location=DeviceLocation(latitude=4.7110, longitude=-74.0721, elevation=2600.0),
+        created_at=datetime.now(UTC),
+        deactivated_at=None,
+    )
+    await repo.save(device)
+
+    result = await repo.find_by_id(device.id)
+    assert result.location is not None
+    assert result.location.latitude == 4.7110
+    assert result.location.elevation == 2600.0
+
+
+async def test_find_by_workspace_excludes_deleted(repo: PostgresDeviceRepository, session: AsyncSession, workspace_id: str):
+    from device_management.infrastructure.orm_models import SensorModel
+    active = _make_device(workspace_id, code="ACTIVE-001")
+    await repo.save(active)
+
+    # soft-delete directo en el ORM, el dominio no expone deleted_at
+    from uuid import UUID
+    deleted_sensor = SensorModel(
+        id=UUID(DeviceId.generate().value),
         code="DELETED-001",
         name="Deleted",
         model="SEN66",
-        workspace_id=workspace.id,
+        workspace_id=UUID(workspace_id),
         deleted_at=datetime.now(UTC),
     )
-    session.add_all([active, deleted])
-    session.flush()
+    session.add(deleted_sensor)
+    await session.flush()
 
-    results = session.execute(
-        select(SensorModel).where(
-            SensorModel.workspace_id == workspace.id,
-            SensorModel.deleted_at.is_(None),
-        )
-    ).scalars().all()
-
-    codes = {r.code for r in results}
+    results = await repo.find_by_workspace(workspace_id)
+    codes = {d.code for d in results}
     assert "ACTIVE-001" in codes
     assert "DELETED-001" not in codes
 
 
-# --- location roundtrip ---
+async def test_find_by_workspace_returns_all_active(repo: PostgresDeviceRepository, workspace_id: str):
+    await repo.save(_make_device(workspace_id, code="DEV-A"))
+    await repo.save(_make_device(workspace_id, code="DEV-B"))
 
-def test_location_persists_with_sensor(session: Session, sensor):
-    loc = LocationModel(
-        sensor_id=sensor.id,
-        latitude=4.7110,
-        longitude=-74.0721,
-        elevation=2600.0,
-    )
-    session.add(loc)
-    session.flush()
-
-    result = session.execute(
-        select(LocationModel).where(LocationModel.sensor_id == sensor.id)
-    ).scalar_one_or_none()
-    assert result is not None
-    assert result.latitude == 4.7110
-    assert result.elevation == 2600.0
-
-
-def test_sensor_without_location_returns_none(session: Session, sensor):
-    result = session.execute(
-        select(LocationModel).where(LocationModel.sensor_id == sensor.id)
-    ).scalar_one_or_none()
-    assert result is None
+    results = await repo.find_by_workspace(workspace_id)
+    codes = {d.code for d in results}
+    assert "DEV-A" in codes
+    assert "DEV-B" in codes

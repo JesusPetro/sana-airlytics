@@ -1,7 +1,9 @@
 from datetime import UTC, datetime
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
 from data_ingestion.infrastructure.orm_models import (
@@ -9,33 +11,32 @@ from data_ingestion.infrastructure.orm_models import (
     ObservedPropertyModel,
     UnitModel,
 )
-from shared.infrastructure.orm_models import ObservationModel
 from device_management.infrastructure.orm_models import SensorModel
+from shared.infrastructure.orm_models import ObservationModel
 
 
 @pytest.fixture
-def datastream(session):
+async def datastream(session: AsyncSession):
     user = UserModel(
         first_name="Jesus", last_name="Petro",
         email="jesus@sana.com", password_hash="hash",
     )
     session.add(user)
-    session.flush()
+    await session.flush()
 
     ws = WorkspaceModel(name="Test Workspace", owner_user_id=user.id)
     session.add(ws)
-    session.flush()
+    await session.flush()
 
     sensor = SensorModel(
         code="SEN66-001", name="Sensor 1",
         model="SEN66+A7670SA", workspace_id=ws.id,
     )
     session.add(sensor)
-    session.flush()
+    await session.flush()
 
-    from sqlalchemy import select
-    prop = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "PM2_5")).scalar_one()
-    unit = session.execute(select(UnitModel).where(UnitModel.code == "UG_M3")).scalar_one()
+    prop = (await session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "PM2_5"))).scalar_one()
+    unit = (await session.execute(select(UnitModel).where(UnitModel.code == "UG_M3"))).scalar_one()
 
     ds = DatastreamModel(
         name="PM2.5",
@@ -44,11 +45,11 @@ def datastream(session):
         unit_id=unit.id,
     )
     session.add(ds)
-    session.flush()
+    await session.flush()
     return ds
 
 
-def test_create_observation(session, datastream):
+async def test_create_observation(session: AsyncSession, datastream):
     now = datetime.now(UTC)
     obs = ObservationModel(
         datastream_id=datastream.id,
@@ -56,33 +57,31 @@ def test_create_observation(session, datastream):
         result=12.5,
     )
     session.add(obs)
-    session.flush()
+    await session.flush()
 
-    from sqlalchemy import select
-    result = session.execute(
+    result = (await session.execute(
         select(ObservationModel).where(ObservationModel.id == obs.id)
-    ).scalar_one()
+    )).scalar_one()
     assert result.result == 12.5
     assert result.datastream_id == datastream.id
 
 
-def test_observation_nullable_result(session, datastream):
+async def test_observation_nullable_result(session: AsyncSession, datastream):
     obs = ObservationModel(
         datastream_id=datastream.id,
         phenomenon_time=datetime.now(UTC),
         result=None,
     )
     session.add(obs)
-    session.flush()
+    await session.flush()
 
-    from sqlalchemy import select
-    result = session.execute(
+    result = (await session.execute(
         select(ObservationModel).where(ObservationModel.id == obs.id)
-    ).scalar_one()
+    )).scalar_one()
     assert result.result is None
 
 
-def test_observation_with_qualifier(session, datastream):
+async def test_observation_with_qualifier(session: AsyncSession, datastream):
     obs = ObservationModel(
         datastream_id=datastream.id,
         phenomenon_time=datetime.now(UTC),
@@ -90,16 +89,15 @@ def test_observation_with_qualifier(session, datastream):
         qualifier="SUSPICIOUS_VALUE",
     )
     session.add(obs)
-    session.flush()
+    await session.flush()
 
-    from sqlalchemy import select
-    result = session.execute(
+    result = (await session.execute(
         select(ObservationModel).where(ObservationModel.id == obs.id)
-    ).scalar_one()
+    )).scalar_one()
     assert result.qualifier == "SUSPICIOUS_VALUE"
 
 
-def test_duplicate_pk_fails(session, datastream):
+async def test_duplicate_pk_fails(session: AsyncSession, datastream):
     now = datetime.now(UTC)
     obs = ObservationModel(
         datastream_id=datastream.id,
@@ -107,15 +105,15 @@ def test_duplicate_pk_fails(session, datastream):
         result=1.0,
     )
     session.add(obs)
-    session.flush()
+    await session.flush()
 
     session.expunge(obs)
     with pytest.raises(IntegrityError):
-        with session.begin_nested():
+        async with session.begin_nested():
             session.add(ObservationModel(
                 id=obs.id,
                 datastream_id=datastream.id,
                 phenomenon_time=now,
                 result=2.0,
             ))
-            session.flush()
+            await session.flush()

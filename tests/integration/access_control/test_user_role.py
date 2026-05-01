@@ -1,81 +1,70 @@
+from datetime import datetime, timezone
+
 import pytest
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from access_control.infrastructure.orm_models import RoleModel, UserModel
 
 
-def test_create_user(session):
+async def test_create_user(session: AsyncSession):
     user = UserModel(
-        first_name="Jesus",
-        last_name="Petro",
-        email="jesus@sana.com",
-        password_hash="hashed_password",
+        first_name="Jesus", last_name="Petro",
+        email="jesus@sana.com", password_hash="hashed_password",
     )
     session.add(user)
-    session.flush()
+    await session.flush()
 
-    result = session.get(UserModel, user.id)
+    result = await session.get(UserModel, user.id)
     assert result.email == "jesus@sana.com"
     assert result.is_active is True
 
 
-def test_user_email_unique(session):
-    session.add(
-        UserModel(
-            first_name="Jesus",
-            last_name="Petro",
-            email="duplicate@sana.com",
-            password_hash="hash",
-        )
-    )
-    session.flush()
+async def test_user_email_unique(session: AsyncSession):
+    session.add(UserModel(
+        first_name="Jesus", last_name="Petro",
+        email="duplicate@sana.com", password_hash="hash",
+    ))
+    await session.flush()
 
     with pytest.raises(IntegrityError):
-        with session.begin_nested():
-            session.add(
-                UserModel(
-                    first_name="Otro",
-                    last_name="User",
-                    email="duplicate@sana.com",
-                    password_hash="hash",
-                )
-            )
-            session.flush()
+        async with session.begin_nested():
+            session.add(UserModel(
+                first_name="Otro", last_name="User",
+                email="duplicate@sana.com", password_hash="hash",
+            ))
+            await session.flush()
 
 
-def test_user_soft_delete(session):
-    from datetime import datetime, timezone
-
+async def test_user_soft_delete(session: AsyncSession):
     user = UserModel(
-        first_name="Jesus",
-        last_name="Petro",
-        email="deleted@sana.com",
-        password_hash="hash",
+        first_name="Jesus", last_name="Petro",
+        email="deleted@sana.com", password_hash="hash",
     )
     session.add(user)
-    session.flush()
+    await session.flush()
 
     user.deleted_at = datetime.now(timezone.utc)
-    session.flush()
+    await session.flush()
 
-    result = session.get(UserModel, user.id)
+    result = await session.get(UserModel, user.id)
     assert result.deleted_at is not None
 
 
-def test_create_role(session):
+async def test_create_role(session: AsyncSession):
     role = RoleModel(name="admin", description="Full access")
     session.add(role)
-    session.flush()
+    await session.flush()
 
-    result = session.get(RoleModel, role.id)
+    result = await session.get(RoleModel, role.id)
     assert result.name == "admin"
 
 
-def test_role_name_unique(session):
+async def test_role_name_unique(session: AsyncSession):
     session.add(RoleModel(name="viewer"))
-    session.flush()
+    await session.flush()
 
     with pytest.raises(IntegrityError):
-        with session.begin_nested():
+        async with session.begin_nested():
             session.add(RoleModel(name="viewer"))
-            session.flush()
+            await session.flush()

@@ -1,5 +1,7 @@
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
 from data_ingestion.infrastructure.orm_models import (
@@ -12,28 +14,27 @@ from device_management.infrastructure.orm_models import SensorModel
 
 
 @pytest.fixture
-def datastream(session):
+async def datastream(session: AsyncSession):
     user = UserModel(
         first_name="Jesus", last_name="Petro",
         email="jesus@sana.com", password_hash="hash",
     )
     session.add(user)
-    session.flush()
+    await session.flush()
 
     ws = WorkspaceModel(name="Test Workspace", owner_user_id=user.id)
     session.add(ws)
-    session.flush()
+    await session.flush()
 
     sensor = SensorModel(
         code="SEN66-001", name="Sensor 1",
         model="SEN66+A7670SA", workspace_id=ws.id,
     )
     session.add(sensor)
-    session.flush()
+    await session.flush()
 
-    from sqlalchemy import select
-    prop = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "PM2_5")).scalar_one()
-    unit = session.execute(select(UnitModel).where(UnitModel.code == "UG_M3")).scalar_one()
+    prop = (await session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "PM2_5"))).scalar_one()
+    unit = (await session.execute(select(UnitModel).where(UnitModel.code == "UG_M3"))).scalar_one()
 
     ds = DatastreamModel(
         name="PM2.5",
@@ -42,43 +43,41 @@ def datastream(session):
         unit_id=unit.id,
     )
     session.add(ds)
-    session.flush()
+    await session.flush()
     return ds
 
 
-def test_create_tag(session, datastream):
+async def test_create_tag(session: AsyncSession, datastream):
     tag = DatastreamTagModel(
         datastream_id=datastream.id,
         key="zona",
         value="industrial",
     )
     session.add(tag)
-    session.flush()
+    await session.flush()
 
-    result = session.get(DatastreamTagModel, tag.id)
+    result = await session.get(DatastreamTagModel, tag.id)
     assert result.key == "zona"
     assert result.value == "industrial"
 
 
-def test_duplicate_key_same_datastream_fails(session, datastream):
+async def test_duplicate_key_same_datastream_fails(session: AsyncSession, datastream):
     session.add(DatastreamTagModel(
         datastream_id=datastream.id, key="zona", value="industrial",
     ))
-    session.flush()
+    await session.flush()
 
     with pytest.raises(IntegrityError):
-        with session.begin_nested():
+        async with session.begin_nested():
             session.add(DatastreamTagModel(
                 datastream_id=datastream.id, key="zona", value="urbana",
             ))
-            session.flush()
+            await session.flush()
 
 
-def test_same_key_different_datastream(session, datastream):
-    from sqlalchemy import select
-    prop2 = session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "CO2")).scalar_one()
-
-    unit = session.get(UnitModel, datastream.unit_id)
+async def test_same_key_different_datastream(session: AsyncSession, datastream):
+    prop2 = (await session.execute(select(ObservedPropertyModel).where(ObservedPropertyModel.code == "CO2"))).scalar_one()
+    unit = await session.get(UnitModel, datastream.unit_id)
 
     ds2 = DatastreamModel(
         name="CO2",
@@ -87,8 +86,8 @@ def test_same_key_different_datastream(session, datastream):
         unit_id=unit.id,
     )
     session.add(ds2)
-    session.flush()
+    await session.flush()
 
     session.add(DatastreamTagModel(datastream_id=datastream.id, key="zona", value="industrial"))
     session.add(DatastreamTagModel(datastream_id=ds2.id, key="zona", value="urbana"))
-    session.flush()
+    await session.flush()
