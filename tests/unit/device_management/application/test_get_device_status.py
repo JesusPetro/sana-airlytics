@@ -18,7 +18,6 @@ def _make_device(site_type=None, location=None) -> Device:
         code="SANA-001",
         name="Sensor Patio",
         model="SEN66",
-        workspace_id="ws-123",
         site_type=site_type,
         location=location,
     )

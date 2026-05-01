@@ -6,7 +6,7 @@ import pytest
 
 from src.device_management.domain.device import Device
 from src.device_management.domain.device_events import (
-    DeviceActivatedEvent,
+    DeviceClaimedEvent,
     DeviceOfflineEvent,
     DeviceRegisteredEvent,
 )
@@ -15,6 +15,7 @@ from src.device_management.domain.site_type import SiteType
 from src.shared.domain.device_id import DeviceId
 
 _ID = DeviceId.generate()
+_WS = "ws-123"
 
 
 def _make_device(**overrides) -> Device:
@@ -23,7 +24,6 @@ def _make_device(**overrides) -> Device:
         code="SANA-001",
         name="Sensor Patio",
         model="SEN66",
-        workspace_id="ws-123",
     )
     defaults.update(overrides)
     return Device(**defaults)
@@ -83,34 +83,46 @@ def test_initial_status_is_pending():
     assert device.status == DeviceStatus.PENDING
 
 
-def test_activate_transitions_to_active():
+def test_initial_workspace_is_none():
+    device = _make_device()
+    assert device.workspace_id is None
+
+
+def test_claim_transitions_to_active():
     device = _make_device()
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
     assert device.status == DeviceStatus.ACTIVE
 
 
-def test_activate_emits_activated_event():
+def test_claim_sets_workspace():
     device = _make_device()
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
+    assert device.workspace_id == _WS
+
+
+def test_claim_emits_claimed_event():
+    device = _make_device()
+    device.pull_events()
+    device.claim(_WS)
     events = device.pull_events()
-    assert any(isinstance(e, DeviceActivatedEvent) for e in events)
+    assert any(isinstance(e, DeviceClaimedEvent) for e in events)
 
 
-def test_activate_is_idempotent():
+def test_claim_is_idempotent_same_workspace():
     device = _make_device()
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
     assert device.pull_events() == []
 
 
 def test_mark_offline_transitions_to_inactive():
     device = _make_device()
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
     device.pull_events()
     device.mark_offline()
     assert device.status == DeviceStatus.INACTIVE
@@ -119,7 +131,7 @@ def test_mark_offline_transitions_to_inactive():
 def test_mark_offline_emits_offline_event():
     device = _make_device()
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
     device.pull_events()
     device.mark_offline()
     events = device.pull_events()
@@ -129,7 +141,7 @@ def test_mark_offline_emits_offline_event():
 def test_mark_offline_is_idempotent():
     device = _make_device()
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
     device.pull_events()
     device.mark_offline()
     device.pull_events()
@@ -146,15 +158,22 @@ def test_record_heartbeat_updates_last_seen():
     assert device.last_seen == now
 
 
-def test_record_heartbeat_reactivates_from_inactive():
+def test_record_heartbeat_reactivates_from_inactive_when_claimed():
     device = _make_device()
     device.pull_events()
-    device.activate()
+    device.claim(_WS)
     device.pull_events()
     device.mark_offline()
     device.pull_events()
     device.record_heartbeat(datetime.now(UTC))
     assert device.status == DeviceStatus.ACTIVE
+
+
+def test_record_heartbeat_does_not_activate_unclaimed_device():
+    device = _make_device()
+    device.pull_events()
+    device.record_heartbeat(datetime.now(UTC))
+    assert device.status == DeviceStatus.PENDING
 
 
 # --- site_type ---

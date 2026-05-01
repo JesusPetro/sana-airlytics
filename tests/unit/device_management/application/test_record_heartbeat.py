@@ -16,11 +16,10 @@ def _make_device(active: bool = True) -> Device:
         code="SANA-001",
         name="Sensor Patio",
         model="SEN66",
-        workspace_id="ws-123",
     )
     device.pull_events()
     if active:
-        device.activate()
+        device.claim("ws-123")
         device.pull_events()
     return device
 

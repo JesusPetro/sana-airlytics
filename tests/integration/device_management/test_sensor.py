@@ -34,7 +34,7 @@ def test_create_sensor(session, workspace):
 
     result = session.get(SensorModel, sensor.id)
     assert result.code == "SEN66-001"
-    assert result.status == "ACTIVE"
+    assert result.status == "PENDING"
 
 
 def test_sensor_code_unique(session, workspace):
@@ -68,7 +68,7 @@ def test_sensor_default_status(session, workspace):
     session.flush()
 
     result = session.get(SensorModel, sensor.id)
-    assert result.status == "ACTIVE"
+    assert result.status == "PENDING"
 
 
 def test_sensor_soft_delete(session, workspace):

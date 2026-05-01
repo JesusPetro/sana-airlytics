@@ -17,7 +17,6 @@ def _make_existing_device() -> Device:
         code="SANA-001",
         name="Sensor Patio",
         model="SEN66",
-        workspace_id="ws-123",
     )
 
 
@@ -26,7 +25,6 @@ def _input(**overrides) -> RegisterDeviceInput:
         code="SANA-001",
         name="Sensor Patio",
         model="SEN66",
-        workspace_id="ws-123",
     )
     defaults.update(overrides)
     return RegisterDeviceInput(**defaults)
@@ -53,6 +51,14 @@ async def test_saves_device_to_repo():
     use_case, repo = _make_use_case()
     await use_case.execute(_input())
     repo.save.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_registered_device_has_no_workspace():
+    use_case, repo = _make_use_case()
+    await use_case.execute(_input())
+    saved_device: Device = repo.save.call_args[0][0]
+    assert saved_device.workspace_id is None
 
 
 @pytest.mark.asyncio
