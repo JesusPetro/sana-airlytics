@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import ssl
 from dataclasses import dataclass
 from typing import Callable
 from uuid import UUID
@@ -15,25 +14,22 @@ from data_ingestion.application.ingest_measurement_batch import IngestMeasuremen
 from data_ingestion.infrastructure.postgres_datastream_repo import PostgresDatastreamRepository
 from data_ingestion.infrastructure.sen66_payload_parser import SEN66PayloadParser
 from shared.infrastructure.logger import get_logger
+from shared.infrastructure.mqtt.client import make_client
+from shared.infrastructure.mqtt.config import MqttConfig
 
 logger = get_logger(__name__)
 
 
 @dataclass
-class MqttConfig:
-    host: str
-    port: int
-    username: str
-    password: str
+class TelemetrySubscriberConfig(MqttConfig):
     topic: str = "sana/+/telemetry"
     max_concurrent_batches: int = 10
-    tls_ca_cert: str | None = None
 
 
 class MqttTelemetrySubscriber:
     def __init__(
         self,
-        config: MqttConfig,
+        config: TelemetrySubscriberConfig,
         session_factory: async_sessionmaker[AsyncSession],
         use_case_factory: Callable[[AsyncSession, set[UUID]], IngestMeasurementBatch],
     ) -> None:
@@ -48,17 +44,7 @@ class MqttTelemetrySubscriber:
             self._known_devices = await PostgresDatastreamRepository(session).find_all_device_ids()
         logger.info("device_cache_loaded", count=len(self._known_devices))
 
-        tls_context: ssl.SSLContext | None = None
-        if self._config.tls_ca_cert:
-            tls_context = ssl.create_default_context(cafile=self._config.tls_ca_cert)
-
-        async with aiomqtt.Client(
-            hostname=self._config.host,
-            port=self._config.port,
-            username=self._config.username,
-            password=self._config.password,
-            tls_context=tls_context,
-        ) as client:
+        async with make_client(self._config) as client:
             await client.subscribe(self._config.topic, qos=1)
             logger.info(
                 "mqtt_connected",
