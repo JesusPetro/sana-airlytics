@@ -10,11 +10,11 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from shared.infrastructure.orm_base import Base
+from shared.infrastructure.orm_models import ObservationModel
 
 
 class DatastreamModel(Base):
@@ -38,7 +38,7 @@ class DatastreamModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    observations: Mapped[list[ObservationModel]] = relationship(back_populates="datastream")
+    observations: Mapped[list[ObservationModel]] = relationship("ObservationModel")
 
     __table_args__ = (
         UniqueConstraint(
@@ -47,18 +47,6 @@ class DatastreamModel(Base):
         ),
     )
 
-
-class ObservationModel(Base):
-    __tablename__ = "observations"
-
-    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
-    datastream_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("datastreams.id"))
-    phenomenon_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
-    result: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
-    result_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    qualifier: Mapped[str | None] = mapped_column(String, nullable=True)
-
-    datastream: Mapped[DatastreamModel] = relationship(back_populates="observations")
 
 
 class DatastreamTagModel(Base):

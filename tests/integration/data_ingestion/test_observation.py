@@ -6,10 +6,10 @@ from sqlalchemy.exc import IntegrityError
 from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
 from data_ingestion.infrastructure.orm_models import (
     DatastreamModel,
-    ObservationModel,
     ObservedPropertyModel,
     UnitModel,
 )
+from shared.infrastructure.orm_models import ObservationModel
 from device_management.infrastructure.orm_models import SensorModel
 
 

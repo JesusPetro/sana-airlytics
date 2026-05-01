@@ -4,10 +4,22 @@ from datetime import datetime
 from uuid import UUID, uuid7
 
 from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from shared.infrastructure.orm_base import Base
+
+
+class ObservationModel(Base):
+    __tablename__ = "observations"
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
+    datastream_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("datastreams.id"))
+    phenomenon_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    result: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
+    result_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    qualifier: Mapped[str | None] = mapped_column(String, nullable=True)
 
 
 class AnnotationModel(Base):
