@@ -5,6 +5,7 @@ from shared.infrastructure.logger import get_logger
 
 from ..domain.device_config import DeviceConfig
 from ..domain.errors import DeviceNotFoundError
+from ..domain.ports.publishers import CommandPublisher
 from ..domain.ports.repositories import DeviceRepository
 from .dtos import UpdateDeviceConfigInput
 
@@ -14,8 +15,9 @@ _logger = get_logger(__name__)
 class UpdateDeviceConfigUseCase:
     """Caso de uso: actualiza la configuracion operativa de un device."""
 
-    def __init__(self, repo: DeviceRepository) -> None:
+    def __init__(self, repo: DeviceRepository, publisher: CommandPublisher) -> None:
         self._repo = repo
+        self._publisher = publisher
 
     async def execute(self, dto: UpdateDeviceConfigInput) -> None:
         """Aplica la nueva config al device; lanza DeviceNotFoundError si no existe."""
@@ -36,7 +38,9 @@ class UpdateDeviceConfigUseCase:
 
         device.update_config(new_config)
         await self._repo.save(device)
-        device.pull_events()  # descartados hasta tener bus de eventos
+        device.pull_events()
+
+        await self._publisher.send_config_update(device.id, new_config)
 
         _logger.info(
             "device_config_updated",
