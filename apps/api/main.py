@@ -11,6 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from src.access_control.application.errors import WeakPasswordError
+from src.access_control.infrastructure.jwt_token_service import JwtTokenService
 
 from .config.settings import settings
 from .middleware.refresh_token import RefreshTokenMiddleware
@@ -49,6 +50,16 @@ def create_app() -> FastAPI:
         openapi_tags=_TAGS_METADATA,
     )
 
+    # --- Token service (singleton compartido con middleware y DI) ---
+    token_service = JwtTokenService(
+        secret_key=settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+        access_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+        refresh_expire_days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS,
+        reset_expire_minutes=settings.JWT_RESET_TOKEN_EXPIRE_MINUTES,
+    )
+    app.state.token_service = token_service
+
     # --- Rate limiting ---
     app.state.limiter = _limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -66,10 +77,15 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
 
     # --- Renovacion automatica de cookie ---
-    app.add_middleware(RefreshTokenMiddleware)
+    app.add_middleware(RefreshTokenMiddleware, token_service=token_service)
 
     # --- Routers ---
     app.include_router(auth_router)
+
+    # --- Exception handlers ---
+    @app.exception_handler(WeakPasswordError)
+    async def weak_password_handler(_: Request, exc: WeakPasswordError) -> JSONResponse:
+        return JSONResponse(status_code=422, content={"detail": str(exc)})
 
     # --- Swagger con soporte Bearer para development ---
     if settings.is_development:
@@ -115,11 +131,6 @@ def _configure_swagger_bearer(app: FastAPI) -> None:
 
 
 app = create_app()
-
-
-@app.exception_handler(WeakPasswordError)
-async def weak_password_handler(_: Request, exc: WeakPasswordError) -> JSONResponse:
-    return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
 @app.get("/health", tags=["Health"])

@@ -4,33 +4,23 @@ import logging
 
 from fastapi import Depends, HTTPException, Request, status
 
-from src.access_control.domain.ports.token_service import TokenClaims, TokenInvalidError
-from src.access_control.infrastructure.jwt_token_service import JwtTokenService
+from src.access_control.domain.ports.token_service import TokenClaims, TokenInvalidError, TokenService
 from ..config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-# Instancia unica del servicio de tokens — stateless, se puede reutilizar
-_token_service = JwtTokenService(
-    secret_key=settings.JWT_SECRET_KEY,
-    algorithm=settings.JWT_ALGORITHM,
-    access_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
-    refresh_expire_days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS,
-    reset_expire_minutes=settings.JWT_RESET_TOKEN_EXPIRE_MINUTES,
-)
 
-
-def get_token_service() -> JwtTokenService:
+def get_token_service(request: Request) -> TokenService:
     """
-    Dependencia que retorna la instancia del servicio de tokens.
-    Facilita el reemplazo por un mock en tests.
+    Dependencia que retorna la instancia del servicio de tokens desde app.state.
+    La instancia se crea una sola vez en create_app() y se comparte con el middleware.
     """
-    return _token_service
+    return request.app.state.token_service
 
 
 async def get_current_user(
     request: Request,
-    token_service: JwtTokenService = Depends(get_token_service),
+    token_service: TokenService = Depends(get_token_service),
 ) -> TokenClaims:
     """
     Dependencia FastAPI que extrae y valida el usuario autenticado.
