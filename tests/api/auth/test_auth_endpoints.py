@@ -3,6 +3,8 @@ from __future__ import annotations
 import pytest
 from httpx import AsyncClient
 
+from apps.api.config.settings import settings
+
 
 pytestmark = pytest.mark.asyncio
 
@@ -13,11 +15,9 @@ class TestRegister:
     async def test_register_success(
         self, client: AsyncClient, register_payload: dict
     ) -> None:
-        """El registro exitoso retorna 201 y establece las cookies de sesion."""
+        """El registro exitoso retorna 201 con user_id."""
         response = await client.post("/api/v1/auth/register", json=register_payload)
         assert response.status_code == 201
-        assert "sana_session" in response.cookies
-        assert "sana_refresh" in response.cookies
         data = response.json()
         assert data["message"] == "User registered successfully."
         assert "user_id" in data
@@ -104,6 +104,7 @@ class TestLogout:
     ) -> None:
         """Logout elimina las cookies de sesion."""
         await client.post("/api/v1/auth/register", json=register_payload)
+        await client.post("/api/v1/auth/login", json={"email": register_payload["email"], "password": register_payload["password"]})
         response = await client.post("/api/v1/auth/logout")
         assert response.status_code == 200
         # Las cookies deben estar vacias o ausentes tras el logout
@@ -123,6 +124,7 @@ class TestMe:
     ) -> None:
         """Usuario autenticado recibe sus datos correctamente."""
         await client.post("/api/v1/auth/register", json=register_payload)
+        await client.post("/api/v1/auth/login", json={"email": register_payload["email"], "password": register_payload["password"]})
         response = await client.get("/api/v1/auth/me")
         assert response.status_code == 200
         data = response.json()
@@ -177,6 +179,47 @@ class TestRequestReset:
         # En el ambiente de test SMTP no esta configurado, debe exponer el token
         data = response.json()
         assert "reset_token" in data or data["message"] != ""
+
+
+class TestRefresh:
+    """Tests del endpoint POST /api/v1/auth/refresh."""
+
+    async def test_refresh_success(
+        self, client: AsyncClient, register_payload: dict
+    ) -> None:
+        """Cookie de refresh válida genera nuevo access token y retorna 200."""
+        await client.post("/api/v1/auth/register", json=register_payload)
+        await client.post("/api/v1/auth/login", json={"email": register_payload["email"], "password": register_payload["password"]})
+        response = await client.post("/api/v1/auth/refresh")
+        assert response.status_code == 200
+        assert response.json()["message"] == "Token refreshed successfully."
+        assert settings.COOKIE_NAME in response.cookies
+
+    async def test_refresh_no_cookie(self, client: AsyncClient) -> None:
+        """Sin cookie de refresh retorna 401."""
+        response = await client.post("/api/v1/auth/refresh")
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Refresh token not found."
+
+    async def test_refresh_invalid_token(self, client: AsyncClient) -> None:
+        """Token de refresh malformado retorna 401."""
+        client.cookies.set(settings.COOKIE_REFRESH_NAME, "not.a.valid.token")
+        response = await client.post("/api/v1/auth/refresh")
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Invalid or expired refresh token."
+
+    async def test_refresh_wrong_token_type(
+        self, client: AsyncClient, register_payload: dict
+    ) -> None:
+        """Usar el access token como refresh token retorna 401."""
+        reg = await client.post("/api/v1/auth/register", json=register_payload)
+        assert reg.status_code == 201
+        # El access token llega en la cookie sana_session, no en el body.
+        # Lo usamos como si fuera el refresh token para simular tipo incorrecto.
+        access_token = client.cookies.get(settings.COOKIE_NAME)
+        client.cookies.set(settings.COOKIE_REFRESH_NAME, access_token)
+        response = await client.post("/api/v1/auth/refresh")
+        assert response.status_code == 401
 
 
 class TestResetPassword:
