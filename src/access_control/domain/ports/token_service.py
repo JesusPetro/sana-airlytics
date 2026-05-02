@@ -11,6 +11,7 @@ class TokenClaims:
     user_id: str
     email: str
     type: str | None  # valor informativo de users.type
+    exp: int | None = None  # unix timestamp de expiracion; None si el token no tiene exp
 
 
 class TokenInvalidError(Exception):

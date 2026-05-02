@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -7,7 +8,29 @@ import bcrypt
 
 
 class PasswordTooWeakError(Exception):
-    """La contrasena no cumple los requisitos minimos de seguridad."""
+    """La contraseña no cumple los requisitos minimos de seguridad."""
+
+
+def _validate_password(password: str) -> None:
+    """Lanza PasswordTooWeakError si la contraseña no cumple los requisitos minimos."""
+    if len(password) < 8:
+        raise PasswordTooWeakError("La contraseña debe tener al menos 8 caracteres.")
+    if not any(c.isupper() for c in password):
+        raise PasswordTooWeakError(
+            "La contraseña debe contener al menos una letra mayuscula."
+        )
+    if not any(c.islower() for c in password):
+        raise PasswordTooWeakError(
+            "La contraseña debe contener al menos una letra minuscula."
+        )
+    if not re.search(r"\d", password):
+        raise PasswordTooWeakError(
+            "La contraseña debe contener al menos un numero."
+        )
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        raise PasswordTooWeakError(
+            "La contraseña debe contener al menos un caracter especial."
+        )
 
 
 class User:
@@ -48,7 +71,8 @@ class User:
         last_name: str,
         type: str | None = None,
     ) -> "User":
-        """Factory que hashea la contrasena antes de construir el usuario."""
+        """Factory que valida y hashea la contraseña antes de construir el usuario."""
+        _validate_password(plain_password)
         password_hash = bcrypt.hashpw(
             plain_password.encode(), bcrypt.gensalt()
         ).decode()
@@ -104,29 +128,9 @@ class User:
 
     def change_password(self, new_plain_password: str) -> None:
         """
-        Actualiza la contrasena del usuario aplicando hash bcrypt.
-        Lanza PasswordTooWeakError si la contrasena no cumple los requisitos minimos.
-        Los requisitos: >= 8 caracteres, al menos una mayuscula, una minuscula,
-        un digito y un caracter especial.
+        Actualiza la contraseña del usuario aplicando hash bcrypt.
+        Lanza PasswordTooWeakError si la contraseña no cumple los requisitos minimos.
         """
-        import re
-        if len(new_plain_password) < 8:
-            raise PasswordTooWeakError("La contrasena debe tener al menos 8 caracteres.")
-        if not re.search(r"[A-Z]", new_plain_password):
-            raise PasswordTooWeakError(
-                "La contrasena debe contener al menos una letra mayuscula."
-            )
-        if not re.search(r"[a-z]", new_plain_password):
-            raise PasswordTooWeakError(
-                "La contrasena debe contener al menos una letra minuscula."
-            )
-        if not re.search(r"\d", new_plain_password):
-            raise PasswordTooWeakError(
-                "La contrasena debe contener al menos un numero."
-            )
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_plain_password):
-            raise PasswordTooWeakError(
-                "La contrasena debe contener al menos un caracter especial."
-            )
+        _validate_password(new_plain_password)
         from ..infrastructure.security.password_hasher import hash_password
         self._password_hash = hash_password(new_plain_password)

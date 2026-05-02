@@ -48,6 +48,7 @@ class JwtTokenService:
                 user_id=payload["sub"],
                 email=payload["email"],
                 type=payload.get("type"),
+                exp=payload.get("exp"),
             )
         except JWTError as exc:
             raise TokenInvalidError(str(exc)) from exc
