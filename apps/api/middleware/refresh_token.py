@@ -4,10 +4,11 @@ import logging
 import time
 from collections.abc import Callable
 
-from jose import JWTError, jwt
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+
+from src.access_control.domain.ports.token_service import TokenInvalidError, TokenService
 
 from ..config.settings import settings
 
@@ -30,6 +31,10 @@ class RefreshTokenMiddleware(BaseHTTPMiddleware):
     el endpoint protegido retornara 401 si es necesario.
     """
 
+    def __init__(self, app, token_service: TokenService) -> None:
+        super().__init__(app)
+        self._token_service = token_service
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Procesa la request y renueva la cookie si el token esta por vencer."""
         token = request.cookies.get(settings.COOKIE_NAME)
@@ -39,35 +44,18 @@ class RefreshTokenMiddleware(BaseHTTPMiddleware):
             return response
 
         try:
-            payload = jwt.decode(
-                token,
-                settings.JWT_SECRET_KEY,
-                algorithms=[settings.JWT_ALGORITHM],
-            )
-        except JWTError:
+            claims = self._token_service.validate_token(token)
+        except TokenInvalidError:
             # Token invalido — dejar pasar, el endpoint decidira
             return response
 
-        exp = payload.get("exp")
-        if exp and (exp - time.time()) < _RENEWAL_THRESHOLD_SECONDS:
-            # Generar nuevo token con los mismos claims, sin el exp viejo
-            new_payload = {k: v for k, v in payload.items() if k != "exp"}
-            from src.access_control.infrastructure.security.token_factory import (
-                create_access_token,
-            )
-            new_token = create_access_token(
-                user_id=new_payload["sub"],
-                email=new_payload["email"],
-                user_type=new_payload.get("type"),
-                secret_key=settings.JWT_SECRET_KEY,
-                algorithm=settings.JWT_ALGORITHM,
-                expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
-            )
+        if claims.exp and (claims.exp - time.time()) < _RENEWAL_THRESHOLD_SECONDS:
+            new_token = self._token_service.generate_token(claims)
             cookie_cfg = settings.cookie_config
             response.set_cookie(value=new_token, **cookie_cfg)
             logger.debug(
                 "Cookie de sesion renovada automaticamente.",
-                extra={"user_id": new_payload.get("sub")},
+                extra={"user_id": claims.user_id},
             )
 
         return response
