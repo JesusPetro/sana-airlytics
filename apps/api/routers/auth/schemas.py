@@ -1,26 +1,6 @@
 from __future__ import annotations
 
-import re
-
-from pydantic import BaseModel, EmailStr, field_validator
-
-
-def _validate_password_strength(v: str) -> str:
-    """
-    Valida que la contrasena cumpla los requisitos minimos de seguridad.
-    Requisitos: >= 8 caracteres, mayuscula, minuscula, digito, caracter especial.
-    """
-    if len(v) < 8:
-        raise ValueError("La contrasena debe tener al menos 8 caracteres.")
-    if not re.search(r"[A-Z]", v):
-        raise ValueError("La contrasena debe tener al menos una mayuscula.")
-    if not re.search(r"[a-z]", v):
-        raise ValueError("La contrasena debe tener al menos una minuscula.")
-    if not re.search(r"\d", v):
-        raise ValueError("La contrasena debe tener al menos un numero.")
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-        raise ValueError("La contrasena debe tener al menos un caracter especial.")
-    return v
+from pydantic import BaseModel, EmailStr
 
 
 class RegisterRequest(BaseModel):
@@ -31,12 +11,6 @@ class RegisterRequest(BaseModel):
     first_name: str
     last_name: str
 
-    @field_validator("password")
-    @classmethod
-    def password_strength(cls, v: str) -> str:
-        """Valida la fortaleza de la contrasena en el registro."""
-        return _validate_password_strength(v)
-
 
 class LoginRequest(BaseModel):
     """Credenciales para autenticacion."""
@@ -46,22 +20,16 @@ class LoginRequest(BaseModel):
 
 
 class RequestResetRequest(BaseModel):
-    """Email del usuario que solicita el reset de contrasena."""
+    """Email del usuario que solicita el reset de contraseña."""
 
     email: EmailStr
 
 
 class ResetPasswordRequest(BaseModel):
-    """Token de reset y nueva contrasena."""
+    """Token de reset y nueva contraseña."""
 
     token: str
     new_password: str
-
-    @field_validator("new_password")
-    @classmethod
-    def password_strength(cls, v: str) -> str:
-        """Valida la fortaleza de la nueva contrasena."""
-        return _validate_password_strength(v)
 
 
 class LoginResponse(BaseModel):

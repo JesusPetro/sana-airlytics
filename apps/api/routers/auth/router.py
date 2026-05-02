@@ -5,8 +5,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from jose import JWTError
-from jose import jwt as jose_jwt
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +30,12 @@ from src.access_control.application.reset_password import (
     ResetPasswordError,
     ResetPasswordUseCase,
 )
-from src.access_control.domain.ports.token_service import TokenClaims
+from src.access_control.domain.ports.repositories import UserRepository
+from src.access_control.domain.ports.token_service import (
+    TokenClaims,
+    TokenInvalidError,
+    TokenService,
+)
 from src.access_control.infrastructure.jwt_token_service import JwtTokenService
 from src.access_control.infrastructure.postgres_user_repo import PostgresUserRepository
 from src.shared.email.email_service import EmailService
@@ -40,6 +43,7 @@ from src.shared.email.email_service import EmailService
 from ...config.settings import settings
 from ...dependencies.auth import get_current_user, get_token_service
 from ...dependencies.database import get_async_session
+from ...dependencies.repositories import get_user_repository
 from ...dependencies.use_cases import (
     get_authenticate_use_case,
     get_register_use_case,
@@ -58,13 +62,14 @@ from .schemas import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/auth", tags=["Auth"])
-limiter = Limiter(key_func=get_remote_address)
+router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
+limiter = Limiter(key_func=get_remote_address, enabled=settings.is_production)
 
 _RegisterUC = Annotated[RegisterUserUseCase, Depends(get_register_use_case)]
 _AuthenticateUC = Annotated[AuthenticateUserUseCase, Depends(get_authenticate_use_case)]
 _ResetPasswordUC = Annotated[ResetPasswordUseCase, Depends(get_reset_password_use_case)]
-_TokenSvc = Annotated[JwtTokenService, Depends(get_token_service)]
+_TokenSvc = Annotated[TokenService, Depends(get_token_service)]
+_UserRepo = Annotated[UserRepository, Depends(get_user_repository)]
 _CurrentUser = Annotated[TokenClaims, Depends(get_current_user)]
 _Session = Annotated[AsyncSession, Depends(get_async_session)]
 
@@ -203,7 +208,7 @@ async def refresh(
     request: Request,
     response: Response,
     token_service: _TokenSvc,
-    db: _Session,
+    user_repo: _UserRepo,
 ) -> dict:
     """Genera un nuevo access token usando el refresh token de la cookie."""
     refresh_token = request.cookies.get(settings.COOKIE_REFRESH_NAME)
@@ -214,24 +219,13 @@ async def refresh(
         )
 
     try:
-        payload = jose_jwt.decode(
-            refresh_token,
-            settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM],
-        )
-        if payload.get("token_type") != "refresh":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type.",
-            )
-    except JWTError as exc:
+        user_id = token_service.validate_refresh_token(refresh_token)
+    except TokenInvalidError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token.",
         ) from exc
 
-    user_id = payload["sub"]
-    user_repo = PostgresUserRepository(db)
     user = await user_repo.find_by_id(UUID(user_id))
     if user is None:
         raise HTTPException(
