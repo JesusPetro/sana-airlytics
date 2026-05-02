@@ -6,24 +6,19 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from src.access_control.application.errors import WeakPasswordError
 from src.access_control.infrastructure.jwt_token_service import JwtTokenService
 
 from .config.settings import settings
+from .dependencies.limiter import limiter as _limiter
 from .middleware.refresh_token import RefreshTokenMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routers.auth.router import router as auth_router
 
 logger = logging.getLogger(__name__)
-
-_limiter = Limiter(
-    key_func=get_remote_address,
-    enabled=settings.is_production,
-)
 
 _TAGS_METADATA = [
     {

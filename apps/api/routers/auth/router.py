@@ -5,8 +5,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.access_control.application.authenticate_user import (
@@ -43,6 +41,7 @@ from src.shared.email.email_service import EmailService
 from ...config.settings import settings
 from ...dependencies.auth import get_current_user, get_token_service
 from ...dependencies.database import get_async_session
+from ...dependencies.limiter import limiter
 from ...dependencies.repositories import get_user_repository
 from ...dependencies.use_cases import (
     get_authenticate_use_case,
@@ -63,7 +62,6 @@ from .schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
-limiter = Limiter(key_func=get_remote_address, enabled=settings.is_production)
 
 _RegisterUC = Annotated[RegisterUserUseCase, Depends(get_register_use_case)]
 _AuthenticateUC = Annotated[AuthenticateUserUseCase, Depends(get_authenticate_use_case)]
@@ -327,7 +325,7 @@ async def token_dev(
         output = await use_case.execute(
             LoginInput(email=str(body.email), password=body.password)
         )
-    except Exception as exc:
+    except AuthenticationError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password.",
