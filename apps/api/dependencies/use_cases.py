@@ -157,3 +157,127 @@ def get_update_device_config_use_case(
 ) -> UpdateDeviceConfigUseCase:
     """Fabrica del caso de uso UpdateDeviceConfig."""
     return UpdateDeviceConfigUseCase(device_repo, _get_mqtt_publisher())
+
+
+# --- analytics ---
+
+from src.analytics.application.get_datastreams import GetDatastreamsUseCase
+from src.analytics.application.get_observations import GetObservationsUseCase
+from src.analytics.application.get_aggregations import GetAggregationsUseCase
+from src.analytics.application.get_sensor_location import GetSensorLocationUseCase
+from src.analytics.application.get_sensor_track import GetSensorTrackUseCase
+from src.analytics.application.get_heatmap import GetHeatmapUseCase
+from src.analytics.application.create_annotation import CreateAnnotationUseCase
+from src.analytics.application.get_annotations import GetAnnotationsUseCase
+from src.analytics.application.create_alert_rule import CreateAlertRuleUseCase
+from src.analytics.application.get_alert_rules import GetAlertRulesUseCase
+from src.analytics.application.update_alert_rule import UpdateAlertRuleUseCase
+from src.analytics.application.delete_alert_rule import DeleteAlertRuleUseCase
+from src.analytics.application.get_alert_events import GetAlertEventsUseCase
+from src.analytics.application.create_zone import CreateZoneUseCase
+from src.analytics.application.get_zones import GetZonesUseCase
+from src.analytics.application.get_zone_health import GetZoneHealthUseCase
+from src.analytics.infrastructure.postgres_datastream_repo import PostgresDatastreamReadRepository
+from src.analytics.infrastructure.postgres_observation_repo import PostgresObservationReadRepository
+from src.analytics.infrastructure.postgres_location_repo import PostgresLocationReadRepository
+from src.analytics.infrastructure.postgres_annotation_repo import PostgresAnnotationRepository
+from src.analytics.infrastructure.postgres_alert_rule_repo import PostgresAlertRuleRepository
+from src.analytics.infrastructure.postgres_alert_event_repo import PostgresAlertEventRepository
+from src.analytics.infrastructure.postgres_zone_repo import PostgresZoneRepository
+from .repositories import (
+    get_datastream_read_repository,
+    get_observation_read_repository,
+    get_location_read_repository,
+    get_annotation_repository,
+    get_alert_rule_repository,
+    get_alert_event_repository,
+    get_zone_repository,
+)
+
+_DsReadRepo = Annotated[PostgresDatastreamReadRepository, Depends(get_datastream_read_repository)]
+_ObsReadRepo = Annotated[PostgresObservationReadRepository, Depends(get_observation_read_repository)]
+_LocReadRepo = Annotated[PostgresLocationReadRepository, Depends(get_location_read_repository)]
+_AnnotRepo = Annotated[PostgresAnnotationRepository, Depends(get_annotation_repository)]
+_AlertRuleRepo = Annotated[PostgresAlertRuleRepository, Depends(get_alert_rule_repository)]
+_AlertEventRepo = Annotated[PostgresAlertEventRepository, Depends(get_alert_event_repository)]
+_ZoneRepo = Annotated[PostgresZoneRepository, Depends(get_zone_repository)]
+
+
+def get_datastreams_use_case(repo: _DsReadRepo) -> GetDatastreamsUseCase:
+    """Fabrica del caso de uso GetDatastreams."""
+    return GetDatastreamsUseCase(repo)
+
+
+def get_observations_use_case(repo: _ObsReadRepo) -> GetObservationsUseCase:
+    """Fabrica del caso de uso GetObservations."""
+    return GetObservationsUseCase(repo)
+
+
+def get_aggregations_use_case(repo: _ObsReadRepo) -> GetAggregationsUseCase:
+    """Fabrica del caso de uso GetAggregations."""
+    return GetAggregationsUseCase(repo)
+
+
+def get_sensor_location_use_case(repo: _LocReadRepo) -> GetSensorLocationUseCase:
+    """Fabrica del caso de uso GetSensorLocation."""
+    return GetSensorLocationUseCase(repo)
+
+
+def get_sensor_track_use_case(repo: _LocReadRepo) -> GetSensorTrackUseCase:
+    """Fabrica del caso de uso GetSensorTrack."""
+    return GetSensorTrackUseCase(repo)
+
+
+def get_heatmap_use_case(repo: _LocReadRepo) -> GetHeatmapUseCase:
+    """Fabrica del caso de uso GetHeatmap."""
+    return GetHeatmapUseCase(repo)
+
+
+def get_create_annotation_use_case(repo: _AnnotRepo) -> CreateAnnotationUseCase:
+    """Fabrica del caso de uso CreateAnnotation."""
+    return CreateAnnotationUseCase(repo)
+
+
+def get_annotations_use_case(repo: _AnnotRepo) -> GetAnnotationsUseCase:
+    """Fabrica del caso de uso GetAnnotations."""
+    return GetAnnotationsUseCase(repo)
+
+
+def get_create_alert_rule_use_case(repo: _AlertRuleRepo) -> CreateAlertRuleUseCase:
+    """Fabrica del caso de uso CreateAlertRule."""
+    return CreateAlertRuleUseCase(repo)
+
+
+def get_alert_rules_use_case(repo: _AlertRuleRepo) -> GetAlertRulesUseCase:
+    """Fabrica del caso de uso GetAlertRules."""
+    return GetAlertRulesUseCase(repo)
+
+
+def get_update_alert_rule_use_case(repo: _AlertRuleRepo) -> UpdateAlertRuleUseCase:
+    """Fabrica del caso de uso UpdateAlertRule."""
+    return UpdateAlertRuleUseCase(repo)
+
+
+def get_delete_alert_rule_use_case(repo: _AlertRuleRepo) -> DeleteAlertRuleUseCase:
+    """Fabrica del caso de uso DeleteAlertRule."""
+    return DeleteAlertRuleUseCase(repo)
+
+
+def get_alert_events_use_case(repo: _AlertEventRepo) -> GetAlertEventsUseCase:
+    """Fabrica del caso de uso GetAlertEvents."""
+    return GetAlertEventsUseCase(repo)
+
+
+def get_create_zone_use_case(repo: _ZoneRepo) -> CreateZoneUseCase:
+    """Fabrica del caso de uso CreateZone."""
+    return CreateZoneUseCase(repo)
+
+
+def get_zones_use_case(repo: _ZoneRepo) -> GetZonesUseCase:
+    """Fabrica del caso de uso GetZones."""
+    return GetZonesUseCase(repo)
+
+
+def get_zone_health_use_case(repo: _ZoneRepo) -> GetZoneHealthUseCase:
+    """Fabrica del caso de uso GetZoneHealth."""
+    return GetZoneHealthUseCase(repo)
