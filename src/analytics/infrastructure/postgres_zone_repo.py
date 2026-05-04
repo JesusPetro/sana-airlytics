@@ -1,1 +1,100 @@
-﻿
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..domain.zone import Zone
+from .orm_models import ZoneModel
+
+
+class PostgresZoneRepository:
+    """
+    Adaptador de persistencia y lectura para zonas geograficas.
+    El calculo de sensores dentro de la zona usa haversine SQL.
+    Depende de la tabla zones creada por migracion pendiente.
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def save(self, zone: Zone) -> None:
+        """Inserta una nueva zona en la BD."""
+        model = ZoneModel(
+            id=zone.id,
+            workspace_id=zone.workspace_id,
+            name=zone.name,
+            center_lat=zone.center_lat,
+            center_lon=zone.center_lon,
+            radius_m=zone.radius_m,
+            created_by=zone.created_by,
+        )
+        self._session.add(model)
+        await self._session.flush()
+
+    async def find_by_id(self, zone_id: UUID) -> Zone | None:
+        """Retorna la zona por ID o None si no existe."""
+        model = await self._session.get(ZoneModel, zone_id)
+        if model is None:
+            return None
+        return self._to_domain(model)
+
+    async def find_by_workspace(self, workspace_id: UUID) -> list[Zone]:
+        """Retorna todas las zonas del workspace."""
+        stmt = select(ZoneModel).where(ZoneModel.workspace_id == workspace_id)
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [self._to_domain(r) for r in rows]
+
+    async def find_health(self, zone: Zone, hours: int) -> list[dict]:
+        """
+        Retorna el promedio de cada variable en las ultimas `hours` horas
+        para todos los sensores dentro del radio de la zona.
+        Usa la formula haversine en SQL para calcular la distancia.
+        No requiere PostGIS.
+        """
+        query = text("""
+            SELECT
+                op.code        AS property_code,
+                AVG(o.result)  AS avg_value
+            FROM observations o
+            JOIN datastreams ds  ON o.datastream_id = ds.id
+            JOIN observed_properties op ON ds.observed_property_id = op.id
+            JOIN sensors s      ON ds.sensor_id = s.id
+            JOIN locations l    ON l.sensor_id = s.id
+            WHERE s.workspace_id = :workspace_id
+              AND o.phenomenon_time >= NOW() - INTERVAL ':hours hours'
+              AND o.qualifier != 'SENSOR_OUT_OF_RANGE'
+              AND (
+                6371000 * acos(
+                  LEAST(1.0,
+                    cos(radians(:lat)) * cos(radians(l.latitude)) *
+                    cos(radians(l.longitude) - radians(:lon)) +
+                    sin(radians(:lat)) * sin(radians(l.latitude))
+                  )
+                )
+              ) <= :radius_m
+            GROUP BY op.code
+        """)
+        params = {
+            "workspace_id": zone.workspace_id,
+            "lat": zone.center_lat,
+            "lon": zone.center_lon,
+            "radius_m": zone.radius_m,
+            "hours": hours,
+        }
+        rows = (await self._session.execute(query, params)).mappings().all()
+        return [dict(r) for r in rows]
+
+    def _to_domain(self, model: ZoneModel) -> Zone:
+        """Convierte el modelo ORM a la entidad de dominio."""
+        return Zone(
+            id=model.id,
+            workspace_id=model.workspace_id,
+            name=model.name,
+            center_lat=model.center_lat,
+            center_lon=model.center_lon,
+            radius_m=model.radius_m,
+            created_by=model.created_by,
+            created_at=model.created_at,
+        )
