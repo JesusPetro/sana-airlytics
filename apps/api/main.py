@@ -17,6 +17,8 @@ from .dependencies.limiter import limiter as _limiter
 from .middleware.refresh_token import RefreshTokenMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .routers.auth.router import router as auth_router
+from .routers.devices.router import router as devices_router
+from .routers.workspaces.router import router as workspaces_router
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,17 @@ _TAGS_METADATA = [
             "Autenticacion y gestion de sesion. "
             "Los tokens se almacenan en cookies httponly — "
             "el cliente nunca recibe el JWT directamente en production."
+        ),
+    },
+    {
+        "name": "Workspaces",
+        "description": "Gestion de workspaces y colaboradores con control de acceso RBAC.",
+    },
+    {
+        "name": "Devices",
+        "description": (
+            "Registro y gestion de devices fisicos SANA. "
+            "Flujo: POST /devices (PENDING) -> POST /devices/{id}/claim (ACTIVE)."
         ),
     },
 ]
@@ -76,6 +89,8 @@ def create_app() -> FastAPI:
 
     # --- Routers ---
     app.include_router(auth_router)
+    app.include_router(workspaces_router)
+    app.include_router(devices_router)
 
     # --- Exception handlers ---
     @app.exception_handler(WeakPasswordError)
