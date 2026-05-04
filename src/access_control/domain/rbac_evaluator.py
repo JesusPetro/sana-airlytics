@@ -5,17 +5,20 @@ from dataclasses import dataclass
 
 # Mapa de permisos: accion → conjunto de roles que pueden ejecutarla
 _PERMISSIONS: dict[str, set[str]] = {
+    # Lectura — todos los roles
     "observation:read":          {"viewer", "editor", "admin"},
     "annotation:read":           {"viewer", "editor", "admin"},
     "sensor:read":               {"viewer", "editor", "admin"},
+    # Creacion — editor y admin
     "annotation:create":         {"editor", "admin"},
     "alert_rule:create":         {"editor", "admin"},
+    "sensor:register":           {"editor", "admin"},
+    "collaborator:invite":       {"editor", "admin"},
+    "collaborator:role_change":  {"editor", "admin"},
+    # Eliminacion — editor y admin
     "alert_rule:delete":         {"editor", "admin"},
-    "sensor:register":           {"admin"},
     "sensor:delete":             {"admin"},
-    "collaborator:invite":       {"admin"},
     "collaborator:remove":       {"admin"},
-    "collaborator:role_change":  {"admin"},
     "workspace:delete":          {"admin"},
 }
 
