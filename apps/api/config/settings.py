@@ -67,6 +67,12 @@ class Settings(BaseSettings):
     API_TITLE: str = "SANA Airlytics API"
     API_VERSION: str = "1.0.0"
 
+    # --- MQTT ---
+    MQTT_HOST: str = ""
+    MQTT_PORT: int = 8883
+    MQTT_USERNAME: str = ""
+    MQTT_PASSWORD: str = ""
+
     @property
     def database_url(self) -> str:
         """

@@ -43,3 +43,4 @@ logs/
 
 # Env files
 .env
+certs/
