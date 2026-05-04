@@ -52,6 +52,21 @@ class PostgresWorkspaceRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [self._to_domain(m) for m in rows]
 
+    async def soft_delete(self, workspace_id: UUID) -> None:
+        """
+        Marca el workspace como eliminado registrando deleted_at.
+        El workspace deja de aparecer en find_by_id y find_by_owner_user.
+        """
+        from datetime import UTC, datetime
+        from sqlalchemy import update
+        stmt = (
+            update(WorkspaceModel)
+            .where(WorkspaceModel.id == workspace_id)
+            .values(deleted_at=datetime.now(UTC))
+        )
+        await self._session.execute(stmt)
+        await self._session.flush()
+
     def _to_domain(self, model: WorkspaceModel) -> Workspace:
         """Convierte un modelo ORM a la entidad de dominio."""
         return Workspace(
