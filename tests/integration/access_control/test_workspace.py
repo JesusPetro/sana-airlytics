@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from access_control.infrastructure.orm_models import OrganizationModel, UserModel, WorkspaceModel
+from access_control.infrastructure.orm_models import OrganizationModel, UserModel
+from shared.infrastructure.orm_models import WorkspaceModel
 
 
 @pytest.fixture

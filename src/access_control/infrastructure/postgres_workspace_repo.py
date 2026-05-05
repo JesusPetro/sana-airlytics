@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from shared.infrastructure.orm_models import WorkspaceModel
+
 from ..domain.workspace import Workspace
-from .orm_models import WorkspaceModel
 
 
 class PostgresWorkspaceRepository:
@@ -57,8 +59,6 @@ class PostgresWorkspaceRepository:
         Marca el workspace como eliminado registrando deleted_at.
         El workspace deja de aparecer en find_by_id y find_by_owner_user.
         """
-        from datetime import UTC, datetime
-        from sqlalchemy import update
         stmt = (
             update(WorkspaceModel)
             .where(WorkspaceModel.id == workspace_id)

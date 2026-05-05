@@ -5,7 +5,8 @@ from datetime import UTC, datetime
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
+from access_control.infrastructure.orm_models import UserModel
+from shared.infrastructure.orm_models import WorkspaceModel
 from device_management.domain.device import Device
 from device_management.domain.device_config import DeviceConfig
 from device_management.domain.device_location import DeviceLocation

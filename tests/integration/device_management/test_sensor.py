@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from access_control.infrastructure.orm_models import UserModel, WorkspaceModel
+from access_control.infrastructure.orm_models import UserModel
+from shared.infrastructure.orm_models import WorkspaceModel
 from device_management.infrastructure.orm_models import SensorModel
 
 
