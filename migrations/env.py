@@ -2,6 +2,7 @@ import os
 from logging.config import fileConfig
 
 import access_control.infrastructure.orm_models  # noqa: F401
+import analytics.infrastructure.orm_models  # noqa: F401
 import data_ingestion.infrastructure.orm_models  # noqa: F401
 import device_management.infrastructure.orm_models  # noqa: F401
 import shared.infrastructure.orm_models  # noqa: F401
