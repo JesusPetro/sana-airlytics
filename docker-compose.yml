@@ -1,6 +1,6 @@
 services:
   db:
-    image: timescale/timescaledb:latest-pg17
+    build: ./infra/db
     environment:
       POSTGRES_USER: sana
       POSTGRES_PASSWORD: sana
