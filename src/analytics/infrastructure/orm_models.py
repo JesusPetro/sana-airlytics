@@ -3,29 +3,44 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid7
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, ForeignKey, Index, String, func
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from shared.infrastructure.orm_base import Base
+from shared.infrastructure.orm_models import UnitModel, WorkspaceModel
+
+alert_metric_enum = Enum("THRESHOLD", "SENSOR_OFFLINE", "BATTERY_LOW", name="alert_metric")
+alert_operator_enum = Enum("GT", "LT", "GTE", "LTE", name="alert_operator")
 
 
 class AlertRuleModel(Base):
-    """Modelo ORM para la tabla alert_rules."""
-
     __tablename__ = "alert_rules"
+    __table_args__ = (
+        CheckConstraint(
+            "(metric = 'THRESHOLD' AND operator IS NOT NULL AND threshold IS NOT NULL)"
+            " OR (metric != 'THRESHOLD' AND operator IS NULL AND threshold IS NULL)",
+            name="chk_threshold_fields",
+        ),
+        Index("idx_alert_rules_workspace", "workspace_id"),
+        Index(
+            "idx_alert_rules_unit",
+            "unit_id",
+            postgresql_where="unit_id IS NOT NULL",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
     workspace_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("workspaces.id")
     )
-    datastream_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("datastreams.id")
+    unit_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("units.id")
     )
     name: Mapped[str] = mapped_column(String)
-    metric: Mapped[str] = mapped_column(String)
-    operator: Mapped[str | None] = mapped_column(String)
+    metric: Mapped[str] = mapped_column(alert_metric_enum)
+    operator: Mapped[str | None] = mapped_column(alert_operator_enum)
     threshold: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_by: Mapped[UUID] = mapped_column(
@@ -38,11 +53,21 @@ class AlertRuleModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    workspace: Mapped[WorkspaceModel] = relationship("WorkspaceModel")
+    unit: Mapped[UnitModel] = relationship("UnitModel")
+    events: Mapped[list[AlertEventModel]] = relationship("AlertEventModel")
+
 
 class AlertEventModel(Base):
-    """Modelo ORM para la tabla alert_events."""
-
     __tablename__ = "alert_events"
+    __table_args__ = (
+        Index("idx_alert_events_rule", "alert_rule_id"),
+        Index(
+            "idx_alert_events_triggered",
+            "triggered_at",
+            postgresql_ops={"triggered_at": "DESC"},
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
     alert_rule_id: Mapped[UUID] = mapped_column(
@@ -51,7 +76,6 @@ class AlertEventModel(Base):
     triggered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     value: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
     message: Mapped[str] = mapped_column(String)
 

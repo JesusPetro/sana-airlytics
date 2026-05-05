@@ -5,12 +5,12 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from data_ingestion.infrastructure.orm_models import (
+from src.data_ingestion.infrastructure.orm_models import (
     DatastreamModel,
     ObservedPropertyModel,
     UnitModel,
 )
-from device_management.infrastructure.orm_models import SensorModel
+from src.device_management.infrastructure.orm_models import SensorModel
 
 
 class PostgresDatastreamReadRepository:

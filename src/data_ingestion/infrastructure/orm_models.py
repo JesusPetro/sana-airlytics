@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from shared.infrastructure.orm_base import Base
-from shared.infrastructure.orm_models import ObservationModel
+from shared.infrastructure.orm_models import ObservationModel, UnitModel  # noqa: F401
 
 
 class DatastreamModel(Base):
@@ -74,15 +74,6 @@ class ObservedPropertyModel(Base):
     type: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-
-class UnitModel(Base):
-    __tablename__ = "units"
-
-    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
-    code: Mapped[str] = mapped_column(String, unique=True)
-    name: Mapped[str] = mapped_column(String)
-    symbol: Mapped[str] = mapped_column(String)
-    type: Mapped[str | None] = mapped_column(String)
 
 class ProcessedMessageModel(Base):
     __tablename__ = "processed_messages"
