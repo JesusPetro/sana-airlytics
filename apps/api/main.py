@@ -16,6 +16,7 @@ from .config.settings import settings
 from .dependencies.limiter import limiter as _limiter
 from .middleware.refresh_token import RefreshTokenMiddleware
 from .middleware.security_headers import SecurityHeadersMiddleware
+from .routers.analytics.router import router as analytics_router
 from .routers.auth.router import router as auth_router
 from .routers.devices.router import router as devices_router
 from .routers.workspaces.router import router as workspaces_router
@@ -40,6 +41,13 @@ _TAGS_METADATA = [
         "description": (
             "Registro y gestion de devices fisicos SANA. "
             "Flujo: POST /devices (PENDING) -> POST /devices/{id}/claim (ACTIVE)."
+        ),
+    },
+    {
+        "name": "Analytics",
+        "description": (
+            "Consultas de series temporales, agregaciones, geovisualizacion, "
+            "anotaciones, alertas y zonas de calidad del aire."
         ),
     },
 ]
@@ -91,6 +99,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(workspaces_router)
     app.include_router(devices_router)
+    app.include_router(analytics_router)
 
     # --- Exception handlers ---
     @app.exception_handler(WeakPasswordError)
