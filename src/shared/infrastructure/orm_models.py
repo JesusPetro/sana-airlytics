@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid7
 
+from geoalchemy2 import Geometry
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -60,6 +61,7 @@ class LocationModel(Base):
     latitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
     longitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
     elevation: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
+    geom: Mapped[str | None] = mapped_column(Geometry("POINT", srid=4326), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -73,6 +75,7 @@ class HistoricalLocationModel(Base):
     latitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
     longitude: Mapped[float] = mapped_column(DOUBLE_PRECISION)
     elevation: Mapped[float | None] = mapped_column(DOUBLE_PRECISION)
+    geom: Mapped[str | None] = mapped_column(Geometry("POINT", srid=4326), nullable=True)
     recorded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
