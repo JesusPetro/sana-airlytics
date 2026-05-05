@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from data_ingestion.application.ingest_measurement_batch import IngestMeasurementBatch
 from data_ingestion.infrastructure.mqtt_telemetry_subscriber import (
-    MqttConfig,
+    TelemetrySubscriberConfig,
     MqttTelemetrySubscriber,
 )
 from data_ingestion.infrastructure.postgres_datastream_repo import PostgresDatastreamRepository
@@ -41,7 +41,7 @@ async def main() -> None:
     engine = create_async_engine(os.environ["DATABASE_URL"])
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    config = MqttConfig(
+    config = TelemetrySubscriberConfig(
         host=os.environ["MQTT_HOST"],
         port=int(os.environ.get("MQTT_PORT", 1883)),
         username=os.environ["MQTT_USER"],
