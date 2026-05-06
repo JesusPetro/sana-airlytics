@@ -35,7 +35,7 @@ class CreateAlertRuleUseCase:
         rule = AlertRule(
             id=uuid7(),
             workspace_id=UUID(cmd.workspace_id),
-            datastream_id=UUID(cmd.datastream_id) if cmd.datastream_id else None,
+            unit_id=UUID(cmd.unit_id) if cmd.unit_id else None,
             name=cmd.name,
             metric=cmd.metric,
             operator=cmd.operator,
@@ -53,7 +53,7 @@ class CreateAlertRuleUseCase:
         return AlertRuleDTO(
             rule_id=str(rule.id),
             workspace_id=str(rule.workspace_id),
-            datastream_id=str(rule.datastream_id) if rule.datastream_id else None,
+            unit_id=str(rule.unit_id) if rule.unit_id else None,
             name=rule.name,
             metric=rule.metric,
             operator=rule.operator,

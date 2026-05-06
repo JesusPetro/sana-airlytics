@@ -23,7 +23,7 @@ class PostgresAlertRuleRepository:
         model = AlertRuleModel(
             id=rule.id,
             workspace_id=rule.workspace_id,
-            datastream_id=rule.datastream_id,
+            unit_id=rule.unit_id,
             name=rule.name,
             metric=rule.metric,
             operator=rule.operator,
@@ -56,12 +56,18 @@ class PostgresAlertRuleRepository:
             await self._session.delete(model)
             await self._session.flush()
 
+    async def find_active(self) -> list[AlertRule]:
+        """Retorna todas las reglas con is_active = True. Usado por el worker de evaluacion."""
+        stmt = select(AlertRuleModel).where(AlertRuleModel.is_active.is_(True))
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [self._to_domain(r) for r in rows]
+
     def _to_domain(self, model: AlertRuleModel) -> AlertRule:
         """Convierte el modelo ORM a la entidad de dominio."""
         return AlertRule(
             id=model.id,
             workspace_id=model.workspace_id,
-            datastream_id=model.datastream_id,
+            unit_id=model.unit_id,
             name=model.name,
             metric=model.metric,
             operator=model.operator,

@@ -103,7 +103,7 @@ class AnnotationDTO:
 class CreateAlertRuleInput:
     """Datos para crear una regla de alerta."""
     workspace_id: str
-    datastream_id: str | None
+    unit_id: str | None
     name: str
     metric: str
     operator: str | None
@@ -123,7 +123,7 @@ class AlertRuleDTO:
     """Representacion de una regla de alerta para la capa API."""
     rule_id: str
     workspace_id: str
-    datastream_id: str | None
+    unit_id: str | None
     name: str
     metric: str
     operator: str | None

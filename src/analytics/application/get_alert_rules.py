@@ -19,7 +19,7 @@ class GetAlertRulesUseCase:
             AlertRuleDTO(
                 rule_id=str(r.id),
                 workspace_id=str(r.workspace_id),
-                datastream_id=str(r.datastream_id) if r.datastream_id else None,
+                unit_id=str(r.unit_id) if r.unit_id else None,
                 name=r.name,
                 metric=r.metric,
                 operator=r.operator,

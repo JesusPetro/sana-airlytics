@@ -81,7 +81,7 @@ class AnnotationResponse(BaseModel):
 
 class CreateAlertRuleRequest(BaseModel):
     """Datos para crear una regla de alerta."""
-    datastream_id: str | None = None
+    unit_id: str | None = None
     name: str
     metric: str
     operator: str | None = None
@@ -97,7 +97,7 @@ class AlertRuleResponse(BaseModel):
     """Representacion de una regla de alerta."""
     rule_id: str
     workspace_id: str
-    datastream_id: str | None
+    unit_id: str | None
     name: str
     metric: str
     operator: str | None

@@ -30,7 +30,7 @@ class UpdateAlertRuleUseCase:
         updated = AlertRule(
             id=rule.id,
             workspace_id=rule.workspace_id,
-            datastream_id=rule.datastream_id,
+            unit_id=rule.unit_id,
             name=rule.name,
             metric=rule.metric,
             operator=rule.operator,

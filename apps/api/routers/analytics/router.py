@@ -103,9 +103,7 @@ def _require_allowed(result) -> None:
         )
 
 
-# ---------------------------------------------------------------------------
 # Datastreams
-# ---------------------------------------------------------------------------
 
 @router.get(
     "/workspaces/{ws_id}/datastreams",
@@ -131,9 +129,7 @@ async def list_datastreams(
     return [DatastreamResponse(**vars(d)) for d in dtos]
 
 
-# ---------------------------------------------------------------------------
 # Observaciones
-# ---------------------------------------------------------------------------
 
 @router.get(
     "/workspaces/{ws_id}/datastreams/{ds_id}/observations",
@@ -168,9 +164,7 @@ async def get_observations(
     return [ObservationPointResponse(**vars(d)) for d in dtos]
 
 
-# ---------------------------------------------------------------------------
 # Agregaciones
-# ---------------------------------------------------------------------------
 
 @router.get(
     "/workspaces/{ws_id}/datastreams/{ds_id}/aggregations",
@@ -206,9 +200,7 @@ async def get_aggregations(
     return [AggregationBucketResponse(**vars(d)) for d in dtos]
 
 
-# ---------------------------------------------------------------------------
 # Geovisualizacion
-# ---------------------------------------------------------------------------
 
 @router.get(
     "/sensors/{sensor_id}/location",
@@ -281,9 +273,7 @@ async def get_heatmap(
     return [HeatmapPointResponse(**vars(d)) for d in dtos]
 
 
-# ---------------------------------------------------------------------------
 # Anotaciones
-# ---------------------------------------------------------------------------
 
 @router.post(
     "/workspaces/{ws_id}/annotations",
@@ -345,9 +335,7 @@ async def list_annotations(
     return [AnnotationResponse(**vars(d)) for d in dtos]
 
 
-# ---------------------------------------------------------------------------
 # Alertas
-# ---------------------------------------------------------------------------
 
 @router.post(
     "/workspaces/{ws_id}/alert-rules",
@@ -375,7 +363,7 @@ async def create_alert_rule(
         dto = await use_case.execute(
             CreateAlertRuleInput(
                 workspace_id=ws_id,
-                datastream_id=body.datastream_id,
+                unit_id=body.unit_id,
                 name=body.name,
                 metric=body.metric,
                 operator=body.operator,
@@ -493,9 +481,7 @@ async def list_alert_events(
     return [AlertEventResponse(**vars(d)) for d in dtos]
 
 
-# ---------------------------------------------------------------------------
 # Zonas
-# ---------------------------------------------------------------------------
 
 @router.post(
     "/workspaces/{ws_id}/zones",
