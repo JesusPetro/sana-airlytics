@@ -142,6 +142,14 @@ class ZoneResponse(BaseModel):
     created_at: datetime
 
 
+class UpdateZoneRequest(BaseModel):
+    """Datos parciales para editar una zona."""
+    name: str | None = None
+    center_lat: float | None = None
+    center_lon: float | None = None
+    radius_m: float | None = None
+
+
 class ZoneHealthVariableResponse(BaseModel):
     """Veredicto de una variable en la zona."""
     property_code: str

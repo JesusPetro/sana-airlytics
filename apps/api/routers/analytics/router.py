@@ -14,12 +14,15 @@ from src.analytics.application.create_alert_rule import CreateAlertRuleUseCase
 from src.analytics.application.create_annotation import CreateAnnotationUseCase
 from src.analytics.application.create_zone import CreateZoneUseCase
 from src.analytics.application.delete_alert_rule import DeleteAlertRuleUseCase
+from src.analytics.application.delete_zone import DeleteZoneUseCase
+from src.analytics.application.update_zone import UpdateZoneUseCase, ZoneNotFoundError as ZoneUpdateNotFoundError
 from src.analytics.application.delete_annotation import DeleteAnnotationUseCase
 from src.analytics.application.dtos import (
     CreateAlertRuleInput,
     CreateAnnotationInput,
     CreateZoneInput,
     UpdateAlertRuleInput,
+    UpdateZoneInput,
 )
 from src.analytics.application.update_annotation import (
     AnnotationNotFoundError,
@@ -41,8 +44,9 @@ from src.analytics.application.get_zones import GetZonesUseCase
 from src.analytics.application.update_alert_rule import AlertRuleNotFoundError, UpdateAlertRuleUseCase
 
 from ...dependencies.auth import get_current_user
-from ...dependencies.repositories import get_annotation_repository
+from ...dependencies.repositories import get_annotation_repository, get_zone_repository
 from src.analytics.infrastructure.postgres_annotation_repo import PostgresAnnotationRepository
+from src.analytics.infrastructure.postgres_zone_repo import PostgresZoneRepository
 from ...dependencies.use_cases import (
     get_aggregations_use_case,
     get_alert_events_use_case,
@@ -61,6 +65,8 @@ from ...dependencies.use_cases import (
     get_sensor_track_use_case,
     get_update_alert_rule_use_case,
     get_update_annotation_use_case,
+    get_update_zone_use_case,
+    get_delete_zone_use_case,
     get_zone_health_use_case,
     get_zones_use_case,
 )
@@ -79,6 +85,7 @@ from .schemas import (
     TrackPointResponse,
     UpdateAlertRuleRequest,
     UpdateAnnotationRequest,
+    UpdateZoneRequest,
     ZoneHealthResponse,
     ZoneResponse,
 )
@@ -96,6 +103,7 @@ _GetLocUC = Annotated[GetSensorLocationUseCase, Depends(get_sensor_location_use_
 _GetTrackUC = Annotated[GetSensorTrackUseCase, Depends(get_sensor_track_use_case)]
 _GetHeatmapUC = Annotated[GetHeatmapUseCase, Depends(get_heatmap_use_case)]
 _AnnotRepo = Annotated[PostgresAnnotationRepository, Depends(get_annotation_repository)]
+_ZoneRepoAlias = Annotated[PostgresZoneRepository, Depends(get_zone_repository)]
 _CreateAnnotUC = Annotated[CreateAnnotationUseCase, Depends(get_create_annotation_use_case)]
 _GetAnnotUC = Annotated[GetAnnotationsUseCase, Depends(get_annotations_use_case)]
 _UpdateAnnotUC = Annotated[UpdateAnnotationUseCase, Depends(get_update_annotation_use_case)]
@@ -108,6 +116,8 @@ _GetEventsUC = Annotated[GetAlertEventsUseCase, Depends(get_alert_events_use_cas
 _CreateZoneUC = Annotated[CreateZoneUseCase, Depends(get_create_zone_use_case)]
 _GetZonesUC = Annotated[GetZonesUseCase, Depends(get_zones_use_case)]
 _GetZoneHealthUC = Annotated[GetZoneHealthUseCase, Depends(get_zone_health_use_case)]
+_UpdateZoneUC = Annotated[UpdateZoneUseCase, Depends(get_update_zone_use_case)]
+_DeleteZoneUC = Annotated[DeleteZoneUseCase, Depends(get_delete_zone_use_case)]
 
 
 def _require_allowed(result) -> None:
@@ -658,6 +668,105 @@ async def list_zones(
     _require_allowed(result)
     dtos = await use_case.execute(ws_id)
     return [ZoneResponse(**vars(d)) for d in dtos]
+
+
+@router.get(
+    "/workspaces/{ws_id}/zones/{zone_id}",
+    response_model=ZoneResponse,
+    summary="Detalle de una zona",
+)
+async def get_zone(
+    ws_id: str,
+    zone_id: str,
+    current_user: _CurrentUser,
+    authorize: _AuthorizeUC,
+    repo: _ZoneRepoAlias,
+) -> ZoneResponse:
+    """Retorna una zona por ID. Requiere rol viewer."""
+    result = await authorize.execute(
+        AuthorizeActionInput(
+            user_id=current_user.user_id,
+            action="zone:read",
+            workspace_id=ws_id,
+        )
+    )
+    _require_allowed(result)
+    zone = await repo.find_by_id(UUID(zone_id))
+    if zone is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Zone not found.")
+    return ZoneResponse(
+        zone_id=str(zone.id),
+        workspace_id=str(zone.workspace_id),
+        name=zone.name,
+        center_lat=zone.center_lat,
+        center_lon=zone.center_lon,
+        radius_m=zone.radius_m,
+        created_by=str(zone.created_by),
+        created_at=zone.created_at,
+    )
+
+
+@router.patch(
+    "/workspaces/{ws_id}/zones/{zone_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Editar campos de una zona",
+)
+async def update_zone(
+    ws_id: str,
+    zone_id: str,
+    body: UpdateZoneRequest,
+    current_user: _CurrentUser,
+    authorize: _AuthorizeUC,
+    use_case: _UpdateZoneUC,
+) -> None:
+    """Edita los campos de la zona. Requiere rol editor."""
+    result = await authorize.execute(
+        AuthorizeActionInput(
+            user_id=current_user.user_id,
+            action="zone:create",
+            workspace_id=ws_id,
+        )
+    )
+    _require_allowed(result)
+    try:
+        await use_case.execute(
+            UpdateZoneInput(
+                zone_id=zone_id,
+                name=body.name,
+                center_lat=body.center_lat,
+                center_lon=body.center_lon,
+                radius_m=body.radius_m,
+            )
+        )
+    except ZoneUpdateNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.delete(
+    "/workspaces/{ws_id}/zones/{zone_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar una zona",
+)
+async def delete_zone(
+    ws_id: str,
+    zone_id: str,
+    current_user: _CurrentUser,
+    authorize: _AuthorizeUC,
+    use_case: _DeleteZoneUC,
+) -> None:
+    """Elimina la zona. Requiere rol editor."""
+    result = await authorize.execute(
+        AuthorizeActionInput(
+            user_id=current_user.user_id,
+            action="zone:create",
+            workspace_id=ws_id,
+        )
+    )
+    _require_allowed(result)
+    try:
+        await use_case.execute(zone_id)
+    except ZoneUpdateNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
 @router.get(

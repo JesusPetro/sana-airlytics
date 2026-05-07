@@ -158,6 +158,16 @@ class CreateZoneInput:
 
 
 @dataclass(frozen=True)
+class UpdateZoneInput:
+    """Datos parciales para editar una zona. Solo los campos presentes se actualizan."""
+    zone_id: str
+    name: str | None = None
+    center_lat: float | None = None
+    center_lon: float | None = None
+    radius_m: float | None = None
+
+
+@dataclass(frozen=True)
 class ZoneDTO:
     """Representacion de una zona para la capa API."""
     zone_id: str

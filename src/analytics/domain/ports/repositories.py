@@ -110,3 +110,14 @@ class ZoneRepository(Protocol):
         zone: Zone,
         hours: int,
     ) -> list[dict]: ...
+
+    async def update(
+        self,
+        zone_id: UUID,
+        name: str | None,
+        center_lat: float | None,
+        center_lon: float | None,
+        radius_m: float | None,
+    ) -> None: ...
+
+    async def delete(self, zone_id: UUID) -> None: ...

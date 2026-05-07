@@ -179,6 +179,8 @@ from src.analytics.application.get_alert_events import GetAlertEventsUseCase
 from src.analytics.application.create_zone import CreateZoneUseCase
 from src.analytics.application.get_zones import GetZonesUseCase
 from src.analytics.application.get_zone_health import GetZoneHealthUseCase
+from src.analytics.application.update_zone import UpdateZoneUseCase
+from src.analytics.application.delete_zone import DeleteZoneUseCase
 from src.analytics.infrastructure.postgres_datastream_repo import PostgresDatastreamReadRepository
 from src.analytics.infrastructure.postgres_observation_repo import PostgresObservationReadRepository
 from src.analytics.infrastructure.postgres_location_repo import PostgresLocationReadRepository
@@ -293,3 +295,13 @@ def get_zones_use_case(repo: _ZoneRepo) -> GetZonesUseCase:
 def get_zone_health_use_case(repo: _ZoneRepo) -> GetZoneHealthUseCase:
     """Fabrica del caso de uso GetZoneHealth."""
     return GetZoneHealthUseCase(repo)
+
+
+def get_update_zone_use_case(repo: _ZoneRepo) -> UpdateZoneUseCase:
+    """Fabrica del caso de uso UpdateZone."""
+    return UpdateZoneUseCase(repo)
+
+
+def get_delete_zone_use_case(repo: _ZoneRepo) -> DeleteZoneUseCase:
+    """Fabrica del caso de uso DeleteZone."""
+    return DeleteZoneUseCase(repo)

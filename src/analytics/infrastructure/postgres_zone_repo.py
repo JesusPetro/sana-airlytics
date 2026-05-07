@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain.zone import Zone
@@ -85,6 +85,36 @@ class PostgresZoneRepository:
         }
         rows = (await self._session.execute(query, params)).mappings().all()
         return [dict(r) for r in rows]
+
+    async def update(
+        self,
+        zone_id: UUID,
+        name: str | None,
+        center_lat: float | None,
+        center_lon: float | None,
+        radius_m: float | None,
+    ) -> None:
+        """Actualiza solo los campos no None de la zona."""
+        values: dict = {}
+        if name is not None:
+            values["name"] = name
+        if center_lat is not None:
+            values["center_lat"] = center_lat
+        if center_lon is not None:
+            values["center_lon"] = center_lon
+        if radius_m is not None:
+            values["radius_m"] = radius_m
+        if not values:
+            return
+        stmt = update(ZoneModel).where(ZoneModel.id == zone_id).values(**values)
+        await self._session.execute(stmt)
+        await self._session.flush()
+
+    async def delete(self, zone_id: UUID) -> None:
+        """Elimina la zona por ID."""
+        stmt = delete(ZoneModel).where(ZoneModel.id == zone_id)
+        await self._session.execute(stmt)
+        await self._session.flush()
 
     def _to_domain(self, model: ZoneModel) -> Zone:
         """Convierte el modelo ORM a la entidad de dominio."""
