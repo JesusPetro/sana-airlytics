@@ -42,7 +42,8 @@ def _init_sentry() -> None:
 def _configure() -> None:
     config = _load_yaml_config()
     fmt = os.getenv("LOG_FORMAT", config.get("format", "pretty")).lower()
-    level_name = os.getenv("LOG_LEVEL", "INFO").upper()
+    yaml_level = config.get("root", {}).get("level", "INFO")
+    level_name = os.getenv("LOG_LEVEL", yaml_level).upper()
 
     renderer = (
         structlog.processors.JSONRenderer()
