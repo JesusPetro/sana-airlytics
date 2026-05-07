@@ -67,6 +67,27 @@ class PostgresWorkspaceRepository:
         await self._session.execute(stmt)
         await self._session.flush()
 
+    async def update(
+        self,
+        workspace_id: UUID,
+        name: str | None,
+        description: str | None,
+        is_private: bool | None,
+    ) -> None:
+        """Actualiza solo los campos no None del workspace."""
+        values: dict = {}
+        if name is not None:
+            values["name"] = name
+        if description is not None:
+            values["description"] = description
+        if is_private is not None:
+            values["is_private"] = is_private
+        if not values:
+            return
+        stmt = update(WorkspaceModel).where(WorkspaceModel.id == workspace_id).values(**values)
+        await self._session.execute(stmt)
+        await self._session.flush()
+
     def _to_domain(self, model: WorkspaceModel) -> Workspace:
         """Convierte un modelo ORM a la entidad de dominio."""
         return Workspace(

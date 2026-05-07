@@ -12,11 +12,16 @@ from src.access_control.application.dtos import (
     AuthorizeActionInput,
     CreateWorkspaceInput,
     InviteCollaboratorInput,
+    UpdateWorkspaceInput,
 )
 from src.access_control.application.invite_collaborator import (
     CollaboratorAlreadyExistsError,
     InsufficientPrivilegesError,
     InviteCollaboratorUseCase,
+)
+from src.access_control.application.update_workspace import (
+    UpdateWorkspaceUseCase,
+    WorkspaceNotFoundError,
 )
 from src.access_control.domain.collaborator import Collaborator
 from src.access_control.domain.ports.repositories import (
@@ -32,6 +37,7 @@ from ...dependencies.use_cases import (
     get_authorize_use_case,
     get_create_workspace_use_case,
     get_invite_collaborator_use_case,
+    get_update_workspace_use_case,
 )
 from .schemas import (
     ChangeCollaboratorRoleRequest,
@@ -39,6 +45,7 @@ from .schemas import (
     CreateWorkspaceRequest,
     CreateWorkspaceResponse,
     InviteCollaboratorRequest,
+    UpdateWorkspaceRequest,
     WorkspaceSummary,
 )
 
@@ -52,6 +59,7 @@ _CreateWsUC = Annotated[CreateWorkspaceUseCase, Depends(get_create_workspace_use
 _InviteUC = Annotated[InviteCollaboratorUseCase, Depends(get_invite_collaborator_use_case)]
 _WsRepo = Annotated[WorkspaceRepository, Depends(get_workspace_repository)]
 _CollabRepo = Annotated[CollaboratorRepository, Depends(get_collaborator_repository)]
+_UpdateWsUC = Annotated[UpdateWorkspaceUseCase, Depends(get_update_workspace_use_case)]
 
 
 def _require_allowed(result) -> None:
@@ -209,6 +217,46 @@ async def delete_workspace(
     # de borrado se delega al metodo de repositorio que actualiza deleted_at en BD.
     await ws_repo.soft_delete(UUID(ws_id))
     logger.info("workspace_deleted", extra={"workspace_id": ws_id, "user_id": current_user.user_id})
+
+
+@router.patch(
+    "/{ws_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Editar metadatos de un workspace",
+    responses={
+        401: {"description": "No autenticado."},
+        403: {"description": "Solo admin u owner pueden editar el workspace."},
+        404: {"description": "Workspace no encontrado."},
+    },
+)
+async def update_workspace(
+    ws_id: str,
+    body: UpdateWorkspaceRequest,
+    current_user: _CurrentUser,
+    authorize: _AuthorizeUC,
+    use_case: _UpdateWsUC,
+) -> None:
+    """Edita nombre, descripcion o visibilidad del workspace. Requiere rol admin u owner."""
+    result = await authorize.execute(
+        AuthorizeActionInput(
+            user_id=current_user.user_id,
+            action="workspace:delete",
+            workspace_id=ws_id,
+        )
+    )
+    _require_allowed(result)
+    try:
+        await use_case.execute(
+            UpdateWorkspaceInput(
+                workspace_id=ws_id,
+                name=body.name,
+                description=body.description,
+                is_private=body.is_private,
+            )
+        )
+    except WorkspaceNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    logger.info("workspace_updated", extra={"workspace_id": ws_id, "user_id": current_user.user_id})
 
 
 @router.post(

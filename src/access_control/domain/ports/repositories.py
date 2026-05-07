@@ -25,6 +25,14 @@ class WorkspaceRepository(Protocol):
     async def find_by_owner_org(self, org_id: UUID) -> list[Workspace]: ...
     async def soft_delete(self, workspace_id: UUID) -> None: ...
 
+    async def update(
+        self,
+        workspace_id: UUID,
+        name: str | None,
+        description: str | None,
+        is_private: bool | None,
+    ) -> None: ...
+
 
 class CollaboratorRepository(Protocol):
     """Puerto de persistencia para colaboradores."""

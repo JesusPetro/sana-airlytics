@@ -28,6 +28,13 @@ class WorkspaceSummary(BaseModel):
     owner_org_id: str | None
 
 
+class UpdateWorkspaceRequest(BaseModel):
+    """Campos editables de un workspace."""
+    name: str | None = None
+    description: str | None = None
+    is_private: bool | None = None
+
+
 class InviteCollaboratorRequest(BaseModel):
     """Datos para invitar un colaborador a un workspace."""
 

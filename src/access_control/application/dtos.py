@@ -67,6 +67,15 @@ class InviteCollaboratorInput:
 
 
 @dataclass(frozen=True)
+class UpdateWorkspaceInput:
+    """Campos editables de un workspace. Solo owner o admin pueden modificarlos."""
+    workspace_id: str
+    name: str | None = None
+    description: str | None = None
+    is_private: bool | None = None
+
+
+@dataclass(frozen=True)
 class AuthorizeActionInput:
     """Consulta de autorizacion emitida por otro BC."""
 

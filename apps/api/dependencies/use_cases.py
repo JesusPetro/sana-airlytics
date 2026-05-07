@@ -10,6 +10,7 @@ from src.access_control.application.create_workspace import CreateWorkspaceUseCa
 from src.access_control.application.invite_collaborator import InviteCollaboratorUseCase
 from src.access_control.application.register_user import RegisterUserUseCase
 from src.access_control.application.reset_password import ResetPasswordUseCase
+from src.access_control.application.update_workspace import UpdateWorkspaceUseCase
 from src.access_control.domain.ports.repositories import (
     AuditLogger,
     CollaboratorRepository,
@@ -111,6 +112,13 @@ def get_invite_collaborator_use_case(
 ) -> InviteCollaboratorUseCase:
     """Fabrica del caso de uso InviteCollaborator."""
     return InviteCollaboratorUseCase(user_repo, workspace_repo, collaborator_repo, org_repo)
+
+
+def get_update_workspace_use_case(
+    workspace_repo: _WorkspaceRepo,
+) -> UpdateWorkspaceUseCase:
+    """Fabrica del caso de uso UpdateWorkspace."""
+    return UpdateWorkspaceUseCase(workspace_repo)
 
 
 # --- device_management ---
