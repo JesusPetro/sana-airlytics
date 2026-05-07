@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -13,11 +14,18 @@ from src.analytics.application.create_alert_rule import CreateAlertRuleUseCase
 from src.analytics.application.create_annotation import CreateAnnotationUseCase
 from src.analytics.application.create_zone import CreateZoneUseCase
 from src.analytics.application.delete_alert_rule import DeleteAlertRuleUseCase
+from src.analytics.application.delete_annotation import DeleteAnnotationUseCase
 from src.analytics.application.dtos import (
     CreateAlertRuleInput,
     CreateAnnotationInput,
     CreateZoneInput,
     UpdateAlertRuleInput,
+)
+from src.analytics.application.update_annotation import (
+    AnnotationNotFoundError,
+    AnnotationNotOwnedError,
+    UpdateAnnotationInput,
+    UpdateAnnotationUseCase,
 )
 from src.analytics.application.get_aggregations import GetAggregationsUseCase
 from src.analytics.application.get_alert_events import GetAlertEventsUseCase
@@ -33,6 +41,8 @@ from src.analytics.application.get_zones import GetZonesUseCase
 from src.analytics.application.update_alert_rule import AlertRuleNotFoundError, UpdateAlertRuleUseCase
 
 from ...dependencies.auth import get_current_user
+from ...dependencies.repositories import get_annotation_repository
+from src.analytics.infrastructure.postgres_annotation_repo import PostgresAnnotationRepository
 from ...dependencies.use_cases import (
     get_aggregations_use_case,
     get_alert_events_use_case,
@@ -44,11 +54,13 @@ from ...dependencies.use_cases import (
     get_create_zone_use_case,
     get_datastreams_use_case,
     get_delete_alert_rule_use_case,
+    get_delete_annotation_use_case,
     get_heatmap_use_case,
     get_observations_use_case,
     get_sensor_location_use_case,
     get_sensor_track_use_case,
     get_update_alert_rule_use_case,
+    get_update_annotation_use_case,
     get_zone_health_use_case,
     get_zones_use_case,
 )
@@ -66,6 +78,7 @@ from .schemas import (
     ObservationPointResponse,
     TrackPointResponse,
     UpdateAlertRuleRequest,
+    UpdateAnnotationRequest,
     ZoneHealthResponse,
     ZoneResponse,
 )
@@ -82,8 +95,11 @@ _GetAggUC = Annotated[GetAggregationsUseCase, Depends(get_aggregations_use_case)
 _GetLocUC = Annotated[GetSensorLocationUseCase, Depends(get_sensor_location_use_case)]
 _GetTrackUC = Annotated[GetSensorTrackUseCase, Depends(get_sensor_track_use_case)]
 _GetHeatmapUC = Annotated[GetHeatmapUseCase, Depends(get_heatmap_use_case)]
+_AnnotRepo = Annotated[PostgresAnnotationRepository, Depends(get_annotation_repository)]
 _CreateAnnotUC = Annotated[CreateAnnotationUseCase, Depends(get_create_annotation_use_case)]
 _GetAnnotUC = Annotated[GetAnnotationsUseCase, Depends(get_annotations_use_case)]
+_UpdateAnnotUC = Annotated[UpdateAnnotationUseCase, Depends(get_update_annotation_use_case)]
+_DeleteAnnotUC = Annotated[DeleteAnnotationUseCase, Depends(get_delete_annotation_use_case)]
 _CreateRuleUC = Annotated[CreateAlertRuleUseCase, Depends(get_create_alert_rule_use_case)]
 _GetRulesUC = Annotated[GetAlertRulesUseCase, Depends(get_alert_rules_use_case)]
 _UpdateRuleUC = Annotated[UpdateAlertRuleUseCase, Depends(get_update_alert_rule_use_case)]
@@ -333,6 +349,105 @@ async def list_annotations(
     _require_allowed(result)
     dtos = await use_case.execute(ws_id, entity_type, entity_id)
     return [AnnotationResponse(**vars(d)) for d in dtos]
+
+
+@router.get(
+    "/workspaces/{ws_id}/annotations/{annotation_id}",
+    response_model=AnnotationResponse,
+    summary="Detalle de una anotacion",
+)
+async def get_annotation(
+    ws_id: str,
+    annotation_id: str,
+    current_user: _CurrentUser,
+    authorize: _AuthorizeUC,
+    repo: _AnnotRepo,
+) -> AnnotationResponse:
+    """Retorna una anotacion por ID. Requiere rol viewer."""
+    result = await authorize.execute(
+        AuthorizeActionInput(
+            user_id=current_user.user_id,
+            action="annotation:read",
+            workspace_id=ws_id,
+        )
+    )
+    _require_allowed(result)
+    annotation = await repo.find_by_id(UUID(annotation_id))
+    if annotation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Annotation not found.")
+    return AnnotationResponse(
+        annotation_id=str(annotation.id),
+        entity_type=annotation.entity_type,
+        entity_id=str(annotation.entity_id),
+        body=annotation.body,
+        created_by=str(annotation.created_by),
+        created_at=annotation.created_at,
+    )
+
+
+@router.patch(
+    "/workspaces/{ws_id}/annotations/{annotation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Editar cuerpo de una anotacion",
+)
+async def update_annotation(
+    ws_id: str,
+    annotation_id: str,
+    body: UpdateAnnotationRequest,
+    current_user: _CurrentUser,
+    authorize: _AuthorizeUC,
+    use_case: _UpdateAnnotUC,
+) -> None:
+    """Edita el cuerpo de la anotacion. Solo el creador puede modificarla. Requiere rol editor."""
+    result = await authorize.execute(
+        AuthorizeActionInput(
+            user_id=current_user.user_id,
+            action="annotation:create",
+            workspace_id=ws_id,
+        )
+    )
+    _require_allowed(result)
+    try:
+        await use_case.execute(
+            UpdateAnnotationInput(
+                annotation_id=annotation_id,
+                body=body.body,
+                requesting_user_id=current_user.user_id,
+            )
+        )
+    except AnnotationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except AnnotationNotOwnedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not the annotation owner.")
+
+
+@router.delete(
+    "/workspaces/{ws_id}/annotations/{annotation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar una anotacion",
+)
+async def delete_annotation(
+    ws_id: str,
+    annotation_id: str,
+    current_user: _CurrentUser,
+    authorize: _AuthorizeUC,
+    use_case: _DeleteAnnotUC,
+) -> None:
+    """Elimina la anotacion. Solo el creador puede eliminarla. Requiere rol editor."""
+    result = await authorize.execute(
+        AuthorizeActionInput(
+            user_id=current_user.user_id,
+            action="annotation:create",
+            workspace_id=ws_id,
+        )
+    )
+    _require_allowed(result)
+    try:
+        await use_case.execute(annotation_id, current_user.user_id)
+    except AnnotationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except AnnotationNotOwnedError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not the annotation owner.")
 
 
 # Alertas

@@ -169,6 +169,8 @@ from src.analytics.application.get_sensor_track import GetSensorTrackUseCase
 from src.analytics.application.get_heatmap import GetHeatmapUseCase
 from src.analytics.application.create_annotation import CreateAnnotationUseCase
 from src.analytics.application.get_annotations import GetAnnotationsUseCase
+from src.analytics.application.update_annotation import UpdateAnnotationUseCase
+from src.analytics.application.delete_annotation import DeleteAnnotationUseCase
 from src.analytics.application.create_alert_rule import CreateAlertRuleUseCase
 from src.analytics.application.get_alert_rules import GetAlertRulesUseCase
 from src.analytics.application.update_alert_rule import UpdateAlertRuleUseCase
@@ -241,6 +243,16 @@ def get_create_annotation_use_case(repo: _AnnotRepo) -> CreateAnnotationUseCase:
 def get_annotations_use_case(repo: _AnnotRepo) -> GetAnnotationsUseCase:
     """Fabrica del caso de uso GetAnnotations."""
     return GetAnnotationsUseCase(repo)
+
+
+def get_update_annotation_use_case(repo: _AnnotRepo) -> UpdateAnnotationUseCase:
+    """Fabrica del caso de uso UpdateAnnotation."""
+    return UpdateAnnotationUseCase(repo)
+
+
+def get_delete_annotation_use_case(repo: _AnnotRepo) -> DeleteAnnotationUseCase:
+    """Fabrica del caso de uso DeleteAnnotation."""
+    return DeleteAnnotationUseCase(repo)
 
 
 def get_create_alert_rule_use_case(repo: _AlertRuleRepo) -> CreateAlertRuleUseCase:

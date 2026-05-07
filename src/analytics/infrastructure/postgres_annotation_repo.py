@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.infrastructure.orm_models import AnnotationModel
@@ -56,3 +56,33 @@ class PostgresAnnotationRepository:
             )
             for r in rows
         ]
+
+    async def find_by_id(self, annotation_id: UUID) -> Annotation | None:
+        """Retorna la anotacion por ID o None."""
+        model = await self._session.get(AnnotationModel, annotation_id)
+        if model is None:
+            return None
+        return Annotation(
+            id=model.id,
+            entity_type=model.entity_type,
+            entity_id=model.entity_id,
+            body=model.body,
+            created_by=model.created_by,
+            created_at=model.created_at,
+        )
+
+    async def update_body(self, annotation_id: UUID, body: str) -> None:
+        """Actualiza el cuerpo de la anotacion."""
+        stmt = (
+            update(AnnotationModel)
+            .where(AnnotationModel.id == annotation_id)
+            .values(body=body)
+        )
+        await self._session.execute(stmt)
+        await self._session.flush()
+
+    async def delete(self, annotation_id: UUID) -> None:
+        """Elimina la anotacion por ID."""
+        stmt = delete(AnnotationModel).where(AnnotationModel.id == annotation_id)
+        await self._session.execute(stmt)
+        await self._session.flush()

@@ -63,7 +63,7 @@ class PostgresZoneRepository:
             JOIN sensors s      ON ds.sensor_id = s.id
             JOIN locations l    ON l.sensor_id = s.id
             WHERE s.workspace_id = :workspace_id
-              AND o.phenomenon_time >= NOW() - INTERVAL ':hours hours'
+              AND o.phenomenon_time >= NOW() - (:hours * INTERVAL '1 hour')
               AND o.qualifier != 'SENSOR_OUT_OF_RANGE'
               AND (
                 6371000 * acos(

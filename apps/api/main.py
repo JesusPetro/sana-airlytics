@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import logging
-
+from shared.infrastructure.logger import get_logger
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -21,7 +20,7 @@ from .routers.auth.router import router as auth_router
 from .routers.devices.router import router as devices_router
 from .routers.workspaces.router import router as workspaces_router
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _TAGS_METADATA = [
     {

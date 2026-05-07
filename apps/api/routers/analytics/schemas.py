@@ -79,6 +79,11 @@ class AnnotationResponse(BaseModel):
     created_at: datetime
 
 
+class UpdateAnnotationRequest(BaseModel):
+    """Datos para editar una anotacion."""
+    body: str
+
+
 class CreateAlertRuleRequest(BaseModel):
     """Datos para crear una regla de alerta."""
     unit_id: str | None = None
