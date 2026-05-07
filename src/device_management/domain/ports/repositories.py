@@ -25,3 +25,7 @@ class DeviceRepository(Protocol):
     async def find_by_workspace(self, workspace_id: str) -> list[Device]:
         """Retorna todos los devices del workspace que no esten soft-deleted."""
         ...
+
+    async def find_pending(self) -> list[Device]:
+        """Retorna todos los devices en estado PENDING disponibles para reclamar."""
+        ...

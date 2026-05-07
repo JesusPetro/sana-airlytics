@@ -100,6 +100,17 @@ class PostgresDeviceRepository:
         rows = (await self._session.execute(stmt)).all()
         return [self._to_domain(sensor, loc) for sensor, loc in rows]
 
+    async def find_pending(self) -> list[Device]:
+        """Retorna todos los devices en estado PENDING disponibles para reclamar."""
+        stmt = (
+            select(SensorModel, LocationModel)
+            .outerjoin(LocationModel, LocationModel.sensor_id == SensorModel.id)
+            .where(SensorModel.status == "PENDING")
+            .where(SensorModel.deleted_at.is_(None))
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [self._to_domain(sensor, loc) for sensor, loc in rows]
+
     def _to_domain(self, sensor: SensorModel, loc: LocationModel | None) -> Device:
         location = (
             DeviceLocation(

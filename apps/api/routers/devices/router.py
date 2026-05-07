@@ -159,6 +159,87 @@ async def claim_device(
 
 
 @router.get(
+    "/devices",
+    response_model=DeviceStatusResponse,
+    summary="Buscar device por codigo fisico",
+    responses={
+        401: {"description": "No autenticado."},
+        404: {"description": "Device no encontrado con ese codigo."},
+    },
+)
+async def find_device_by_code(
+    code: str,
+    current_user: _CurrentUser,
+    device_repo: _DeviceRepo,
+) -> DeviceStatusResponse:
+    """
+    Permite al usuario verificar si un device con el code impreso existe
+    en el sistema y conocer su estado antes de reclamarlo.
+    """
+    device = await device_repo.find_by_code(code)
+    if device is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Device not found.",
+        )
+    return DeviceStatusResponse(
+        device_id=str(device.id),
+        code=device.code,
+        name=device.name,
+        model=device.model,
+        status=device.status.value,
+        sampling_interval_seconds=device.config.sampling_interval_seconds,
+        transmission_interval_seconds=device.config.transmission_interval_seconds,
+        keepalive_seconds=device.config.keepalive_seconds,
+        last_seen=device.last_seen,
+        deactivated_at=device.deactivated_at,
+        site_type=device.site_type.value if device.site_type else None,
+        latitude=device.location.latitude if device.location else None,
+        longitude=device.location.longitude if device.location else None,
+        elevation=device.location.elevation if device.location else None,
+    )
+
+
+@router.get(
+    "/devices/available",
+    response_model=list[DeviceStatusResponse],
+    summary="Listar devices disponibles para reclamar",
+    responses={
+        401: {"description": "No autenticado."},
+    },
+)
+async def list_available_devices(
+    current_user: _CurrentUser,
+    device_repo: _DeviceRepo,
+) -> list[DeviceStatusResponse]:
+    """
+    Retorna todos los devices en estado PENDING que aun no han sido
+    asignados a ningun workspace. Cualquier usuario autenticado puede
+    reclamar cualquiera de estos devices.
+    """
+    devices = await device_repo.find_pending()
+    return [
+        DeviceStatusResponse(
+            device_id=str(d.id),
+            code=d.code,
+            name=d.name,
+            model=d.model,
+            status=d.status.value,
+            sampling_interval_seconds=d.config.sampling_interval_seconds,
+            transmission_interval_seconds=d.config.transmission_interval_seconds,
+            keepalive_seconds=d.config.keepalive_seconds,
+            last_seen=d.last_seen,
+            deactivated_at=d.deactivated_at,
+            site_type=d.site_type.value if d.site_type else None,
+            latitude=d.location.latitude if d.location else None,
+            longitude=d.location.longitude if d.location else None,
+            elevation=d.location.elevation if d.location else None,
+        )
+        for d in devices
+    ]
+
+
+@router.get(
     "/devices/{device_id}",
     response_model=DeviceStatusResponse,
     summary="Estado y configuracion de un device",
