@@ -36,7 +36,7 @@ class PostgresDeviceRepository:
             deactivated_at=device.deactivated_at,
             sampling_interval_seconds=device.config.sampling_interval_seconds,
             transmission_interval_seconds=device.config.transmission_interval_seconds,
-            workspace_id=UUID(device.workspace_id),
+            workspace_id=UUID(device.workspace_id) if device.workspace_id is not None else None,
         )
         await self._session.execute(
             sensor_stmt.on_conflict_do_update(
@@ -115,7 +115,7 @@ class PostgresDeviceRepository:
             code=sensor.code,
             name=sensor.name,
             model=sensor.model,
-            workspace_id=str(sensor.workspace_id),
+            workspace_id=str(sensor.workspace_id) if sensor.workspace_id is not None else None,
             status=DeviceStatus(sensor.status),
             site_type=SiteType(sensor.site_type) if sensor.site_type else None,
             config=DeviceConfig(
