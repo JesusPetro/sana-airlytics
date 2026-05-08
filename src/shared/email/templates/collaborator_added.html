@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Añadido como colaborador - SANA Airlytics</title>
+    <style>
+      body {
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        background: #F5F9FF;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        background: #1B6CA8;
+        padding: 32px;
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #ffffff;
+        margin: 0;
+        font-size: 22px;
+      }
+
+      .body {
+        padding: 32px;
+        color: #2D3748;
+        text-align: center;
+      }
+
+      .body p {
+        line-height: 1.6;
+        margin: 0 0 16px;
+        text-align: left;
+      }
+
+      .workspace-card {
+        padding: 24px;
+        margin: 24px 0;
+        text-align: center;
+      }
+
+      .workspace-icon {
+        display: inline-block;
+        width: 52px;
+        height: 52px;
+        background: #1B6CA8;
+        border-radius: 10px;
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 52px;
+        text-align: center;
+        margin-bottom: 12px;
+      }
+
+      .workspace-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1A202C;
+        margin: 0 0 8px;
+      }
+
+      .workspace-role {
+        font-size: 13px;
+        color: #718096;
+        margin: 0;
+      }
+
+      .role-badge {
+        display: inline-block;
+        background: #EBF8FF;
+        color: #1B6CA8;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 12px;
+        border: 1px solid #BEE3F8;
+        text-transform: capitalize;
+      }
+
+      .btn-wrapper {
+        text-align: center;
+        margin: 28px 0 8px;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 13px 28px;
+        background: #1B6CA8;
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 15px;
+      }
+
+      .divider {
+        border: none;
+        border-top: 1px solid #E2E8F0;
+        margin: 24px 0;
+      }
+
+      .meta {
+        font-size: 13px;
+        color: #718096;
+        line-height: 1.6;
+        text-align: left;
+      }
+
+      .footer {
+        padding: 16px 32px;
+        background: #F5F9FF;
+        font-size: 12px;
+        color: #8A9BB0;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>SANA Airlytics</h1>
+      </div>
+      <div class="body">
+        <p>Hola, <strong>{{{invitee_name}}}</strong>.</p>
+        <p>
+          <strong>{{{actor_name}}}</strong> te ha añadido como colaborador en el siguiente workspace:
+        </p>
+
+        <div class="workspace-card">
+          <div class="workspace-icon">{{{workspace_initial}}}</div>
+          <div class="workspace-name">{{{workspace_name}}}</div>
+          <div class="workspace-role">Tu rol: <span class="role-badge">{{{role}}}</span></div>
+        </div>
+
+        <p>Ya tienes acceso a la plataforma con los permisos correspondientes a tu rol.</p>
+
+        <div class="btn-wrapper">
+          <a href="{{{platform_url}}}" class="btn">Ir a la plataforma</a>
+        </div>
+
+        <hr class="divider" />
+
+        <p class="meta">
+          Si crees que esto es un error o no reconoces este workspace, puedes ignorar este correo.
+        </p>
+      </div>
+      <div class="footer">SANA Airlytics &mdash; Sistema de monitoreo ambiental</div>
+    </div>
+  </body>
+</html>
