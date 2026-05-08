@@ -81,20 +81,20 @@ def _build_request_reset_use_case(db: AsyncSession) -> RequestPasswordResetUseCa
         reset_expire_minutes=settings.JWT_RESET_TOKEN_EXPIRE_MINUTES,
     )
     email_service = EmailService(
-        smtp_host=settings.SMTP_HOST,
-        smtp_port=settings.SMTP_PORT,
-        smtp_user=settings.SMTP_USER,
-        smtp_password=settings.SMTP_PASSWORD,
-        from_email=settings.SMTP_FROM_EMAIL,
+        api_key=settings.RESEND_API_KEY,
+        from_email=settings.RESEND_FROM_EMAIL,
         frontend_url=settings.FRONTEND_URL,
-        is_configured=settings.smtp_configured,
+        template_reset_password=settings.RESEND_TEMPLATE_RESET_PASSWORD,
+        template_account_created=settings.RESEND_TEMPLATE_ACCOUNT_CREATED,
+        template_alert_event=settings.RESEND_TEMPLATE_ALERT_EVENT,
+        template_collaborator_added=settings.RESEND_TEMPLATE_COLLABORATOR_ADDED,
     )
     return RequestPasswordResetUseCase(
         user_repo=PostgresUserRepository(db),
         token_service=token_service,
         email_sender=email_service,
         is_development=settings.is_development,
-        smtp_configured=settings.smtp_configured,
+        resend_configured=settings.resend_configured,
     )
 
 

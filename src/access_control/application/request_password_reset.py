@@ -23,13 +23,13 @@ class RequestPasswordResetUseCase:
         token_service: TokenService,
         email_sender,  # EmailService — tipado como Any para evitar acoplamiento
         is_development: bool = False,
-        smtp_configured: bool = False,
+        resend_configured: bool = False,
     ) -> None:
         self._users = user_repo
         self._tokens = token_service
         self._email = email_sender
         self._is_dev = is_development
-        self._smtp_ok = smtp_configured
+        self._resend_ok = resend_configured
 
     async def execute(
         self, cmd: RequestPasswordResetInput
@@ -56,10 +56,11 @@ class RequestPasswordResetUseCase:
 
         email_sent = await self._email.send_reset_password_email(
             to_email=user.email,
+            name=user.first_name,
             reset_token=reset_token,
         )
 
-        if self._is_dev and not self._smtp_ok:
+        if self._is_dev and not self._resend_ok:
             logger.debug(
                 "SMTP no configurado en development — token de reset expuesto en respuesta."
             )
@@ -68,7 +69,7 @@ class RequestPasswordResetUseCase:
                 reset_token=reset_token,
                 dev_note=(
                     "SMTP not configured -- token exposed for development testing only. "
-                    "Configure SMTP_* variables in .env to test real email sending."
+                    "Configure RESEND_* variables in .env to test real email sending."
                 ),
             )
 

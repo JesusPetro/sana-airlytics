@@ -53,12 +53,13 @@ class Settings(BaseSettings):
     # --- CORS ---
     CORS_ORIGINS: str = "*"
 
-    # --- SMTP ---
-    SMTP_HOST: str = ""
-    SMTP_PORT: int = 2525
-    SMTP_USER: str
-    SMTP_PASSWORD: str
-    SMTP_FROM_EMAIL: str = "noreply@sana-airlytics.io"
+    # --- Resend ---
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "noreply@mg.airlytics.tech"
+    RESEND_TEMPLATE_RESET_PASSWORD: str = ""
+    RESEND_TEMPLATE_ACCOUNT_CREATED: str = ""
+    RESEND_TEMPLATE_ALERT_EVENT: str = ""
+    RESEND_TEMPLATE_COLLABORATOR_ADDED: str = ""
 
     # --- Frontend ---
     FRONTEND_URL: str = "http://localhost:5173"
@@ -137,9 +138,15 @@ class Settings(BaseSettings):
         }
 
     @property
-    def smtp_configured(self) -> bool:
-        """Retorna True si las variables SMTP minimas estan presentes."""
-        return bool(self.SMTP_HOST and self.SMTP_USER and self.SMTP_PASSWORD)
+    def resend_configured(self) -> bool:
+        """Retorna True si Resend está configurado con API key y todos los template IDs."""
+        return bool(
+            self.RESEND_API_KEY
+            and self.RESEND_TEMPLATE_RESET_PASSWORD
+            and self.RESEND_TEMPLATE_ACCOUNT_CREATED
+            and self.RESEND_TEMPLATE_ALERT_EVENT
+            and self.RESEND_TEMPLATE_COLLABORATOR_ADDED
+        )
 
     @property
     def is_development(self) -> bool:
