@@ -31,3 +31,15 @@ export function useTimeRange() {
 
   return { range, setRange };
 }
+
+export function rangeToISO(range: TimeRange): { from: string; to: string } {
+  const to   = new Date();
+  const from = new Date(to);
+  switch (range) {
+    case '1H':  from.setHours(to.getHours() - 1);   break;
+    case '6H':  from.setHours(to.getHours() - 6);   break;
+    case '7D':  from.setDate(to.getDate() - 7);      break;
+    default:    from.setDate(to.getDate() - 1);      break; // 24H
+  }
+  return { from: from.toISOString(), to: to.toISOString() };
+}
