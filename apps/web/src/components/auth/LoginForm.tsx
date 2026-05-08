@@ -16,7 +16,9 @@ const STRINGS = {
     submitting:  'Iniciando sesión…',
     noAccount:   '¿No tienes cuenta?',
     register:    'Crear cuenta',
-    required:    'Completa todos los campos.',
+    required:           'Completa todos los campos.',
+    invalidCredentials: 'Email o contraseña incorrectos.',
+    serverError:        'Ocurrió un error. Intenta de nuevo.',
   },
   en: {
     title:       'Welcome back',
@@ -28,7 +30,9 @@ const STRINGS = {
     submitting:  'Signing in…',
     noAccount:   "Don't have an account?",
     register:    'Create account',
-    required:    'Please fill in all fields.',
+    required:           'Please fill in all fields.',
+    invalidCredentials: 'Invalid email or password.',
+    serverError:        'Something went wrong. Please try again.',
   },
 } as const;
 
@@ -59,15 +63,15 @@ export function LoginForm({ locale }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!email.trim() || !password) {
-      setError(s.required);
-      return;
-    }
+    if (!email.trim() || !password) { setError(s.required); return; }
     setLoading(true);
-    // TODO: replace with real API call
-    await new Promise(r => setTimeout(r, 1000));
-    setLoading(false);
-    window.location.href = `/${locale}/dashboard`;
+    try {
+      await import('@/lib/api/auth').then(({ login }) => login(email.trim(), password));
+      window.location.href = `/${locale}/dashboard`;
+    } catch (err: any) {
+      setError(err?.status === 401 ? s.invalidCredentials : s.serverError);
+      setLoading(false);
+    }
   }
 
   return (

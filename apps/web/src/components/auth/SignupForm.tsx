@@ -52,6 +52,8 @@ const STRINGS = {
     weakPass:       'La contraseña es demasiado débil.',
     mismatch:       'Las contraseñas no coinciden.',
     orgRequired:    'Completa los datos de la organización.',
+    emailTaken:     'Este correo ya está registrado.',
+    serverError:    'Ocurrió un error. Intenta de nuevo.',
   },
   en: {
     title:          'Create your account',
@@ -87,6 +89,8 @@ const STRINGS = {
     weakPass:       'Password is too weak.',
     mismatch:       'Passwords do not match.',
     orgRequired:    'Please complete the organization details.',
+    emailTaken:     'This email is already registered.',
+    serverError:    'Something went wrong. Please try again.',
   },
 } as const;
 
@@ -171,10 +175,17 @@ export function SignupForm({ locale }: Props) {
     if (isOrg && !orgName.trim())   { setError(s.orgRequired); return; }
 
     setLoading(true);
-    // TODO: replace with real API call
-    await new Promise(r => setTimeout(r, 1000));
-    setLoading(false);
-    window.location.href = `/${locale}/dashboard`;
+    try {
+      await import('@/lib/api/auth').then(({ register }) =>
+        register({ email: email.trim(), password, first_name: firstName.trim(), last_name: lastName.trim() })
+      );
+      // auto-login after register
+      await import('@/lib/api/auth').then(({ login }) => login(email.trim(), password));
+      window.location.href = `/${locale}/dashboard`;
+    } catch (err: any) {
+      setError(err?.status === 409 ? s.emailTaken : s.serverError);
+      setLoading(false);
+    }
   }
 
   const confirmMismatch = confirm.length > 0 && confirm !== password;
