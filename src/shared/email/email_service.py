@@ -1,98 +1,104 @@
 from __future__ import annotations
 
 import logging
-import smtplib
-import ssl
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from pathlib import Path
+
+import resend
 
 logger = logging.getLogger(__name__)
-
-# Ruta al directorio de templates relativa a este archivo
-_TEMPLATES_DIR = Path(__file__).parent / "templates"
-
-
-def _load_template(name: str) -> str:
-    """
-    Carga el contenido de un template HTML desde el directorio templates/.
-    Lanza FileNotFoundError si el template no existe.
-    """
-    path = _TEMPLATES_DIR / name
-    return path.read_text(encoding="utf-8")
 
 
 class EmailService:
     """
-    Servicio de envio de correos electronicos via SMTP.
-    Configurado para usar Mailtrap en development y SMTP real en production.
-    Todas las credenciales se reciben via constructor desde variables de entorno.
+    Servicio de envio de correos electronicos via Resend.
+    Usa plantillas pre-registradas en Resend identificadas por su template ID.
     """
 
     def __init__(
         self,
-        smtp_host: str,
-        smtp_port: int,
-        smtp_user: str,
-        smtp_password: str,
+        api_key: str,
         from_email: str,
         frontend_url: str,
-        is_configured: bool,
+        template_reset_password: str,
+        template_account_created: str,
+        template_alert_event: str,
+        template_collaborator_added: str,
     ) -> None:
-        self._host = smtp_host
-        self._port = smtp_port
-        self._user = smtp_user
-        self._password = smtp_password
+        resend.api_key = api_key
         self._from = from_email
         self._frontend_url = frontend_url
-        self._configured = is_configured
+        self._tpl_reset_password = template_reset_password
+        self._tpl_account_created = template_account_created
+        self._tpl_alert_event = template_alert_event
+        self._tpl_collaborator_added = template_collaborator_added
 
     async def send_reset_password_email(
-        self, to_email: str, reset_token: str
+        self, to_email: str, name: str, reset_token: str
     ) -> bool:
-        """
-        Envia el correo de reset de contrasena al usuario.
-        El link de reset apunta a FRONTEND_URL/reset-password?token=<token>.
-        Retorna True si el envio fue exitoso, False si fallo o SMTP no esta configurado.
-        """
-        if not self._configured:
-            logger.warning(
-                "SMTP no configurado — email de reset no enviado.",
-                extra={"to": to_email},
-            )
-            return False
-
         reset_link = f"{self._frontend_url}/reset-password?token={reset_token}"
+        return await self._send(
+            to=to_email,
+            subject="SANA Airlytics — Restablecer contraseña",
+            template_id=self._tpl_reset_password,
+            variables={"name": name, "reset_link": reset_link},
+        )
 
+    async def send_account_created_email(self, to_email: str, name: str) -> bool:
+        return await self._send(
+            to=to_email,
+            subject="SANA Airlytics — Bienvenido",
+            template_id=self._tpl_account_created,
+            variables={"name": name},
+        )
+
+    async def send_alert_event_email(
+        self, to_email: str, name: str, sensor_name: str, message: str
+    ) -> bool:
+        return await self._send(
+            to=to_email,
+            subject="SANA Airlytics — Alerta de sensor",
+            template_id=self._tpl_alert_event,
+            variables={"name": name, "sensor_name": sensor_name, "message": message},
+        )
+
+    async def send_collaborator_added_email(
+        self,
+        to_email: str,
+        invitee_name: str,
+        actor_name: str,
+        workspace_name: str,
+        role: str,
+    ) -> bool:
+        return await self._send(
+            to=to_email,
+            subject=f"SANA Airlytics — Te han añadido a {workspace_name}",
+            template_id=self._tpl_collaborator_added,
+            variables={
+                "invitee_name": invitee_name,
+                "actor_name": actor_name,
+                "workspace_name": workspace_name,
+                "workspace_initial": workspace_name[0].upper(),
+                "role": role,
+                "platform_url": self._frontend_url,
+            },
+        )
+
+    async def _send(
+        self,
+        to: str,
+        subject: str,
+        template_id: str,
+        variables: dict[str, str],
+    ) -> bool:
         try:
-            html_body = _load_template("reset_password.html").replace(
-                "{{reset_link}}", reset_link
-            )
-        except FileNotFoundError:
-            logger.error("Template reset_password.html no encontrado.")
-            return False
-
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "SANA Airlytics — Reset de contrasena"
-        message["From"] = self._from
-        message["To"] = to_email
-        message.attach(MIMEText(html_body, "html"))
-
-        try:
-            context = ssl.create_default_context()
-            with smtplib.SMTP(self._host, self._port) as server:
-                server.ehlo()
-                server.starttls(context=context)
-                server.login(self._user, self._password)
-                server.sendmail(self._from, to_email, message.as_string())
-            logger.info(
-                "Email de reset enviado.", extra={"to": to_email}
-            )
+            resend.Emails.send({
+                "from": self._from,
+                "to": [to],
+                "subject": subject,
+                "template_id": template_id,
+                "variables": variables,
+            })
+            logger.info("Email enviado.", extra={"to": to, "template": template_id})
             return True
-        except smtplib.SMTPException as exc:
-            logger.error(
-                "Error SMTP al enviar email de reset: %s",
-                exc,
-                extra={"to": to_email},
-            )
+        except Exception as exc:
+            logger.error("Error al enviar email: %s", exc, extra={"to": to})
             return False
