@@ -41,6 +41,14 @@ class CollaboratorRepository(Protocol):
     async def find(self, user_id: UUID, workspace_id: UUID) -> Collaborator | None: ...
     async def find_by_workspace(self, workspace_id: UUID) -> list[Collaborator]: ...
 
+    async def find_by_user_and_workspace(
+        self, user_id: UUID, workspace_id: UUID
+    ) -> Collaborator | None: ...
+
+    async def reactivate(
+        self, user_id: UUID, workspace_id: UUID, role_name: str
+    ) -> None: ...
+
 
 class OrganizationRepository(Protocol):
     """Puerto de solo lectura para organizaciones. MVP: solo necesitamos el owner."""

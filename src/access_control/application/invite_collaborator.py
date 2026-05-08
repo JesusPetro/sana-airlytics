@@ -66,12 +66,17 @@ class InviteCollaboratorUseCase:
         if invitee is None:
             raise ValueError(f"Usuario no encontrado: {cmd.invitee_email!r}")
 
-        # Verificar que no existe ya un vinculo activo
-        existing = await self._collaborators.find(invitee.id, workspace_id)
-        if existing is not None and existing.is_active:
-            raise CollaboratorAlreadyExistsError(
-                f"El usuario ya es colaborador de este workspace"
-            )
+        # Buscar colaborador existente sin filtro de is_active
+        existing = await self._collaborators.find_by_user_and_workspace(
+            invitee.id, workspace_id
+        )
+        if existing is not None:
+            if existing.is_active:
+                raise CollaboratorAlreadyExistsError(
+                    "El usuario ya es colaborador de este workspace"
+                )
+            await self._collaborators.reactivate(invitee.id, workspace_id, cmd.role_name)
+            return
 
         collaborator = Collaborator(
             id=uuid7(),

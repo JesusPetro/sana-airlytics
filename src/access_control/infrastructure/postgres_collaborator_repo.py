@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain.collaborator import Collaborator
@@ -67,6 +67,46 @@ class PostgresCollaboratorRepository:
         )
         rows = (await self._session.execute(stmt)).all()
         return [self._to_domain(m, name) for m, name in rows]
+
+    async def find_by_user_and_workspace(
+        self, user_id: UUID, workspace_id: UUID
+    ) -> Collaborator | None:
+        """Retorna el colaborador (activo o inactivo) o None si nunca existio."""
+        stmt = (
+            select(CollaboratorModel, RoleModel.name)
+            .join(RoleModel, CollaboratorModel.role_id == RoleModel.id)
+            .where(
+                CollaboratorModel.user_id == user_id,
+                CollaboratorModel.workspace_id == workspace_id,
+            )
+        )
+        row = (await self._session.execute(stmt)).one_or_none()
+        if row is None:
+            return None
+        model, role_name = row
+        return self._to_domain(model, role_name)
+
+    async def reactivate(
+        self, user_id: UUID, workspace_id: UUID, role_name: str
+    ) -> None:
+        """Reactiva un colaborador previo y le asigna un nuevo rol."""
+        role_stmt = select(RoleModel.id).where(RoleModel.name == role_name)
+        role_id = (await self._session.execute(role_stmt)).scalar_one_or_none()
+        if role_id is None:
+            raise ValueError(
+                f"Rol no encontrado en BD: {role_name!r}. "
+                f"Verificar que la tabla roles contiene admin/editor/viewer."
+            )
+        stmt = (
+            update(CollaboratorModel)
+            .where(
+                CollaboratorModel.user_id == user_id,
+                CollaboratorModel.workspace_id == workspace_id,
+            )
+            .values(is_active=True, role_id=role_id)
+        )
+        await self._session.execute(stmt)
+        await self._session.flush()
 
     def _to_domain(self, model: CollaboratorModel, role_name: str) -> Collaborator:
         """Convierte un modelo ORM a la entidad de dominio."""
