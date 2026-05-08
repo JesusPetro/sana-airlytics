@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { Topbar } from '@/components/layout/Topbar';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { WorkspaceProvider } from '@/context/WorkspaceContext';
+import { AppProviders } from '@/components/layout/AppProviders';
+import { EmptyWorkspaceGate } from '@/components/workspace/EmptyWorkspaceGate';
+import { UserFab } from '@/components/layout/UserFab';
 
 type Props = {
   children: ReactNode;
@@ -12,7 +14,7 @@ export default async function AppLayout({ children, params }: Props) {
   const { locale } = await params;
 
   return (
-    <WorkspaceProvider>
+    <AppProviders>
       <Topbar locale={locale} />
       <Sidebar locale={locale} />
       {/*
@@ -29,8 +31,11 @@ export default async function AppLayout({ children, params }: Props) {
           transition: 'padding-left 200ms ease',
         }}
       >
-        {children}
+        <EmptyWorkspaceGate>
+          {children}
+        </EmptyWorkspaceGate>
+        <UserFab />
       </main>
-    </WorkspaceProvider>
+    </AppProviders>
   );
 }

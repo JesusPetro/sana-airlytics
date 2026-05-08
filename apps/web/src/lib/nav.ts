@@ -1,4 +1,4 @@
-import { LayoutDashboard, Map as MapIcon, Cpu, Bell } from 'lucide-react';
+import { LayoutDashboard, Map as MapIcon, Cpu, Bell, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -8,6 +8,7 @@ export interface NavItem {
   labelKey: string;
   badge?: 'alertCount';
   visibleFor?: string[];
+  bottomSection?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -35,5 +36,12 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Bell,
     labelKey: 'nav.alerts',
     badge: 'alertCount',
+  },
+  {
+    id: 'settings',
+    href: '/settings',
+    icon: Settings,
+    labelKey: 'nav.settings',
+    bottomSection: true,
   },
 ];

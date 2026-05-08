@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { WorkspacePill } from './WorkspacePill';
 import { RangePills } from '@/components/ui/RangePills';
+import { ThemeToggle } from '@/components/landing/ThemeToggle';
+import { LangToggle } from '@/components/landing/LangToggle';
 
 interface TopbarProps {
   locale: string;
@@ -9,7 +11,7 @@ interface TopbarProps {
 export function Topbar({ locale }: TopbarProps) {
   return (
     <header
-      className="fixed top-0 left-0 right-0 flex items-center justify-between px-4"
+      className="fixed top-0 left-0 right-0 flex items-center gap-4 px-4"
       style={{
         height: 'var(--topbar-h)',
         zIndex: 50,
@@ -43,8 +45,13 @@ export function Topbar({ locale }: TopbarProps) {
         <WorkspacePill />
       </div>
 
-      {/* Right — Range pills */}
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Right — Range pills + Lang + Theme */}
       <RangePills />
+      <LangToggle />
+      <ThemeToggle />
     </header>
   );
 }

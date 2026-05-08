@@ -140,6 +140,10 @@
   --color-text-disabled:  #4A5878;
   --color-text-inverse:   #0D1B2A;
 
+  /* Brand — dark overrides */
+  --color-primary-surface: #0F1E3A;
+  --color-primary-muted:   #1E3A6E;
+
   /* Shadows — darker */
   --shadow-sm:    0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.18);
   --shadow-md:    0 4px 12px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2);
@@ -361,6 +365,43 @@ html {
 }
 .sensor-popup.leaflet-tooltip::before {
   display: none;
+}
+
+/* ── App map markers (SensorMarker DivIcon) ─────────── */
+.sensor-marker-wrap {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sensor-dot-core {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--m-color, #155DFC);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 0 var(--m-color, #155DFC);
+  position: relative;
+  z-index: 2;
+}
+
+.sensor-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--m-color, #155DFC);
+  opacity: 0.35;
+  animation: sensorPulseAnim 2s ease-out infinite;
+  z-index: 1;
+}
+
+@keyframes sensorPulseAnim {
+  0%   { transform: scale(0.3); opacity: 0.45; }
+  70%  { transform: scale(1);   opacity: 0; }
+  100% { transform: scale(1);   opacity: 0; }
 }
 
 /* ── Leaflet attribution (landing fullscreen) ──────── */

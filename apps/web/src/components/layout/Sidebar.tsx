@@ -60,9 +60,9 @@ export function Sidebar({ locale }: SidebarProps) {
       }}
     >
       {/* Nav items */}
-      <nav className="flex-1 py-3 px-2">
+      <nav className="flex-1 py-3 px-2 flex flex-col justify-between">
         <ul className="flex flex-col gap-0.5">
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter((i) => !i.bottomSection).map((item) => {
             const isActive = pathname.includes(item.href);
             const Icon = item.icon;
             const label = t(item.labelKey);
@@ -151,6 +151,44 @@ export function Sidebar({ locale }: SidebarProps) {
                       boxShadow: 'var(--shadow-md)',
                     }}
                   >
+                    {label}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Bottom nav items (Settings) */}
+        <ul className="flex flex-col gap-0.5" style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: '8px', marginTop: '8px' }}>
+          {NAV_ITEMS.filter((i) => i.bottomSection).map((item) => {
+            const isActive = pathname.includes(item.href);
+            const Icon = item.icon;
+            const label = t(item.labelKey);
+            return (
+              <li key={item.id} className="group relative">
+                <Link
+                  href={`/${locale}${item.href}`}
+                  className="flex items-center rounded-[10px] transition-colors duration-150"
+                  style={{
+                    padding: expanded ? '10px 12px' : '10px 0',
+                    justifyContent: expanded ? 'flex-start' : 'center',
+                    gap: expanded ? '12px' : '0',
+                    background: isActive ? 'var(--color-primary-surface)' : 'transparent',
+                    color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                    fontWeight: isActive ? 600 : 400,
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'var(--color-surface-subtle)'; (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-primary)'; } }}
+                  onMouseLeave={(e) => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-secondary)'; } }}
+                >
+                  <span className="relative flex-shrink-0"><Icon size={20} /></span>
+                  <span className="overflow-hidden whitespace-nowrap text-sm transition-all duration-200" style={{ opacity: expanded ? 1 : 0, maxWidth: expanded ? '200px' : '0px' }}>
+                    {label}
+                  </span>
+                </Link>
+                {!expanded && (
+                  <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1.5 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    style={{ zIndex: 60, background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)', boxShadow: 'var(--shadow-md)' }}>
                     {label}
                   </span>
                 )}
