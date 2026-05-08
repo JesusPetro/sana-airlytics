@@ -9,23 +9,48 @@ function RangePillsInner() {
   const { range, setRange } = useTimeRange();
 
   return (
-    <div className="flex items-center gap-1">
+    <div
+      role="tablist"
+      aria-label="Rango temporal"
+      style={{
+        display:      'inline-flex',
+        alignItems:   'center',
+        background:   'var(--color-surface-subtle)',
+        border:       '1px solid var(--color-border-subtle)',
+        borderRadius: 'var(--radius-full)',
+        padding:      '3px',
+        gap:          '2px',
+      }}
+    >
       {RANGES.map((r) => {
         const active = r === range;
         return (
           <button
             key={r}
+            role="tab"
+            aria-selected={active}
             onClick={() => setRange(r)}
-            style={
-              active
-                ? { background: 'var(--color-primary)', color: '#fff', borderColor: 'var(--color-primary)' }
-                : {
-                    background: 'var(--color-surface)',
-                    color: 'var(--color-text-secondary)',
-                    borderColor: 'var(--color-border)',
-                  }
-            }
-            className="h-8 rounded-full border px-3 py-1 font-mono text-xs font-medium transition-colors duration-150 hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-1"
+            style={{
+              height:       '26px',
+              padding:      '0 12px',
+              borderRadius: 'var(--radius-full)',
+              fontSize:     '0.75rem',
+              fontWeight:   500,
+              border:       'none',
+              cursor:       'pointer',
+              transition:   'background 140ms, color 140ms',
+              background:   active ? 'var(--color-surface)' : 'transparent',
+              color:        active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+              boxShadow:    active ? 'var(--shadow-sm)' : 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (!active)
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              if (!active)
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)';
+            }}
           >
             {r}
           </button>
@@ -37,7 +62,20 @@ function RangePillsInner() {
 
 export function RangePills() {
   return (
-    <Suspense fallback={<div className="h-8 w-37 animate-pulse rounded-full bg-surface-2" />}>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display:      'inline-flex',
+            height:       '32px',
+            width:        '148px',
+            borderRadius: 'var(--radius-full)',
+            background:   'var(--color-surface-subtle)',
+            border:       '1px solid var(--color-border-subtle)',
+          }}
+        />
+      }
+    >
       <RangePillsInner />
     </Suspense>
   );
