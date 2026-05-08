@@ -27,6 +27,8 @@ class UpdateAnnotationUseCase:
 
     async def execute(self, cmd: UpdateAnnotationInput) -> AnnotationDTO:
         """Valida ownership y actualiza el cuerpo de la anotacion."""
+        if cmd.body is None:
+            raise ValueError("Al menos un campo debe ser provisto para actualizar el recurso.")
         annotation = await self._repo.find_by_id(UUID(cmd.annotation_id))
         if annotation is None:
             raise AnnotationNotFoundError(cmd.annotation_id)

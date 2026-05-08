@@ -425,6 +425,8 @@ async def update_annotation(
                 requesting_user_id=current_user.user_id,
             )
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except AnnotationNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except AnnotationNotOwnedError:
@@ -738,6 +740,8 @@ async def update_zone(
                 radius_m=body.radius_m,
             )
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except ZoneUpdateNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 

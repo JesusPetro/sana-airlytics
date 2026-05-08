@@ -17,6 +17,8 @@ class UpdateZoneUseCase:
 
     async def execute(self, cmd: UpdateZoneInput) -> None:
         """Valida que la zona exista y actualiza los campos no None."""
+        if all(v is None for v in (cmd.name, cmd.center_lat, cmd.center_lon, cmd.radius_m)):
+            raise ValueError("Al menos un campo debe ser provisto para actualizar el recurso.")
         zone = await self._repo.find_by_id(UUID(cmd.zone_id))
         if zone is None:
             raise ZoneNotFoundError(cmd.zone_id)

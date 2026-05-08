@@ -17,6 +17,8 @@ class UpdateWorkspaceUseCase:
 
     async def execute(self, cmd: UpdateWorkspaceInput) -> None:
         """Verifica que el workspace exista y actualiza los campos no None."""
+        if all(v is None for v in (cmd.name, cmd.description, cmd.is_private)):
+            raise ValueError("Al menos un campo debe ser provisto para actualizar el recurso.")
         workspace = await self._repo.find_by_id(UUID(cmd.workspace_id))
         if workspace is None:
             raise WorkspaceNotFoundError(cmd.workspace_id)

@@ -254,6 +254,8 @@ async def update_workspace(
                 is_private=body.is_private,
             )
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except WorkspaceNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     logger.info("workspace_updated", extra={"workspace_id": ws_id, "user_id": current_user.user_id})
