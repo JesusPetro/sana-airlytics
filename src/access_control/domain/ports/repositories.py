@@ -15,6 +15,18 @@ class UserRepository(Protocol):
     async def find_by_id(self, user_id: UUID) -> User | None: ...
     async def find_by_email(self, email: str) -> User | None: ...
 
+    async def update_profile(
+        self,
+        user_id: UUID,
+        first_name: str | None,
+        last_name: str | None,
+        middle_name: str | None,
+        phone: str | None,
+        address: str | None,
+    ) -> None: ...
+
+    async def deactivate(self, user_id: UUID) -> None: ...
+
 
 class WorkspaceRepository(Protocol):
     """Puerto de persistencia para workspaces."""

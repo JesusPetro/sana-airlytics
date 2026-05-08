@@ -46,6 +46,9 @@ class User:
         password_hash: str,
         first_name: str,
         last_name: str,
+        middle_name: str | None = None,
+        phone: str | None = None,
+        address: str | None = None,
         type: str | None = None,
         is_active: bool = True,
         deleted_at: datetime | None = None,
@@ -57,6 +60,9 @@ class User:
         self._password_hash = password_hash
         self._first_name = first_name
         self._last_name = last_name
+        self._middle_name = middle_name
+        self._phone = phone
+        self._address = address
         self._type = type
         self._is_active = is_active
         self._deleted_at = deleted_at
@@ -69,6 +75,9 @@ class User:
         plain_password: str,
         first_name: str,
         last_name: str,
+        middle_name: str | None = None,
+        phone: str | None = None,
+        address: str | None = None,
         type: str | None = None,
     ) -> "User":
         """Factory que valida y hashea la contraseña antes de construir el usuario."""
@@ -76,7 +85,10 @@ class User:
         password_hash = bcrypt.hashpw(
             plain_password.encode(), bcrypt.gensalt()
         ).decode()
-        return cls(id, email, password_hash, first_name, last_name, type)
+        return cls(
+            id, email, password_hash, first_name, last_name,
+            middle_name, phone, address, type,
+        )
 
     def verify_password(self, plain_password: str) -> bool:
         """Verifica la contrasena en texto plano contra el hash almacenado."""
@@ -110,6 +122,18 @@ class User:
         return self._last_name
 
     @property
+    def middle_name(self) -> str | None:
+        return self._middle_name
+
+    @property
+    def phone(self) -> str | None:
+        return self._phone
+
+    @property
+    def address(self) -> str | None:
+        return self._address
+
+    @property
     def type(self) -> str | None:
         """Campo informativo para la UI. No afecta la logica de acceso."""
         return self._type
@@ -125,6 +149,30 @@ class User:
     @property
     def full_name(self) -> str:
         return f"{self._first_name} {self._last_name}"
+
+    def update_profile(
+        self,
+        first_name: str | None,
+        last_name: str | None,
+        middle_name: str | None,
+        phone: str | None,
+        address: str | None,
+    ) -> None:
+        """
+        Actualiza los campos editables del perfil.
+        Solo modifica los campos que reciben un valor no None.
+        El email no es editable — es el identificador unico del usuario.
+        """
+        if first_name is not None:
+            self._first_name = first_name
+        if last_name is not None:
+            self._last_name = last_name
+        if middle_name is not None:
+            self._middle_name = middle_name
+        if phone is not None:
+            self._phone = phone
+        if address is not None:
+            self._address = address
 
     def change_password(self, new_plain_password: str) -> None:
         """

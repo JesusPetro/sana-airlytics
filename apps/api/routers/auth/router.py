@@ -11,11 +11,17 @@ from src.access_control.application.authenticate_user import (
     AuthenticateUserUseCase,
     AuthenticationError,
 )
+from src.access_control.application.delete_user_account import DeleteUserAccountUseCase
 from src.access_control.application.dtos import (
     LoginInput,
     RegisterUserInput,
     RequestPasswordResetInput,
     ResetPasswordInput,
+    UpdateUserProfileInput,
+)
+from src.access_control.application.get_user_profile import (
+    GetUserProfileUseCase,
+    UserNotFoundError,
 )
 from src.access_control.application.register_user import (
     EmailAlreadyRegisteredError,
@@ -28,6 +34,7 @@ from src.access_control.application.reset_password import (
     ResetPasswordError,
     ResetPasswordUseCase,
 )
+from src.access_control.application.update_user_profile import UpdateUserProfileUseCase
 from src.access_control.domain.ports.repositories import UserRepository
 from src.access_control.domain.ports.token_service import (
     TokenClaims,
@@ -45,8 +52,11 @@ from ...dependencies.limiter import limiter
 from ...dependencies.repositories import get_user_repository
 from ...dependencies.use_cases import (
     get_authenticate_use_case,
+    get_delete_user_account_use_case,
     get_register_use_case,
     get_reset_password_use_case,
+    get_update_user_profile_use_case,
+    get_user_profile_use_case,
 )
 from .schemas import (
     LoginRequest,
@@ -57,6 +67,8 @@ from .schemas import (
     RequestResetRequest,
     ResetPasswordRequest,
     TokenDevResponse,
+    UpdateProfileRequest,
+    UserProfileResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,6 +78,9 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 _RegisterUC = Annotated[RegisterUserUseCase, Depends(get_register_use_case)]
 _AuthenticateUC = Annotated[AuthenticateUserUseCase, Depends(get_authenticate_use_case)]
 _ResetPasswordUC = Annotated[ResetPasswordUseCase, Depends(get_reset_password_use_case)]
+_GetProfileUC = Annotated[GetUserProfileUseCase, Depends(get_user_profile_use_case)]
+_UpdateProfileUC = Annotated[UpdateUserProfileUseCase, Depends(get_update_user_profile_use_case)]
+_DeleteAccountUC = Annotated[DeleteUserAccountUseCase, Depends(get_delete_user_account_use_case)]
 _TokenSvc = Annotated[TokenService, Depends(get_token_service)]
 _UserRepo = Annotated[UserRepository, Depends(get_user_repository)]
 _CurrentUser = Annotated[TokenClaims, Depends(get_current_user)]
@@ -120,6 +135,10 @@ async def register(
         password=body.password,
         first_name=body.first_name,
         last_name=body.last_name,
+        middle_name=body.middle_name,
+        phone=body.phone,
+        address=body.address,
+        type=body.type,
     )
     try:
         output = await use_case.execute(cmd)
@@ -331,3 +350,92 @@ async def token_dev(
             detail="Incorrect email or password.",
         ) from exc
     return TokenDevResponse(access_token=output.access_token)
+
+
+@router.get(
+    "/profile",
+    response_model=UserProfileResponse,
+    summary="Obtener perfil completo del usuario autenticado",
+    responses={
+        401: {"description": "No autenticado o token invalido."},
+        404: {"description": "Usuario no encontrado o inactivo."},
+    },
+)
+async def get_profile(
+    current_user: _CurrentUser,
+    use_case: _GetProfileUC,
+) -> UserProfileResponse:
+    """Retorna los datos completos del perfil leyendo desde la BD, no del JWT."""
+    try:
+        output = await use_case.execute(current_user.user_id)
+    except UserNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        ) from exc
+    return UserProfileResponse(
+        user_id=output.user_id,
+        email=output.email,
+        first_name=output.first_name,
+        last_name=output.last_name,
+        middle_name=output.middle_name,
+        phone=output.phone,
+        address=output.address,
+        type=output.type,
+        is_active=output.is_active,
+    )
+
+
+@router.patch(
+    "/profile",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Actualizar perfil del usuario autenticado",
+    responses={
+        401: {"description": "No autenticado o token invalido."},
+        404: {"description": "Usuario no encontrado o inactivo."},
+    },
+)
+async def update_profile(
+    body: UpdateProfileRequest,
+    current_user: _CurrentUser,
+    use_case: _UpdateProfileUC,
+) -> None:
+    """Actualiza los campos editables del perfil. El email no es modificable."""
+    cmd = UpdateUserProfileInput(
+        user_id=current_user.user_id,
+        first_name=body.first_name,
+        last_name=body.last_name,
+        middle_name=body.middle_name,
+        phone=body.phone,
+        address=body.address,
+    )
+    try:
+        await use_case.execute(cmd)
+    except UserNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        ) from exc
+
+
+@router.delete(
+    "/account",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar cuenta del usuario autenticado (soft delete)",
+    responses={
+        401: {"description": "No autenticado o token invalido."},
+        404: {"description": "Usuario no encontrado o ya inactivo."},
+    },
+)
+async def delete_account(
+    current_user: _CurrentUser,
+    use_case: _DeleteAccountUC,
+) -> None:
+    """Desactiva la cuenta; el registro permanece en BD (soft delete)."""
+    try:
+        await use_case.execute(current_user.user_id)
+    except UserNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        ) from exc

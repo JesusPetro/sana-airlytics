@@ -41,6 +41,10 @@ class RegisterUserUseCase:
                 plain_password=cmd.password,
                 first_name=cmd.first_name,
                 last_name=cmd.last_name,
+                middle_name=cmd.middle_name,
+                phone=cmd.phone,
+                address=cmd.address,
+                type=cmd.type,
             )
         except _DomainWeakPassword as e:
             raise WeakPasswordError(str(e)) from e

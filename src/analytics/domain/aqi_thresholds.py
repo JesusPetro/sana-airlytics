@@ -9,10 +9,10 @@ class AqiThresholds:
     """
 
     PM2_5_GOOD       = 15.0   # por debajo: bueno
-    PM2_5_MODERATE   = 45.0   # por debajo: moderado; por encima: malo
+    PM2_5_MODERATE   = 37.0   # por debajo: moderado; por encima: malo
 
     PM10_GOOD        = 45.0
-    PM10_MODERATE    = 100.0
+    PM10_MODERATE    = 75.0
 
     CO2_GOOD         = 1000.0
     CO2_MODERATE     = 2000.0

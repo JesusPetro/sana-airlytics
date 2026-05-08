@@ -7,9 +7,12 @@ from fastapi import Depends
 from src.access_control.application.authenticate_user import AuthenticateUserUseCase
 from src.access_control.application.authorize_action import AuthorizeActionUseCase
 from src.access_control.application.create_workspace import CreateWorkspaceUseCase
+from src.access_control.application.delete_user_account import DeleteUserAccountUseCase
+from src.access_control.application.get_user_profile import GetUserProfileUseCase
 from src.access_control.application.invite_collaborator import InviteCollaboratorUseCase
 from src.access_control.application.register_user import RegisterUserUseCase
 from src.access_control.application.reset_password import ResetPasswordUseCase
+from src.access_control.application.update_user_profile import UpdateUserProfileUseCase
 from src.access_control.application.update_workspace import UpdateWorkspaceUseCase
 from src.access_control.domain.ports.repositories import (
     AuditLogger,
@@ -119,6 +122,26 @@ def get_update_workspace_use_case(
 ) -> UpdateWorkspaceUseCase:
     """Fabrica del caso de uso UpdateWorkspace."""
     return UpdateWorkspaceUseCase(workspace_repo)
+
+
+def get_user_profile_use_case(user_repo: _UserRepo) -> GetUserProfileUseCase:
+    """Fabrica del caso de uso GetUserProfile."""
+    return GetUserProfileUseCase(user_repo)
+
+
+def get_update_user_profile_use_case(
+    user_repo: _UserRepo,
+) -> UpdateUserProfileUseCase:
+    """Fabrica del caso de uso UpdateUserProfile."""
+    return UpdateUserProfileUseCase(user_repo)
+
+
+def get_delete_user_account_use_case(
+    user_repo: _UserRepo,
+    audit_logger: _AuditLog,
+) -> DeleteUserAccountUseCase:
+    """Fabrica del caso de uso DeleteUserAccount."""
+    return DeleteUserAccountUseCase(user_repo, audit_logger)
 
 
 # --- device_management ---

@@ -10,6 +10,10 @@ class RegisterRequest(BaseModel):
     password: str
     first_name: str
     last_name: str
+    middle_name: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    type: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -56,6 +60,30 @@ class MeResponse(BaseModel):
     user_id: str
     email: str
     type: str | None
+
+
+class UserProfileResponse(BaseModel):
+    """Perfil completo del usuario autenticado."""
+
+    user_id: str
+    email: str
+    first_name: str
+    last_name: str
+    middle_name: str | None
+    phone: str | None
+    address: str | None
+    type: str | None
+    is_active: bool
+
+
+class UpdateProfileRequest(BaseModel):
+    """Campos editables del perfil del usuario."""
+
+    first_name: str | None = None
+    last_name: str | None = None
+    middle_name: str | None = None
+    phone: str | None = None
+    address: str | None = None
 
 
 class TokenDevResponse(BaseModel):

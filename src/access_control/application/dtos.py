@@ -11,6 +11,10 @@ class RegisterUserInput:
     password: str
     first_name: str
     last_name: str
+    middle_name: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    type: str | None = None
 
 
 @dataclass(frozen=True)
@@ -118,3 +122,30 @@ class ResetPasswordOutput:
     """Resultado de confirmar el reset de contrasena."""
 
     message: str
+
+
+@dataclass(frozen=True)
+class UpdateUserProfileInput:
+    """Datos de entrada para actualizar el perfil del usuario."""
+
+    user_id: str
+    first_name: str | None = None
+    last_name: str | None = None
+    middle_name: str | None = None
+    phone: str | None = None
+    address: str | None = None
+
+
+@dataclass(frozen=True)
+class UserProfileOutput:
+    """Datos del perfil completo del usuario."""
+
+    user_id: str
+    email: str
+    first_name: str
+    last_name: str
+    middle_name: str | None
+    phone: str | None
+    address: str | None
+    type: str | None
+    is_active: bool
