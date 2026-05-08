@@ -1,0 +1,373 @@
+@import "tailwindcss";
+
+/* ─── FUENTE LOCAL: Como ──────────────────────────────── */
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como-ExtraLight.woff2') format('woff2');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Como';
+  src: url('/fonts/Como-Heavy.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── DARK MODE — class strategy ──────────────────────── */
+@custom-variant dark (&:is(.dark *));
+
+/* ═══════════════════════════════════════════════════════
+   CSS VARIABLES — light mode (default)
+   ═══════════════════════════════════════════════════════ */
+:root {
+  /* Brand */
+  --color-primary:         #155DFC;
+  --color-primary-dark:    #113DC0;
+  --color-primary-muted:   #C6D2FF;
+  --color-primary-surface: #EEF2FF;
+
+  /* Accent */
+  --color-accent-violet: #4F39F6;
+  --color-accent-teal:   #0097A7;
+  --color-accent-cyan:   #46ECD5;
+
+  /* Surface */
+  --color-bg:             #F8FAFF;
+  --color-surface:        #FFFFFF;
+  --color-surface-subtle: #EEF2FF;
+  --color-surface-2:      #E2E8F0;
+  --color-surface-hover:  #BEDBFF;
+  --color-border:         #D1DCE8;
+  --color-border-subtle:  #E8EDF5;
+
+  /* Text */
+  --color-text-primary:   #0D1B2A;
+  --color-text-secondary: #4A5568;
+  --color-text-disabled:  #A0AEC0;
+  --color-text-inverse:   #FFFFFF;
+
+  /* AQI — health gradient */
+  --color-aqi-good:       #10B981;
+  --color-aqi-transition: #06B6D4;
+  --color-aqi-moderate:   #3B82F6;
+  --color-aqi-elevated:   #8B5CF6;
+  --color-aqi-unhealthy:  #EC4899;
+  --color-aqi-critical:   #EF4444;
+  --color-aqi-hazardous:  #991B1B;
+
+  /* No-threshold variables */
+  --color-no-threshold: #155DFC;
+
+  /* Device status */
+  --color-status-online:      #10B981;
+  --color-status-offline:     #EF4444;
+  --color-status-pending:     #F59E0B;
+  --color-status-maintenance: #8B5CF6;
+
+  /* Shadows */
+  --shadow-sm:    0 1px 3px rgba(13,27,42,0.06), 0 1px 2px rgba(13,27,42,0.04);
+  --shadow-md:    0 4px 12px rgba(13,27,42,0.08), 0 2px 4px rgba(13,27,42,0.04);
+  --shadow-lg:    0 16px 40px rgba(13,27,42,0.12);
+  --shadow-float: 0 8px 32px rgba(21,93,252,0.12), 0 2px 8px rgba(13,27,42,0.06);
+
+  /* Layout */
+  --topbar-h:              56px;
+  --sidebar-w-collapsed:   64px;
+  --sidebar-w-expanded:    240px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CSS VARIABLES — dark mode
+   ═══════════════════════════════════════════════════════ */
+.dark {
+  /* Surface */
+  --color-bg:             #070B14;
+  --color-surface:        #0D1521;
+  --color-surface-subtle: #121E32;
+  --color-surface-2:      #1A2640;
+  --color-surface-hover:  #1C2F52;
+  --color-border:         #2A3B56;
+  --color-border-subtle:  #1A2840;
+
+  /* Text */
+  --color-text-primary:   #E2EAFF;
+  --color-text-secondary: #8B9BBC;
+  --color-text-disabled:  #4A5878;
+  --color-text-inverse:   #0D1B2A;
+
+  /* Shadows — darker */
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.18);
+  --shadow-md:    0 4px 12px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-lg:    0 16px 40px rgba(0,0,0,0.5);
+  --shadow-float: 0 8px 32px rgba(21,93,252,0.25), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ═══════════════════════════════════════════════════════
+   TAILWIND v4 THEME — maps CSS vars → utilities
+   ═══════════════════════════════════════════════════════ */
+@theme inline {
+  /* ── Fonts ────────────────────────────────────────── */
+  --font-sans:    'Como', sans-serif;
+  --font-mono:    var(--font-jetbrains-mono);
+  --font-display: 'Como', sans-serif;
+
+  /* ── Brand colors ─────────────────────────────────── */
+  --color-primary:         var(--color-primary);
+  --color-primary-dark:    var(--color-primary-dark);
+  --color-primary-muted:   var(--color-primary-muted);
+  --color-primary-surface: var(--color-primary-surface);
+
+  /* ── Accent ───────────────────────────────────────── */
+  --color-accent-violet: var(--color-accent-violet);
+  --color-accent-teal:   var(--color-accent-teal);
+  --color-accent-cyan:   var(--color-accent-cyan);
+
+  /* ── Surface ──────────────────────────────────────── */
+  --color-bg:             var(--color-bg);
+  --color-surface:        var(--color-surface);
+  --color-surface-subtle: var(--color-surface-subtle);
+  --color-surface-2:      var(--color-surface-2);
+  --color-surface-hover:  var(--color-surface-hover);
+  --color-border:         var(--color-border);
+  --color-border-subtle:  var(--color-border-subtle);
+
+  /* ── Text ─────────────────────────────────────────── */
+  --color-text-primary:   var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-disabled:  var(--color-text-disabled);
+  --color-text-inverse:   var(--color-text-inverse);
+
+  /* ── AQI ──────────────────────────────────────────── */
+  --color-aqi-good:       var(--color-aqi-good);
+  --color-aqi-transition: var(--color-aqi-transition);
+  --color-aqi-moderate:   var(--color-aqi-moderate);
+  --color-aqi-elevated:   var(--color-aqi-elevated);
+  --color-aqi-unhealthy:  var(--color-aqi-unhealthy);
+  --color-aqi-critical:   var(--color-aqi-critical);
+  --color-aqi-hazardous:  var(--color-aqi-hazardous);
+  --color-no-threshold:   var(--color-no-threshold);
+
+  /* ── Status ───────────────────────────────────────── */
+  --color-status-online:      var(--color-status-online);
+  --color-status-offline:     var(--color-status-offline);
+  --color-status-pending:     var(--color-status-pending);
+  --color-status-maintenance: var(--color-status-maintenance);
+
+  /* ── Radii ────────────────────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ──────────────────────────────────────── */
+  --shadow-sm:    var(--shadow-sm);
+  --shadow-md:    var(--shadow-md);
+  --shadow-lg:    var(--shadow-lg);
+  --shadow-float: var(--shadow-float);
+
+  /* ── Layout spacing ───────────────────────────────── */
+  --spacing-topbar:             56px;
+  --spacing-sidebar-collapsed:  64px;
+  --spacing-sidebar-expanded:   240px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════ */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans, 'Como', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+  border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-disabled);
+}
+
+/* ═══════════════════════════════════════════════════════
+   VIEW TRANSITIONS — theme circle expand
+   ═══════════════════════════════════════════════════════ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: vt-circle-expand 0.45s ease-in both;
+}
+
+@keyframes vt-circle-expand {
+  from {
+    clip-path: circle(0% at var(--vt-x, 95%) var(--vt-y, 32px));
+  }
+  to {
+    clip-path: circle(150% at var(--vt-x, 95%) var(--vt-y, 32px));
+  }
+}
+
+/* ── Lang switch — cross-fade (overrides circle expand) ── */
+html[data-vt-lang]::view-transition-old(root),
+html[data-vt-lang]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html[data-vt-lang]::view-transition-old(root) {
+  animation: vt-fade-out 0.28s ease both;
+}
+html[data-vt-lang]::view-transition-new(root) {
+  animation: vt-fade-in 0.28s ease both;
+}
+
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+}
+
+/* ── Landing smooth scroll ─────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Sensor markers (Leaflet custom DivIcon) ────────── */
+.sensor-marker {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+.sensor-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #155DFC;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(21, 93, 252, 0.55);
+  z-index: 3;
+  will-change: transform, opacity;
+}
+.sensor-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.sensor-ring--inner {
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid rgba(21, 93, 252, 0.5);
+  z-index: 2;
+}
+.sensor-ring--outer {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(21, 93, 252, 0.25);
+  z-index: 1;
+}
+
+/* ── Skeleton pulse (sensor data card) ────────────── */
+@keyframes skelPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Sensor popup (Leaflet tooltip, custom skin) ───── */
+.sensor-popup.leaflet-tooltip {
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  border-radius: 10px;
+  padding: 8px 10px;
+  min-width: 88px;
+  color: var(--color-text-primary);
+  pointer-events: none;
+}
+.sensor-popup.leaflet-tooltip::before {
+  display: none;
+}
+
+/* ── Leaflet attribution (landing fullscreen) ──────── */
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  opacity: 0.45;
+  background: transparent !important;
+  color: currentColor !important;
+  box-shadow: none !important;
+}

@@ -1,0 +1,45 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "map": "Mapa",
+    "devices": "Dispositivos",
+    "alerts": "Alertas"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "noData": "Sin datos disponibles"
+  },
+  "landing": {
+    "nav": {
+      "cta": "Iniciar sesión"
+    },
+    "hero": {
+      "title": "Respira los datos.",
+      "titleHighlight": "Conoce el aire.",
+      "subtitle": "Monitoreo atmosférico en Cartagena. Rastrea PM2.5, CO₂, VOCs y más con múltiples nodos sensores.",
+      "cta_primary": "Iniciar sesión",
+      "cta_secondary": "Cómo funciona",
+      "mapLabel": "Cartagena, Colombia · 3 sensores activos"
+    },
+    "features": {
+      "sectionTitle": "Diseñado para el monitoreo real",
+      "realtime": {
+        "title": "Datos siempre actualizados",
+        "desc": "Lecturas del módulo SEN66 transmitidas con regularidad. El dashboard refleja el estado más reciente sin necesidad de recargar la página."
+      },
+      "versatility": {
+        "title": "Interiores, exteriores y móvil",
+        "desc": "Despliega el sensor en espacios cerrados, al aire libre o en vehículos en movimiento. Un dispositivo, múltiples escenarios."
+      },
+      "alerts": {
+        "title": "Alertas configurables",
+        "desc": "Define umbrales por variable y recibe notificaciones cuando la calidad del aire los supera."
+      }
+    },
+    "footer": {
+      "tagline": "Proyecto de grado — Universidad Tecnológica de Bolívar (UTB)",
+      "copyright": "© 2025 SANA Airlytics. Todos los derechos reservados."
+    }
+  }
+}

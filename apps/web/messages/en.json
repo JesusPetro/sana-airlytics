@@ -1,0 +1,45 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "map": "Map",
+    "devices": "Devices",
+    "alerts": "Alerts"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "noData": "No data available"
+  },
+  "landing": {
+    "nav": {
+      "cta": "Sign in"
+    },
+    "hero": {
+      "title": "Breathe the data.",
+      "titleHighlight": "Know the air.",
+      "subtitle": "Atmospheric monitoring across Cartagena. Track PM2.5, CO₂, VOCs and more from multiple sensor nodes.",
+      "cta_primary": "Sign in",
+      "cta_secondary": "How it works",
+      "mapLabel": "Cartagena, Colombia · 3 active sensors"
+    },
+    "features": {
+      "sectionTitle": "Built for real-world monitoring",
+      "realtime": {
+        "title": "Always up to date",
+        "desc": "Readings from the SEN66 module transmitted at regular intervals. The dashboard always reflects the current state without any page refresh."
+      },
+      "versatility": {
+        "title": "Indoors, outdoors & mobile",
+        "desc": "Deploy the sensor in enclosed spaces, open air, or moving vehicles. One device, multiple scenarios."
+      },
+      "alerts": {
+        "title": "Configurable alerts",
+        "desc": "Set thresholds per variable and get notified when air quality exceeds them."
+      }
+    },
+    "footer": {
+      "tagline": "Thesis project — Universidad Tecnológica de Bolívar (UTB)",
+      "copyright": "© 2025 SANA Airlytics. All rights reserved."
+    }
+  }
+}
