@@ -10,9 +10,11 @@ import { EmptyWorkspace } from '@/components/ui/EmptyWorkspace';
 
 export default function AlertasPage() {
   const t = useTranslations('alerts');
-  const { activeWorkspace } = useWorkspace();
+  const tCommon = useTranslations();
+  const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
   const [showModal, setShowModal] = useState(false);
 
+  if (wsLoading) return <EmptyWorkspace msg={tCommon('common.loading')} />;
   if (!activeWorkspace) {
     return <EmptyWorkspace msg={t('noWorkspace')} />;
   }

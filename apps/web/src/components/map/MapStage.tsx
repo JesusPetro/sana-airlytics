@@ -24,7 +24,7 @@ const CARTAGENA: [number, number] = [10.391, -75.479];
 
 export function MapStage() {
   const t = useTranslations();
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
   const { range } = useTimeRange();
   const { from, to } = rangeToISO(range);
 
@@ -62,6 +62,7 @@ export function MapStage() {
     return [avgLat, avgLng];
   }, [devicesWithCoords]);
 
+  if (wsLoading) return null;
   if (!activeWorkspace) {
     return <EmptyWorkspace msg={t('dashboard.noWorkspace')} />;
   }
