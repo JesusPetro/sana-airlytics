@@ -30,30 +30,53 @@ export default function DashboardPage() {
   }
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1200px' }}>
-      <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
-        {t('dashboard.title')}
-      </h1>
+    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      <section>
-        <KpiGrid data={data} isLoading={isLoading} />
-      </section>
+      {/* Row 1 — KPIs con umbral | sin umbral */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1.25fr) minmax(0, 1fr)',
+        gap: '20px',
+        alignItems: 'start',
+      }}>
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+              {t('dashboard.withThreshold')}
+            </h2>
+          </div>
+          <KpiGrid data={data} isLoading={isLoading} />
+        </section>
 
-      <section>
-        <KpiGridNoThresh data={data} isLoading={isLoading} />
-      </section>
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+              {t('dashboard.noThreshold')}
+            </h2>
+          </div>
+          <KpiGridNoThresh data={data} isLoading={isLoading} />
+        </section>
+      </div>
 
-      <section>
-        <MapPreview />
-      </section>
-
+      {/* Row 2 — Serie temporal (full width) */}
       <section>
         <TimeSeriesCard datastreams={datastreams} />
       </section>
 
-      <section>
-        <AlertSummary />
-      </section>
+      {/* Row 3 — Mapa | Alertas */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)',
+        gap: '20px',
+        alignItems: 'start',
+      }}>
+        <section>
+          <MapPreview />
+        </section>
+        <section>
+          <AlertSummary />
+        </section>
+      </div>
     </div>
   );
 }
