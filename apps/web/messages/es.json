@@ -46,6 +46,8 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "withThreshold": "Variables con umbral",
+    "noThreshold": "Variables sin umbral",
     "noWorkspace": "Ningún workspace seleccionado"
   },
   "workspace": {
@@ -168,6 +170,7 @@
     "cancel": "Cancelar",
     "done": "Listo",
     "noDevices": "No hay dispositivos en este workspace",
+    "colStatus": "Estado",
     "colName": "Nombre",
     "colModel": "Modelo",
     "colLastSeen": "Última conexión",
@@ -229,7 +232,7 @@
   "map": {
     "title": "Mapa de sensores",
     "points": "Puntos",
-    "heatmap": "Mapa de calor",
+    "heatmap": "Heatmap",
     "contaminant": "Contaminante",
     "trajectory": "Trayectoria",
     "expand": "Expandir mapa",

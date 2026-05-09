@@ -46,6 +46,8 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "withThreshold": "Threshold variables",
+    "noThreshold": "Non-threshold variables",
     "noWorkspace": "No workspace selected"
   },
   "workspace": {
@@ -168,6 +170,7 @@
     "cancel": "Cancel",
     "done": "Done",
     "noDevices": "No devices in this workspace",
+    "colStatus": "Status",
     "colName": "Name",
     "colModel": "Model",
     "colLastSeen": "Last seen",
