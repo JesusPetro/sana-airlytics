@@ -17,6 +17,8 @@ dependencies = [
 orm = [
     "asyncpg>=0.31.0",
     "psycopg2-binary>=2.9.12",
+    "GeoAlchemy2>=0.15",
+    "shapely>=2.0",
 ]
 auth = [
     "bcrypt>=4.0",

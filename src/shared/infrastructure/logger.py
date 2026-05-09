@@ -73,6 +73,7 @@ def _configure() -> None:
         for handler_cfg in config.get("handlers", {}).values():
             if "filename" in handler_cfg:
                 Path(handler_cfg["filename"]).parent.mkdir(parents=True, exist_ok=True)
+        config.setdefault("root", {})["level"] = level_name
         logging.config.dictConfig(config)
     else:
         logging.basicConfig(level=getattr(logging, level_name, logging.INFO))
@@ -81,8 +82,11 @@ def _configure() -> None:
         processor=renderer,
         foreign_pre_chain=shared_processors,
     )
-    for handler in logging.getLogger().handlers:
-        handler.setFormatter(formatter)
+    root = logging.getLogger()
+    root.handlers.clear()
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
 
     # Campos globales que aparecen en todos los logs
     structlog.contextvars.bind_contextvars(

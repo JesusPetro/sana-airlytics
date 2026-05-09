@@ -1,0 +1,1 @@
+ingest: uv run python apps/ingest/main.py
