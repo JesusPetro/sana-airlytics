@@ -28,7 +28,6 @@ class HardwareMetadataDTO:
     battery_pct: int
     rssi_dbm: int
     uptime_s: int
-    gps: GpsDTO | None
 
 
 @dataclass(frozen=True)
@@ -43,6 +42,7 @@ class SensorReadingDTO:
     voc_index: VariableReadingDTO
     nox_index: VariableReadingDTO
     co2: VariableReadingDTO
+    gps: GpsDTO | None
 
 
 @dataclass(frozen=True)

@@ -23,17 +23,10 @@ class SEN66PayloadParser:
     def parse(cls, payload: dict) -> IngestBatchDTO:
         """Parsea el payload completo. Lanza KeyError/TypeError/ValueError si el formato es inválido."""
         raw_meta = payload["metadata"]
-        raw_gps = raw_meta.get("gps")
-        gps = (
-            GpsDTO(lat=raw_gps["lat"], lon=raw_gps["lon"], alt=raw_gps["alt"])
-            if raw_gps is not None
-            else None
-        )
         metadata = HardwareMetadataDTO(
             battery_pct=raw_meta["battery_pct"],
             rssi_dbm=raw_meta["rssi_dbm"],
             uptime_s=raw_meta["uptime_s"],
-            gps=gps,
         )
         readings = [cls._parse_reading(r) for r in payload["readings"]]
         return IngestBatchDTO(
@@ -45,7 +38,14 @@ class SEN66PayloadParser:
 
     @classmethod
     def _parse_reading(cls, raw: dict) -> SensorReadingDTO:
+        raw_gps = raw.get("gps")
+        gps = (
+            GpsDTO(lat=raw_gps["lat"], lon=raw_gps["lon"], alt=raw_gps["alt"])
+            if raw_gps is not None
+            else None
+        )
         return SensorReadingDTO(
             timestamp=datetime.fromisoformat(raw["timestamp"]).replace(tzinfo=UTC),
+            gps=gps,
             **{code: VariableReadingDTO(**raw[code]) for code in cls.VARIABLES},
         )

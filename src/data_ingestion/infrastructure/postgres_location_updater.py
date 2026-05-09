@@ -44,6 +44,7 @@ class PostgresLocationUpdater:
                 latitude=coordinate.latitude,
                 longitude=coordinate.longitude,
                 elevation=coordinate.altitude,
+                updated_at=timestamp,
             )
             .on_conflict_do_update(
                 index_elements=["sensor_id"],

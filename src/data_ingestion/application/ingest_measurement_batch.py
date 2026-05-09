@@ -17,7 +17,7 @@ from ..domain.ports.repositories import (
 )
 from ..domain.sensor_reading import SensorReading
 from .create_datastreams_for_device import CreateDatastreamsForDevice
-from .dtos import DeviceRegisteredEventDTO, IngestBatchDTO
+from .dtos import DeviceRegisteredEventDTO, IngestBatchDTO, SensorReadingDTO
 
 _logger = get_logger(__name__)
 
@@ -78,7 +78,7 @@ class IngestMeasurementBatch:
         result_time = datetime.now(UTC)
         observations = await self._build_observations(device_id, dto, result_time)
 
-        await self._update_location_if_present(device_id, dto, result_time)
+        await self._update_locations_from_readings(device_id, dto)
 
         # Persistencia separada: save_batch escribe observaciones; mark_as_processed
         # registra el message_id. Si save_batch falla, el message_id no queda marcado
@@ -143,23 +143,18 @@ class IngestMeasurementBatch:
             )
         )
 
-    async def _update_location_if_present(
+    async def _update_locations_from_readings(
         self,
         device_id: DeviceId,
         dto: IngestBatchDTO,
-        timestamp: datetime,
     ) -> None:
-        """Actualiza la ubicación del device si el payload incluye GPS válido.
-
-        Coordinate valida los rangos en su __post_init__, por lo que no hace
-        falta validar lat/lon aquí.
-        """
-        gps = dto.metadata.gps
-        if gps is None:
-            return
-
-        await self._location.update_location(
-            device_id,
-            Coordinate(latitude=gps.lat, longitude=gps.lon, altitude=gps.alt),
-            timestamp,
-        )
+        """Actualiza la ubicación del device por cada lectura que incluya GPS."""
+        for reading_dto in dto.readings:
+            if reading_dto.gps is None:
+                continue
+            gps = reading_dto.gps
+            await self._location.update_location(
+                device_id,
+                Coordinate(latitude=gps.lat, longitude=gps.lon, altitude=gps.alt),
+                reading_dto.timestamp,
+            )

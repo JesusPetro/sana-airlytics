@@ -44,16 +44,24 @@ class MqttTelemetrySubscriber:
             self._known_devices = await PostgresDatastreamRepository(session).find_all_device_ids()
         logger.info("device_cache_loaded", count=len(self._known_devices))
 
-        async with make_client(self._config) as client:
-            await client.subscribe(self._config.topic, qos=1)
-            logger.info(
-                "mqtt_connected",
-                host=self._config.host,
-                port=self._config.port,
-                topic=self._config.topic,
-            )
-            async for message in client.messages:
-                asyncio.create_task(self._handle(message))
+        delay = 1
+        while True:
+            try:
+                async with make_client(self._config) as client:
+                    await client.subscribe(self._config.topic, qos=1)
+                    logger.info(
+                        "mqtt_connected",
+                        host=self._config.host,
+                        port=self._config.port,
+                        topic=self._config.topic,
+                    )
+                    delay = 1
+                    async for message in client.messages:
+                        asyncio.create_task(self._handle(message))
+            except aiomqtt.MqttError as exc:
+                logger.warning("mqtt_disconnected", error=str(exc), retry_in=delay)
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, 60)
 
     async def _handle(self, message: aiomqtt.Message) -> None:
         async with self._semaphore:
