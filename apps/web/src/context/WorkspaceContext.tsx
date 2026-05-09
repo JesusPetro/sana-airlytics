@@ -15,7 +15,7 @@ interface WorkspaceContextValue {
   workspaces: WorkspaceSummary[];
   activeWorkspace: WorkspaceSummary | null;
   setActiveWorkspace: (ws: WorkspaceSummary) => void;
-  refreshWorkspaces: () => Promise<void>;
+  refreshWorkspaces: () => Promise<WorkspaceSummary[] | null>;
   isLoading: boolean;
 }
 
@@ -26,7 +26,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<WorkspaceSummary[] | null> => {
     try {
       const list = await getWorkspaces();
       setWorkspaces(list);
@@ -34,15 +34,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         if (prev && list.find((w) => w.workspace_id === prev.workspace_id)) return prev;
         return list[0] ?? null;
       });
-    } catch {}
+      return list;
+    } catch {
+      return null;
+    }
   }, []);
 
   useEffect(() => {
     load().finally(() => setIsLoading(false));
   }, [load]);
 
-  const refreshWorkspaces = useCallback(async () => {
-    await load();
+  const refreshWorkspaces = useCallback(async (): Promise<WorkspaceSummary[] | null> => {
+    return load();
   }, [load]);
 
   return (

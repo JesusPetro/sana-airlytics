@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { X, CheckCircle } from 'lucide-react';
@@ -13,7 +14,7 @@ interface CreateWorkspaceModalProps {
 
 export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
   const t = useTranslations('workspace');
-  const { refreshWorkspaces, setActiveWorkspace, workspaces } = useWorkspace();
+  const { refreshWorkspaces, setActiveWorkspace } = useWorkspace();
 
   const [name, setName]        = useState('');
   const [description, setDesc] = useState('');
@@ -25,9 +26,9 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
       description: description.trim() || null,
     }),
     onSuccess: async (res) => {
-      await refreshWorkspaces();
+      const freshList = await refreshWorkspaces();
       setActiveWorkspace(
-        workspaces.find((w) => w.workspace_id === res.workspace_id) ??
+        freshList?.find((w) => w.workspace_id === res.workspace_id) ??
         { workspace_id: res.workspace_id, name: name.trim(), description: description.trim() || null, is_private: false, owner_user_id: null, owner_org_id: null }
       );
       setDone(true);
@@ -36,7 +37,7 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
 
   const isValid = name.trim().length > 0;
 
-  return (
+  return createPortal(
     <>
       <div onClick={onClose} style={{
         position: 'fixed', inset: 0,
@@ -53,12 +54,14 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
       }}>
         {/* Header */}
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 20px 14px', borderBottom: '1px solid var(--color-border-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: done ? 'flex-end' : 'space-between',
+          padding: '18px 20px 14px', borderBottom: done ? 'none' : '1px solid var(--color-border-subtle)',
         }}>
-          <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)' }}>
-            {t('create')}
-          </span>
+          {!done && (
+            <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)' }}>
+              {t('create')}
+            </span>
+          )}
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', borderRadius: '6px', display: 'flex' }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}>
@@ -67,8 +70,8 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
         </div>
 
         {done ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 20px' }}>
-            <CheckCircle size={40} color="var(--color-aqi-good)" />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '8px 20px 32px' }}>
+            <CheckCircle size={44} color="var(--color-aqi-good)" />
             <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)', margin: 0 }}>
               {t('created')}
             </p>
@@ -140,7 +143,8 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
           </>
         )}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
