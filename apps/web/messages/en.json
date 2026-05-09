@@ -125,7 +125,9 @@
     "deleteConfirmBtn": "Delete permanently",
     "deleting": "Deleting…",
     "deleteError": "Failed to delete. Please try again.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "workspaceId": "Workspace ID",
+    "copied": "Copied"
   },
   "members": {
     "title": "Members",

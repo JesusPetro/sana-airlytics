@@ -125,7 +125,9 @@
     "deleteConfirmBtn": "Eliminar permanentemente",
     "deleting": "Eliminando…",
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "workspaceId": "ID del workspace",
+    "copied": "Copiado"
   },
   "members": {
     "title": "Miembros",
