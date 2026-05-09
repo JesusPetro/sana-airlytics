@@ -44,7 +44,18 @@ export function MapStage() {
   const tracks = useDeviceTracks(devices, contaminant);
   const [trajectory, setTrajectory] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceStatusResponse | null>(null);
+  const [popupVisible, setPopupVisible]     = useState(false);
   const popupAnchorRef = useRef<{ x: number; y: number } | null>(null);
+
+  function openPopup(dev: DeviceStatusResponse) {
+    setSelectedDevice(dev);
+    setTimeout(() => setPopupVisible(true), 10);
+  }
+
+  function closePopup() {
+    setPopupVisible(false);
+    setTimeout(() => setSelectedDevice(null), 200);
+  }
 
   const devicesWithCoords = useMemo(
     () => devices.filter((d) => d.latitude != null && d.longitude != null),
@@ -101,7 +112,7 @@ export function MapStage() {
             key={d.device_id}
             device={d}
             pm2_5={readings[d.device_id]?.pm2_5}
-            onClick={(dev) => setSelectedDevice(dev)}
+            onClick={openPopup}
           />
         ))}
 
@@ -129,11 +140,17 @@ export function MapStage() {
 
       {/* Sensor popup — rendered outside MapContainer to use CSS vars */}
       {selectedDevice && (
-        <div style={{ position: 'absolute', top: '60px', left: '172px', zIndex: 1100 }}>
+        <div style={{
+          position: 'absolute', top: '60px', left: '172px', zIndex: 1100,
+          opacity: popupVisible ? 1 : 0,
+          transform: popupVisible ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(-8px)',
+          transformOrigin: 'top left',
+          transition: 'opacity 0.18s ease, transform 0.18s ease',
+        }}>
           <SensorPopup
             device={selectedDevice}
             readings={readings[selectedDevice.device_id]}
-            onClose={() => setSelectedDevice(null)}
+            onClose={closePopup}
           />
         </div>
       )}
