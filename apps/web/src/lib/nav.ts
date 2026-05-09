@@ -7,8 +7,8 @@ export interface NavItem {
   icon: LucideIcon;
   labelKey: string;
   badge?: 'alertCount';
-  visibleFor?: string[];
   bottomSection?: boolean;
+  minRole?: 'editor' | 'admin';
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -43,5 +43,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Settings,
     labelKey: 'nav.settings',
     bottomSection: true,
+    minRole: 'admin',
   },
 ];

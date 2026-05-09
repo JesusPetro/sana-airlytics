@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import { isEditorOrAbove } from '@/lib/roles';
 import { RulesPanel } from '@/components/alerts/RulesPanel';
 import { HistoryPanel } from '@/components/alerts/HistoryPanel';
 import { NewRuleModal } from '@/components/alerts/NewRuleModal';
@@ -29,7 +30,7 @@ export default function AlertasPage() {
         alignItems: 'start',
         minHeight: 'calc(100vh - var(--topbar-h))',
       }}>
-        <RulesPanel onNewRule={() => setShowModal(true)} />
+        <RulesPanel onNewRule={isEditorOrAbove(activeWorkspace) ? () => setShowModal(true) : undefined} />
         <HistoryPanel />
       </div>
 

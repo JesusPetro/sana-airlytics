@@ -8,6 +8,8 @@ import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/nav';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
+import { roleLevel } from '@/lib/roles';
 
 function initials(email: string): string {
   const parts = email.split('@')[0].split(/[._-]/);
@@ -34,7 +36,16 @@ export function Sidebar({ locale }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations();
   const { user, logout } = useAuth();
+  const { activeWorkspace } = useWorkspace();
   const router = useRouter();
+
+  const MIN_LEVELS: Record<string, number> = { editor: 1, admin: 2 };
+  const visibleItems = (bottom: boolean) =>
+    NAV_ITEMS.filter((i) => {
+      if (!!i.bottomSection !== bottom) return false;
+      if (!i.minRole) return true;
+      return roleLevel(activeWorkspace) >= MIN_LEVELS[i.minRole];
+    });
 
   async function handleLogout() {
     await logout();
@@ -75,7 +86,7 @@ export function Sidebar({ locale }: SidebarProps) {
       {/* Nav items */}
       <nav className="flex-1 py-3 px-2 flex flex-col justify-between">
         <ul className="flex flex-col gap-0.5">
-          {NAV_ITEMS.filter((i) => !i.bottomSection).map((item) => {
+          {visibleItems(false).map((item) => {
             const isActive = pathname.includes(item.href);
             const Icon = item.icon;
             const label = t(item.labelKey);
@@ -174,7 +185,7 @@ export function Sidebar({ locale }: SidebarProps) {
 
         {/* Bottom nav items (Settings) */}
         <ul className="flex flex-col gap-0.5" style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: '8px', marginTop: '8px' }}>
-          {NAV_ITEMS.filter((i) => i.bottomSection).map((item) => {
+          {visibleItems(true).map((item) => {
             const isActive = pathname.includes(item.href);
             const Icon = item.icon;
             const label = t(item.labelKey);

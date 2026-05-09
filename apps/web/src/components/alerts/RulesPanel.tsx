@@ -7,7 +7,7 @@ import { RuleCard } from './RuleCard';
 import { Skel } from '@/components/ui/Skeleton';
 
 interface RulesPanelProps {
-  onNewRule: () => void;
+  onNewRule?: () => void;
 }
 
 export function RulesPanel({ onNewRule }: RulesPanelProps) {
@@ -45,19 +45,21 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
             </span>
           )}
         </div>
-        <button
-          onClick={onNewRule}
-          style={{
-            fontSize: '12px', fontWeight: 600,
-            background: 'var(--color-primary)', color: '#fff',
-            border: 'none', borderRadius: '8px', padding: '7px 14px',
-            cursor: 'pointer', transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-primary-dark)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
-        >
-          + {t('newRule')}
-        </button>
+        {onNewRule && (
+          <button
+            onClick={onNewRule}
+            style={{
+              fontSize: '12px', fontWeight: 600,
+              background: 'var(--color-primary)', color: '#fff',
+              border: 'none', borderRadius: '8px', padding: '7px 14px',
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-primary-dark)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
+          >
+            + {t('newRule')}
+          </button>
+        )}
       </div>
 
       {/* List */}
