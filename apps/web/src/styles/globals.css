@@ -239,6 +239,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Form elements inherit font ─────────────────────── */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
 /* ── Scrollbar ──────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 10px;
@@ -386,6 +395,21 @@ html {
   box-shadow: 0 0 0 0 var(--m-color, #155DFC);
   position: relative;
   z-index: 2;
+}
+
+/* ── Track point bubble — reset Leaflet Popup styles ──── */
+.track-bubble-popup .leaflet-popup-content-wrapper {
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.track-bubble-popup .leaflet-popup-content {
+  margin: 0;
+}
+.track-bubble-popup .leaflet-popup-tip-container {
+  display: none;
 }
 
 .sensor-pulse {

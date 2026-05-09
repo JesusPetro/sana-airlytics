@@ -2,11 +2,14 @@
 
 import { useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import 'leaflet/dist/leaflet.css';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDevices } from '@/hooks/useDevices';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTimeRange, rangeToISO } from '@/hooks/useTimeRange';
+import { MapAutoResize } from './MapAutoResize';
+import { TrackPoints } from './TrackPoints';
 import { SensorMarker } from './SensorMarker';
 import { HeatmapOverlay } from './HeatmapOverlay';
 import { MapControlPanel } from './MapControlPanel';
@@ -16,23 +19,29 @@ import { SensorPopup } from './SensorPopup';
 import type { DeviceStatusResponse } from '@/types/sensor';
 import { useTranslations } from 'next-intl';
 import { EmptyWorkspace } from '@/components/ui/EmptyWorkspace';
+import { useDeviceTracks } from '@/hooks/useDeviceTracks';
 
 type LayerMode = 'points' | 'heatmap';
 type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
 
 const CARTAGENA: [number, number] = [10.391, -75.479];
 
+const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
 export function MapStage() {
   const t = useTranslations();
+  const isDark = useDarkMode();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
   const { range } = useTimeRange();
   const { from, to } = rangeToISO(range);
 
-  const { data: devices = [], isLoading: devLoading } = useDevices(activeWorkspace?.workspace_id);
-  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id, from, to);
-
   const [layer, setLayer] = useState<LayerMode>('points');
   const [contaminant, setContaminant] = useState<ContaminantCode>('pm2_5');
+
+  const { data: devices = [], isLoading: devLoading } = useDevices(activeWorkspace?.workspace_id);
+  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id, from, to);
+  const tracks = useDeviceTracks(devices, contaminant);
   const [trajectory, setTrajectory] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceStatusResponse | null>(null);
   const popupAnchorRef = useRef<{ x: number; y: number } | null>(null);
@@ -76,10 +85,16 @@ export function MapStage() {
         zoomControl={false}
         attributionControl={true}
       >
+        <MapAutoResize />
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          key={isDark ? 'dark' : 'light'}
+          url={isDark ? TILE_DARK : TILE_LIGHT}
+          attribution={isDark
+            ? '&copy; <a href="https://carto.com/">CARTO</a>'
+            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}
         />
+
+        <TrackPoints tracks={tracks} contaminant={contaminant} />
 
         {layer === 'points' && devicesWithCoords.map((d) => (
           <SensorMarker

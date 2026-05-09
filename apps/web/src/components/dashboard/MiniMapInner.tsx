@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
+import { useDarkMode } from '@/hooks/useDarkMode';
+import { MapAutoResize } from '@/components/map/MapAutoResize';
 import 'leaflet/dist/leaflet.css';
 import { SensorMarker } from '@/components/map/SensorMarker';
 import { HeatmapOverlay } from '@/components/map/HeatmapOverlay';
@@ -15,7 +17,11 @@ interface MiniMapInnerProps {
 
 const CARTAGENA: [number, number] = [10.391, -75.479];
 
+const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
 export function MiniMapInner({ devices, pm2_5Map, heatmap }: MiniMapInnerProps) {
+  const isDark = useDarkMode();
   const devicesWithCoords = useMemo(
     () => devices.filter((d) => d.latitude != null && d.longitude != null),
     [devices],
@@ -47,7 +53,11 @@ export function MiniMapInner({ devices, pm2_5Map, heatmap }: MiniMapInnerProps) 
       scrollWheelZoom={false}
       doubleClickZoom={false}
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <MapAutoResize />
+      <TileLayer
+        key={isDark ? 'dark' : 'light'}
+        url={isDark ? TILE_DARK : TILE_LIGHT}
+      />
 
       {!heatmap && devicesWithCoords.map((d) => (
         <SensorMarker

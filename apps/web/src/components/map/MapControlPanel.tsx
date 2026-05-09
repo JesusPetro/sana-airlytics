@@ -35,6 +35,7 @@ const panelStyle: React.CSSProperties = {
   flexDirection: 'column',
   gap: '8px',
   minWidth: '148px',
+  fontFamily: 'var(--font-sans, inherit)',
 };
 
 export function MapControlPanel({
@@ -65,6 +66,7 @@ export function MapControlPanel({
             style={{
               padding: '4px 0',
               fontSize: '11px',
+              fontFamily: 'inherit',
               fontWeight: layer === l ? 600 : 400,
               borderRadius: '6px',
               border: 'none',
@@ -94,6 +96,7 @@ export function MapControlPanel({
                 textAlign: 'left',
                 padding: '4px 6px',
                 fontSize: '11px',
+                fontFamily: 'inherit',
                 fontWeight: contaminant === c.code ? 600 : 400,
                 borderRadius: '6px',
                 border: 'none',
