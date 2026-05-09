@@ -6,7 +6,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain.collaborator import Collaborator
-from .orm_models import CollaboratorModel, RoleModel
+from .orm_models import CollaboratorModel, RoleModel, UserModel
 
 
 class PostgresCollaboratorRepository:
@@ -62,6 +62,51 @@ class PostgresCollaboratorRepository:
             .join(RoleModel, CollaboratorModel.role_id == RoleModel.id)
             .where(
                 CollaboratorModel.workspace_id == workspace_id,
+                CollaboratorModel.is_active.is_(True),
+            )
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [self._to_domain(m, name) for m, name in rows]
+
+    async def find_by_workspace_with_user_info(self, workspace_id: UUID) -> list[dict]:
+        """Retorna colaboradores activos con datos del usuario para visualizacion."""
+        stmt = (
+            select(
+                CollaboratorModel,
+                RoleModel.name.label("role_name"),
+                UserModel.email,
+                UserModel.first_name,
+                UserModel.last_name,
+            )
+            .join(RoleModel, CollaboratorModel.role_id == RoleModel.id)
+            .join(UserModel, CollaboratorModel.user_id == UserModel.id)
+            .where(
+                CollaboratorModel.workspace_id == workspace_id,
+                CollaboratorModel.is_active.is_(True),
+            )
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [
+            {
+                "collaborator_id": str(row.CollaboratorModel.id),
+                "user_id":         str(row.CollaboratorModel.user_id),
+                "workspace_id":    str(row.CollaboratorModel.workspace_id),
+                "role":            row.role_name,
+                "is_active":       row.CollaboratorModel.is_active,
+                "email":           row.email,
+                "first_name":      row.first_name,
+                "last_name":       row.last_name,
+            }
+            for row in rows
+        ]
+
+    async def find_by_user(self, user_id: UUID) -> list[Collaborator]:
+        """Retorna todos los registros activos donde el usuario es colaborador."""
+        stmt = (
+            select(CollaboratorModel, RoleModel.name)
+            .join(RoleModel, CollaboratorModel.role_id == RoleModel.id)
+            .where(
+                CollaboratorModel.user_id == user_id,
                 CollaboratorModel.is_active.is_(True),
             )
         )

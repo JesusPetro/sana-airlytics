@@ -5,6 +5,8 @@ export interface WorkspaceSummary {
   is_private: boolean;
   owner_user_id: string | null;
   owner_org_id: string | null;
+  role: string | null;
+  membership_type: string;
 }
 
 export interface CollaboratorSummary {
@@ -13,4 +15,7 @@ export interface CollaboratorSummary {
   workspace_id: string;
   role: string;
   is_active: boolean;
+  email: string;
+  first_name: string;
+  last_name: string;
 }

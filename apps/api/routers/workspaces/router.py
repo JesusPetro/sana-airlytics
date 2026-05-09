@@ -138,13 +138,41 @@ async def create_workspace(
 async def list_workspaces(
     current_user: _CurrentUser,
     ws_repo: _WsRepo,
+    collab_repo: _CollabRepo,
 ) -> list[WorkspaceSummary]:
     """
-    Retorna los workspaces donde el usuario es owner.
-    No incluye workspaces donde el usuario es solo colaborador.
+    Retorna todos los workspaces accesibles por el usuario:
+    - Workspaces donde el usuario es owner (membership_type='owner').
+    - Workspaces donde el usuario es colaborador activo (membership_type='collaborator').
+    La lista esta deduplicada por workspace_id.
     """
-    workspaces = await ws_repo.find_by_owner_user(UUID(current_user.user_id))
-    return [_workspace_to_summary(ws) for ws in workspaces]
+    user_id = UUID(current_user.user_id)
+
+    owned = await ws_repo.find_by_owner_user(user_id)
+    owned_ids: set[UUID] = {ws.id for ws in owned}
+    result: list[WorkspaceSummary] = [_workspace_to_summary(ws) for ws in owned]
+
+    collabs = await collab_repo.find_by_user(user_id)
+    for collab in collabs:
+        if collab.workspace_id in owned_ids:
+            continue
+        ws = await ws_repo.find_by_id(collab.workspace_id)
+        if ws is None:
+            continue
+        result.append(
+            WorkspaceSummary(
+                workspace_id=str(ws.id),
+                name=ws.name,
+                description=None,
+                is_private=ws.is_private,
+                owner_user_id=str(ws.owner_user_id) if ws.owner_user_id else None,
+                owner_org_id=str(ws.owner_org_id) if ws.owner_org_id else None,
+                role=collab.role_name,
+                membership_type="collaborator",
+            )
+        )
+
+    return result
 
 
 @router.get(
@@ -337,8 +365,8 @@ async def list_collaborators(
     )
     _require_allowed(result)
 
-    collaborators = await collab_repo.find_by_workspace(UUID(ws_id))
-    return [_collaborator_to_summary(c) for c in collaborators]
+    collaborators = await collab_repo.find_by_workspace_with_user_info(UUID(ws_id))
+    return [CollaboratorSummary(**c) for c in collaborators]
 
 
 @router.patch(

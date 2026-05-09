@@ -26,6 +26,8 @@ class WorkspaceSummary(BaseModel):
     is_private: bool
     owner_user_id: str | None
     owner_org_id: str | None
+    role: str | None = None
+    membership_type: str = "owner"
 
 
 class UpdateWorkspaceRequest(BaseModel):
@@ -56,3 +58,6 @@ class CollaboratorSummary(BaseModel):
     workspace_id: str
     role: str
     is_active: bool
+    email: str
+    first_name: str
+    last_name: str
