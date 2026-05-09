@@ -13,20 +13,21 @@ export class ApiRequestError extends Error {
 
 export async function apiClient<T>(
   path: string,
-  options?: RequestInit,
+  options?: RequestInit & { skipAuthRedirect?: boolean },
 ): Promise<T> {
   const base = process.env.NEXT_PUBLIC_API_URL ?? '';
+  const { skipAuthRedirect, ...fetchOptions } = options ?? {};
   const res = await fetch(`${base}${path}`, {
-    ...options,
+    ...fetchOptions,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...fetchOptions?.headers,
     },
   });
 
   if (!res.ok) {
-    if (res.status === 401 && typeof window !== 'undefined') {
+    if (res.status === 401 && !skipAuthRedirect && typeof window !== 'undefined') {
       const locale = window.location.pathname.split('/')[1] ?? 'es';
       window.location.href = `/${locale}/login`;
     }

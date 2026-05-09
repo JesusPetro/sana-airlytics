@@ -10,11 +10,12 @@ export function login(email: string, password: string): Promise<{ message: strin
   return apiClient('/api/v1/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+    skipAuthRedirect: true,
   });
 }
 
 export function logout(): Promise<void> {
-  return apiClient('/api/v1/auth/logout', { method: 'POST' });
+  return apiClient('/api/v1/auth/logout', { method: 'POST', skipAuthRedirect: true });
 }
 
 export function me(): Promise<MeResponse> {
