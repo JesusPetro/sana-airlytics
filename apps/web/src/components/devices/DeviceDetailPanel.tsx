@@ -1,13 +1,18 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { X } from 'lucide-react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { formatRelative, formatValue } from '@/lib/format';
 import { KPI_SPECS_THRESH, KPI_SPECS_NOTHRESH } from '@/lib/constants';
 import type { DeviceStatusResponse } from '@/types/sensor';
 import type { DashboardEntry } from '@/hooks/useDashboard';
+
+gsap.registerPlugin(useGSAP);
 
 const MiniMapInner = dynamic(
   () => import('@/components/dashboard/MiniMapInner').then((m) => m.MiniMapInner),
@@ -25,6 +30,21 @@ interface DeviceDetailPanelProps {
 export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPanelProps) {
   const t = useTranslations();
   const locale = useLocale();
+  const panelRef    = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const closing     = useRef(false);
+
+  useGSAP(() => {
+    gsap.fromTo(backdropRef.current, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' });
+    gsap.fromTo(panelRef.current,    { x: 400 },     { x: 0,       duration: 0.32, ease: 'power3.out' });
+  }, {});
+
+  function handleClose() {
+    if (closing.current) return;
+    closing.current = true;
+    gsap.to(panelRef.current,    { x: 400, duration: 0.24, ease: 'power3.in' });
+    gsap.to(backdropRef.current, { opacity: 0, duration: 0.2, ease: 'power2.in', onComplete: onClose });
+  }
 
   const pm2_5Map: Record<string, number | null> = {
     [device.device_id]: dashData['pm2_5']?.latestValue ?? null,
@@ -43,7 +63,8 @@ export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPan
     <>
       {/* Backdrop */}
       <div
-        onClick={onClose}
+        ref={backdropRef}
+        onClick={handleClose}
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(0,0,0,0.25)',
@@ -53,7 +74,7 @@ export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPan
       />
 
       {/* Panel */}
-      <div style={{
+      <div ref={panelRef} style={{
         position: 'fixed',
         top: 0, right: 0, bottom: 0,
         width: '380px',
@@ -84,7 +105,7 @@ export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPan
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: 'var(--color-text-secondary)', padding: '4px',
