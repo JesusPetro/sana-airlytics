@@ -20,7 +20,7 @@ loggers:
     level: WARNING
 
 root:
-  level: INFO
+  level: WARNING
   handlers: [console]
 
 handlers:

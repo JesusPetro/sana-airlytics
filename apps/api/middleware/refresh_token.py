@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 import time
 from collections.abc import Callable
 
@@ -12,7 +12,7 @@ from src.access_control.domain.ports.token_service import TokenInvalidError, Tok
 
 from ..config.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Umbral en segundos: renovar si el token expira en menos de 15 minutos
 _RENEWAL_THRESHOLD_SECONDS = 900

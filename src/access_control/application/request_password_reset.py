@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 
 from ..domain.ports.repositories import UserRepository
 from ..domain.ports.token_service import TokenService
 from .dtos import RequestPasswordResetInput, RequestPasswordResetOutput
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RequestPasswordResetUseCase:

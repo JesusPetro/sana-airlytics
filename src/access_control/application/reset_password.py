@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 
 from ..domain.ports.repositories import UserRepository
 from ..domain.ports.token_service import TokenInvalidError, TokenService
@@ -8,7 +8,7 @@ from ..domain.user import PasswordTooWeakError as _DomainWeakPassword
 from .dtos import ResetPasswordInput, ResetPasswordOutput
 from .errors import WeakPasswordError
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ResetPasswordError(Exception):

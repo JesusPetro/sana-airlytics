@@ -20,36 +20,27 @@ class AqiThresholds:
     VOC_GOOD         = 150.0
     VOC_MODERATE     = 300.0
 
+    _THRESHOLDS: dict[str, tuple[float, float]] = {
+        "PM2_5":     (PM2_5_GOOD,   PM2_5_MODERATE),
+        "PM10":      (PM10_GOOD,    PM10_MODERATE),
+        "CO2":       (CO2_GOOD,     CO2_MODERATE),
+        "VOC_INDEX": (VOC_GOOD,     VOC_MODERATE),
+    }
+
     @classmethod
     def classify(cls, variable_code: str, avg_value: float) -> str:
         """
-        Clasifica un valor promedio como 'good', 'moderate' o 'poor'
-        segun la variable observada. Retorna 'unknown' si la variable
-        no tiene umbral definido.
+        Clasifica un valor promedio segun los umbrales OMS 2021.
+        Retorna 'unknown' si la variable no tiene umbral definido.
+        La logica de clasificacion existe una sola vez — la tabla
+        _THRESHOLDS es el unico punto de configuracion.
         """
-        code = variable_code.upper()
-        if code == "PM2_5":
-            if avg_value <= cls.PM2_5_GOOD:
-                return "good"
-            if avg_value <= cls.PM2_5_MODERATE:
-                return "moderate"
-            return "poor"
-        if code == "PM10":
-            if avg_value <= cls.PM10_GOOD:
-                return "good"
-            if avg_value <= cls.PM10_MODERATE:
-                return "moderate"
-            return "poor"
-        if code == "CO2":
-            if avg_value <= cls.CO2_GOOD:
-                return "good"
-            if avg_value <= cls.CO2_MODERATE:
-                return "moderate"
-            return "poor"
-        if code == "VOC_INDEX":
-            if avg_value <= cls.VOC_GOOD:
-                return "good"
-            if avg_value <= cls.VOC_MODERATE:
-                return "moderate"
-            return "poor"
-        return "unknown"
+        thresholds = cls._THRESHOLDS.get(variable_code.upper())
+        if thresholds is None:
+            return "unknown"
+        good_limit, moderate_limit = thresholds
+        if avg_value <= good_limit:
+            return "good"
+        if avg_value <= moderate_limit:
+            return "moderate"
+        return "poor"

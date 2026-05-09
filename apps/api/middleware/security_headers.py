@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 from collections.abc import Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -9,7 +9,7 @@ from starlette.responses import Response
 
 from ..config.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

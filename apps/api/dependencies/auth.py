@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 
 from fastapi import Depends, HTTPException, Request, status
 
 from src.access_control.domain.ports.token_service import TokenClaims, TokenInvalidError, TokenService
 from ..config.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def get_token_service(request: Request) -> TokenService:

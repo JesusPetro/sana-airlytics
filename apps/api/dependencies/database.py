@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from ..config.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Motor asincrono. pool_pre_ping=True reconecta si la conexion fue cerrada por el servidor.
 _engine = create_async_engine(

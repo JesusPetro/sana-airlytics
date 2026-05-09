@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 from typing import Annotated
 from uuid import UUID
 
@@ -49,7 +49,7 @@ from .schemas import (
     WorkspaceSummary,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/v1/workspaces", tags=["Workspaces"])
 

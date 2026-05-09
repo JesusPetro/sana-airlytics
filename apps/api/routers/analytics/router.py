@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
@@ -90,7 +90,7 @@ from .schemas import (
     ZoneResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["Analytics"])
 

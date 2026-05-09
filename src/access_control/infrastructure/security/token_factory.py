@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import logging
+from shared.infrastructure.logger import get_logger
 from datetime import UTC, datetime, timedelta
 
 from jose import JWTError, jwt
 
 from ...domain.ports.token_service import TokenInvalidError
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_access_token(
