@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { Settings2, Copy, Check, AlertTriangle } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { updateWorkspace, deleteWorkspace } from '@/lib/api/workspaces';
 import { useRouter, usePathname } from 'next/navigation';
@@ -18,13 +19,21 @@ export function GeneralSettings() {
   const [saveOk, setSaveOk]    = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
   const [showDeleteZone, setShowDeleteZone] = useState(false);
+  const [idCopied, setIdCopied] = useState(false);
 
   useEffect(() => {
     setName(activeWorkspace?.name ?? '');
     setDesc(activeWorkspace?.description ?? '');
     setSaveOk(false);
     setDeleteInput('');
+    setIdCopied(false);
   }, [activeWorkspace?.workspace_id]);
+
+  const copyId = () => {
+    navigator.clipboard.writeText(activeWorkspace!.workspace_id);
+    setIdCopied(true);
+    setTimeout(() => setIdCopied(false), 2000);
+  };
 
   const saveMutation = useMutation({
     mutationFn: () => updateWorkspace(activeWorkspace!.workspace_id, {
@@ -56,14 +65,18 @@ export function GeneralSettings() {
                   (description ?? '') !== (activeWorkspace.description ?? '');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '520px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Form */}
       <section style={{
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         borderRadius: '12px', overflow: 'hidden',
       }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+        <div style={{
+          padding: '14px 20px', borderBottom: '1px solid var(--color-border-subtle)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+        }}>
+          <Settings2 size={15} style={{ color: 'var(--color-text-secondary)' }} />
           <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-primary)' }}>
             {t('generalTitle')}
           </span>
@@ -79,6 +92,33 @@ export function GeneralSettings() {
               rows={3}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
+          </Field>
+          {/* Workspace ID — read-only, copyable */}
+          <Field label={t('workspaceId')}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span style={{
+                flex: 1, padding: '8px 10px', fontSize: '12px', fontFamily: 'monospace',
+                background: 'var(--color-surface-subtle)', border: '1px solid var(--color-border)',
+                borderRadius: '8px', color: 'var(--color-text-secondary)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {activeWorkspace.workspace_id}
+              </span>
+              <button
+                onClick={copyId}
+                title={idCopied ? t('copied') : 'Copy'}
+                style={{
+                  padding: '8px', border: '1px solid var(--color-border)',
+                  borderRadius: '8px', background: 'var(--color-surface-subtle)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  color: idCopied ? 'var(--color-aqi-good)' : 'var(--color-text-secondary)',
+                  transition: 'color 0.15s',
+                  flexShrink: 0,
+                }}
+              >
+                {idCopied ? <Check size={14} /> : <Copy size={14} />}
+              </button>
+            </div>
           </Field>
           {saveMutation.isError && (
             <p style={{ fontSize: '12px', color: 'var(--color-aqi-critical)', margin: 0 }}>{t('saveError')}</p>
@@ -113,7 +153,11 @@ export function GeneralSettings() {
         borderRadius: '12px', overflow: 'hidden',
         opacity: 0.9,
       }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(239,68,68,0.2)' }}>
+        <div style={{
+          padding: '14px 20px', borderBottom: '1px solid rgba(239,68,68,0.2)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+        }}>
+          <AlertTriangle size={15} style={{ color: 'var(--color-aqi-critical)' }} />
           <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-aqi-critical)' }}>
             {t('dangerZone')}
           </span>
