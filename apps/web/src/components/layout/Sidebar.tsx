@@ -1,11 +1,18 @@
 'use client';
 
 import { useLayoutEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/nav';
+import { useAuth } from '@/context/AuthContext';
+
+function initials(email: string): string {
+  const parts = email.split('@')[0].split(/[._-]/);
+  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('');
+}
 
 const STORAGE_KEY = 'sidebar-expanded';
 const ALERT_COUNT = 0; // hardcoded until API integration in Phase 2
@@ -26,6 +33,13 @@ export function Sidebar({ locale }: SidebarProps) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const t = useTranslations();
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await logout();
+    router.push(`/${locale}/login`);
+  }
 
   useLayoutEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54,7 +68,6 @@ export function Sidebar({ locale }: SidebarProps) {
         background: 'var(--color-surface)',
         borderRight: '1px solid var(--color-border-subtle)',
         transition: 'width 200ms ease',
-        overflow: 'hidden',
         // Hide until localStorage is read to prevent flash
         visibility: mounted ? 'visible' : 'hidden',
       }}
@@ -198,31 +211,134 @@ export function Sidebar({ locale }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* Bottom — collapse toggle */}
-      <div
-        className="flex-shrink-0 flex items-center py-3 px-2"
-        style={{ borderTop: '1px solid var(--color-border-subtle)' }}
+      {/* Collapse toggle — shadcn-style pill floating just outside the sidebar edge */}
+      <button
+        onClick={toggle}
+        aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '-16px',
+          zIndex: 50,
+          width: '20px',
+          height: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          color: 'var(--color-text-secondary)',
+          boxShadow: 'var(--shadow-sm)',
+          transition: 'background 140ms, color 140ms, box-shadow 140ms',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--color-surface-subtle)';
+          e.currentTarget.style.color = 'var(--color-text-primary)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--color-surface)';
+          e.currentTarget.style.color = 'var(--color-text-secondary)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+        }}
       >
-        <button
-          onClick={toggle}
-          className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
-          style={{ color: 'var(--color-text-disabled)' }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background =
-              'var(--color-surface-subtle)';
-            (e.currentTarget as HTMLButtonElement).style.color =
-              'var(--color-text-secondary)';
+        {expanded ? <ChevronLeft size={11} /> : <ChevronRight size={11} />}
+      </button>
+
+      {/* User account — very last element, flush to bottom */}
+      {user && (
+        <div
+          style={{
+            borderTop: '1px solid var(--color-border-subtle)',
+            padding: '8px',
           }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            (e.currentTarget as HTMLButtonElement).style.color =
-              'var(--color-text-disabled)';
-          }}
-          aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
         >
-          {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </button>
-      </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: expanded ? '6px 8px' : '6px 0',
+              justifyContent: expanded ? 'flex-start' : 'center',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Avatar */}
+            <span
+              style={{
+                flexShrink: 0,
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: 'var(--color-primary)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+              }}
+            >
+              {initials(user.email) || '?'}
+            </span>
+
+            {/* Email */}
+            <span
+              style={{
+                overflow: 'hidden',
+                opacity: expanded ? 1 : 0,
+                maxWidth: expanded ? '160px' : '0px',
+                transition: 'opacity 200ms ease 60ms, max-width 200ms ease',
+                flex: 1,
+                minWidth: 0,
+                fontSize: '11px',
+                fontWeight: 500,
+                color: 'var(--color-text-secondary)',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {user.email}
+            </span>
+
+            {/* Logout */}
+            {expanded && (
+              <button
+                onClick={handleLogout}
+                style={{
+                  flexShrink: 0,
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-text-disabled)',
+                  transition: 'background 140ms, color 140ms',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--color-surface-subtle)';
+                  e.currentTarget.style.color = '#EF4444';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-text-disabled)';
+                }}
+                title="Cerrar sesión"
+              >
+                <LogOut size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

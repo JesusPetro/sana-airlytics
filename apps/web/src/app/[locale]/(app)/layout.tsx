@@ -3,7 +3,6 @@ import { Topbar } from '@/components/layout/Topbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AppProviders } from '@/components/layout/AppProviders';
 import { EmptyWorkspaceGate } from '@/components/workspace/EmptyWorkspaceGate';
-import { UserFab } from '@/components/layout/UserFab';
 
 type Props = {
   children: ReactNode;
@@ -34,7 +33,6 @@ export default async function AppLayout({ children, params }: Props) {
         <EmptyWorkspaceGate>
           {children}
         </EmptyWorkspaceGate>
-        <UserFab />
       </main>
     </AppProviders>
   );
