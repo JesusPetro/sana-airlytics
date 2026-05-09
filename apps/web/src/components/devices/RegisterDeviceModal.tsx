@@ -28,7 +28,7 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
   const [isSearching, setIsSearching] = useState(false);
 
   const claimMutation = useMutation({
-    mutationFn: () => claimDevice(found!.device_id, activeWorkspace!.workspace_id),
+    mutationFn: () => claimDevice(found!.code, activeWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['devices', activeWorkspace?.workspace_id] });
       setStep('success');
