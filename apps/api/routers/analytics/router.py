@@ -39,6 +39,7 @@ from src.analytics.application.get_heatmap import GetHeatmapUseCase
 from src.analytics.application.get_observations import GetObservationsUseCase
 from src.analytics.application.get_sensor_location import GetSensorLocationUseCase
 from src.analytics.application.get_sensor_track import GetSensorTrackUseCase
+from src.analytics.application.get_sensor_snapshot import GetSensorSnapshotUseCase
 from src.analytics.application.get_zone_health import GetZoneHealthUseCase, ZoneNotFoundError
 from src.analytics.application.get_zones import GetZonesUseCase
 from src.analytics.application.update_alert_rule import AlertRuleNotFoundError, UpdateAlertRuleUseCase
@@ -63,6 +64,7 @@ from ...dependencies.use_cases import (
     get_observations_use_case,
     get_sensor_location_use_case,
     get_sensor_track_use_case,
+    get_sensor_snapshot_use_case,
     get_update_alert_rule_use_case,
     get_update_annotation_use_case,
     get_update_zone_use_case,
@@ -83,6 +85,8 @@ from .schemas import (
     LocationResponse,
     ObservationPointResponse,
     TrackPointResponse,
+    SnapshotResponse,
+    SnapshotVariableResponse,
     UpdateAlertRuleRequest,
     UpdateAnnotationRequest,
     UpdateZoneRequest,
@@ -100,7 +104,8 @@ _GetDatastreamsUC = Annotated[GetDatastreamsUseCase, Depends(get_datastreams_use
 _GetObsUC = Annotated[GetObservationsUseCase, Depends(get_observations_use_case)]
 _GetAggUC = Annotated[GetAggregationsUseCase, Depends(get_aggregations_use_case)]
 _GetLocUC = Annotated[GetSensorLocationUseCase, Depends(get_sensor_location_use_case)]
-_GetTrackUC = Annotated[GetSensorTrackUseCase, Depends(get_sensor_track_use_case)]
+_GetTrackUC    = Annotated[GetSensorTrackUseCase,    Depends(get_sensor_track_use_case)]
+_GetSnapshotUC = Annotated[GetSensorSnapshotUseCase, Depends(get_sensor_snapshot_use_case)]
 _GetHeatmapUC = Annotated[GetHeatmapUseCase, Depends(get_heatmap_use_case)]
 _AnnotRepo = Annotated[PostgresAnnotationRepository, Depends(get_annotation_repository)]
 _ZoneRepoAlias = Annotated[PostgresZoneRepository, Depends(get_zone_repository)]
@@ -263,10 +268,34 @@ async def get_sensor_track(
     use_case: _GetTrackUC,
     from_dt: datetime = Query(..., alias="from"),
     to_dt: datetime = Query(..., alias="to"),
+    contaminant: str | None = Query(None),
 ) -> list[TrackPointResponse]:
-    """Retorna la trayectoria GPS historica del sensor en el rango indicado."""
-    dtos = await use_case.execute(sensor_id, from_dt, to_dt)
+    """Retorna la trayectoria GPS historica del sensor en el rango indicado.
+    Si se indica contaminant, cada punto incluye el valor de esa variable."""
+    dtos = await use_case.execute(sensor_id, from_dt, to_dt, contaminant)
     return [TrackPointResponse(**vars(d)) for d in dtos]
+
+
+@router.get(
+    "/sensors/{sensor_id}/snapshot",
+    response_model=SnapshotResponse,
+    summary="Snapshot de todas las variables del sensor en un instante",
+)
+async def get_sensor_snapshot(
+    sensor_id: str,
+    current_user: _CurrentUser,
+    use_case: _GetSnapshotUC,
+    at: datetime = Query(...),
+) -> SnapshotResponse:
+    """Retorna todas las variables del sensor cuyo phenomenon_time este cercano a `at`."""
+    dto = await use_case.execute(sensor_id, at)
+    if dto is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No snapshot found at this timestamp.")
+    return SnapshotResponse(
+        sensor_id=dto.sensor_id,
+        phenomenon_time=dto.phenomenon_time,
+        variables=[SnapshotVariableResponse(**vars(v)) for v in dto.variables],
+    )
 
 
 @router.get(

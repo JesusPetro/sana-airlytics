@@ -64,6 +64,7 @@ class LocationReadRepository(Protocol):
         sensor_id: UUID,
         from_dt: datetime,
         to_dt: datetime,
+        contaminant: str | None = None,
     ) -> list[dict]: ...
 
     async def find_heatmap_points(
@@ -72,6 +73,13 @@ class LocationReadRepository(Protocol):
         property_code: str,
         from_dt: datetime,
         to_dt: datetime,
+    ) -> list[dict]: ...
+
+    async def find_snapshot(
+        self,
+        sensor_id: UUID,
+        at_dt: datetime,
+        window_seconds: int,
     ) -> list[dict]: ...
 
 

@@ -217,6 +217,7 @@ from src.analytics.application.get_observations import GetObservationsUseCase
 from src.analytics.application.get_aggregations import GetAggregationsUseCase
 from src.analytics.application.get_sensor_location import GetSensorLocationUseCase
 from src.analytics.application.get_sensor_track import GetSensorTrackUseCase
+from src.analytics.application.get_sensor_snapshot import GetSensorSnapshotUseCase
 from src.analytics.application.get_heatmap import GetHeatmapUseCase
 from src.analytics.application.create_annotation import CreateAnnotationUseCase
 from src.analytics.application.get_annotations import GetAnnotationsUseCase
@@ -281,6 +282,11 @@ def get_sensor_location_use_case(repo: _LocReadRepo) -> GetSensorLocationUseCase
 def get_sensor_track_use_case(repo: _LocReadRepo) -> GetSensorTrackUseCase:
     """Fabrica del caso de uso GetSensorTrack."""
     return GetSensorTrackUseCase(repo)
+
+
+def get_sensor_snapshot_use_case(repo: _LocReadRepo) -> GetSensorSnapshotUseCase:
+    """Fabrica del caso de uso GetSensorSnapshot."""
+    return GetSensorSnapshotUseCase(repo)
 
 
 def get_heatmap_use_case(repo: _LocReadRepo) -> GetHeatmapUseCase:

@@ -64,6 +64,7 @@ class TrackPointDTO:
     longitude: float
     elevation: float | None
     recorded_at: datetime
+    contaminant_value: float | None = None
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,24 @@ class HeatmapPointDTO:
     latitude: float
     longitude: float
     avg_value: float
+
+
+@dataclass(frozen=True)
+class SnapshotVariableDTO:
+    """Una variable dentro de un snapshot de medicion."""
+    property_code: str
+    property_name: str
+    result: float | None
+    unit_symbol: str
+    qualifier: str | None
+
+
+@dataclass(frozen=True)
+class SnapshotDTO:
+    """Snapshot de todas las variables de un sensor en un instante."""
+    sensor_id: str
+    phenomenon_time: datetime
+    variables: list[SnapshotVariableDTO]
 
 
 # --- Anotaciones ---

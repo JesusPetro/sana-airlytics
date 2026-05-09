@@ -18,15 +18,17 @@ class GetSensorTrackUseCase:
         sensor_id: str,
         from_dt: datetime,
         to_dt: datetime,
+        contaminant: str | None = None,
     ) -> list[TrackPointDTO]:
         """Retorna la trayectoria del sensor en el rango temporal indicado."""
-        rows = await self._repo.find_track(UUID(sensor_id), from_dt, to_dt)
+        rows = await self._repo.find_track(UUID(sensor_id), from_dt, to_dt, contaminant)
         return [
             TrackPointDTO(
                 latitude=r["latitude"],
                 longitude=r["longitude"],
                 elevation=r["elevation"],
                 recorded_at=r["recorded_at"],
+                contaminant_value=r.get("contaminant_value"),
             )
             for r in rows
         ]

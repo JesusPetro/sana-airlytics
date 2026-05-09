@@ -53,6 +53,7 @@ class TrackPointResponse(BaseModel):
     longitude: float
     elevation: float | None
     recorded_at: datetime
+    contaminant_value: float | None = None
 
 
 class HeatmapPointResponse(BaseModel):
@@ -60,6 +61,22 @@ class HeatmapPointResponse(BaseModel):
     latitude: float
     longitude: float
     avg_value: float
+
+
+class SnapshotVariableResponse(BaseModel):
+    """Una variable dentro de un snapshot de medicion."""
+    property_code: str
+    property_name: str
+    result: float | None
+    unit_symbol: str
+    qualifier: str | None
+
+
+class SnapshotResponse(BaseModel):
+    """Snapshot de todas las variables de un sensor en un instante."""
+    sensor_id: str
+    phenomenon_time: datetime
+    variables: list[SnapshotVariableResponse]
 
 
 class CreateAnnotationRequest(BaseModel):
