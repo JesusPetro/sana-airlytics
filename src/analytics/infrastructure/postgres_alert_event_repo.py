@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..domain.alert_event import AlertEvent
 from .orm_models import AlertEventModel, AlertRuleModel
+from shared.infrastructure.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class PostgresAlertEventRepository:
@@ -18,6 +21,48 @@ class PostgresAlertEventRepository:
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def save(self, event: AlertEvent) -> None:
+        """Inserta un nuevo evento de alerta en la BD."""
+        model = AlertEventModel(
+            id=event.id,
+            alert_rule_id=event.alert_rule_id,
+            triggered_at=event.triggered_at,
+            value=event.value,
+            message=event.message,
+        )
+        self._session.add(model)
+        await self._session.flush()
+
+    async def find_recent(
+        self,
+        alert_rule_id: UUID,
+        since: datetime,
+    ) -> AlertEvent | None:
+        """
+        Retorna el evento mas reciente de la regla desde 'since'.
+        Usado por el worker para verificar el cooldown anti-spam.
+        """
+        stmt = (
+            select(AlertEventModel)
+            .where(
+                AlertEventModel.alert_rule_id == alert_rule_id,
+                AlertEventModel.triggered_at >= since,
+            )
+            .order_by(AlertEventModel.triggered_at.desc())
+            .limit(1)
+        )
+        model = (await self._session.execute(stmt)).scalar_one_or_none()
+        if model is None:
+            return None
+        return AlertEvent(
+            id=model.id,
+            alert_rule_id=model.alert_rule_id,
+            triggered_at=model.triggered_at,
+            resolved_at=model.resolved_at,
+            value=model.value,
+            message=model.message,
+        )
 
     async def find_by_workspace(
         self,

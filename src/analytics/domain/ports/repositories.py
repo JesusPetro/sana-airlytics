@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 from uuid import UUID
@@ -8,6 +9,22 @@ from ..alert_event import AlertEvent
 from ..alert_rule import AlertRule
 from ..annotation import Annotation
 from ..zone import Zone
+
+
+@dataclass(frozen=True)
+class LatestObservationDTO:
+    """
+    Ultima observacion valida o no-valida de un datastream.
+    Usado exclusivamente por el worker de evaluacion de alertas.
+    """
+
+    datastream_id: UUID
+    sensor_id: UUID
+    sensor_name: str
+    property_code: str
+    value: float
+    qualifier: str
+    observed_at: datetime
 
 
 class DatastreamReadRepository(Protocol):
@@ -88,7 +105,15 @@ class AlertRuleRepository(Protocol):
 
 
 class AlertEventRepository(Protocol):
-    """Puerto de lectura de eventos de alerta."""
+    """Puerto de persistencia y lectura de eventos de alerta."""
+
+    async def save(self, event: AlertEvent) -> None: ...
+
+    async def find_recent(
+        self,
+        alert_rule_id: UUID,
+        since: datetime,
+    ) -> AlertEvent | None: ...
 
     async def find_by_workspace(
         self,
@@ -96,6 +121,20 @@ class AlertEventRepository(Protocol):
         from_dt: datetime | None,
         to_dt: datetime | None,
     ) -> list[AlertEvent]: ...
+
+
+class LatestObservationRepository(Protocol):
+    """
+    Puerto de lectura para la observacion mas reciente por datastream.
+    El adaptador resuelve el JOIN contra datastreams y sensors internamente
+    sin exponer el modelo de data_ingestion al BC analytics.
+    """
+
+    async def find_latest_by_unit(
+        self,
+        workspace_id: UUID,
+        unit_id: UUID,
+    ) -> list[LatestObservationDTO]: ...
 
 
 class ZoneRepository(Protocol):
