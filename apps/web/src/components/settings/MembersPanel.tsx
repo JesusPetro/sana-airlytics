@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { UserCircle2 } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { getCollaborators, changeCollaboratorRole, removeCollaborator } from '@/lib/api/workspaces';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { InviteMemberModal } from './InviteMemberModal';
 import { Skel } from '@/components/ui/Skeleton';
+import { Select } from '@/components/ui/Select';
 
 const ROLES = ['viewer', 'editor', 'admin'] as const;
 
@@ -17,8 +18,8 @@ export function MembersPanel() {
   const qc = useQueryClient();
   const wsId = activeWorkspace?.workspace_id;
 
-  const [showInvite, setShowInvite]           = useState(false);
-  const [confirmRevoke, setConfirmRevoke]     = useState<string | null>(null);
+  const [showInvite, setShowInvite]       = useState(false);
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
 
   const { data: collaborators = [], isLoading } = useQuery({
     queryKey: ['collaborators', wsId],
@@ -43,13 +44,14 @@ export function MembersPanel() {
 
   if (!activeWorkspace) return null;
 
+  const canInvite = activeWorkspace.role === null || activeWorkspace.role === 'admin';
+
   return (
     <>
       <div style={{
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         borderRadius: '12px', overflow: 'hidden',
-        maxWidth: '640px',
       }}>
         {/* Header */}
         <div style={{
@@ -57,6 +59,7 @@ export function MembersPanel() {
           padding: '14px 20px', borderBottom: '1px solid var(--color-border-subtle)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Users size={15} style={{ color: 'var(--color-text-secondary)' }} />
             <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-primary)' }}>
               {t('title')}
             </span>
@@ -70,17 +73,19 @@ export function MembersPanel() {
               </span>
             )}
           </div>
-          <button
-            onClick={() => setShowInvite(true)}
-            style={{
-              fontSize: '12px', fontWeight: 600,
-              background: 'var(--color-primary)', color: '#fff',
-              border: 'none', borderRadius: '8px', padding: '6px 14px',
-              cursor: 'pointer',
-            }}
-          >
-            + {t('invite')}
-          </button>
+          {canInvite && (
+            <button
+              onClick={() => setShowInvite(true)}
+              style={{
+                fontSize: '12px', fontWeight: 600,
+                background: 'var(--color-primary)', color: '#fff',
+                border: 'none', borderRadius: '8px', padding: '6px 14px',
+                cursor: 'pointer',
+              }}
+            >
+              + {t('invite')}
+            </button>
+          )}
         </div>
 
         {/* Table */}
@@ -110,8 +115,13 @@ export function MembersPanel() {
                 ))
               ) : collaborators.length === 0 ? (
                 <tr>
-                  <td colSpan={3} style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
-                    {t('noMembers')}
+                  <td colSpan={3} style={{ padding: '48px 24px', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <Users size={28} style={{ color: 'var(--color-border)' }} />
+                      <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                        {t('noMembers')}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -125,10 +135,23 @@ export function MembersPanel() {
                     {/* User */}
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <UserCircle2 size={22} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
-                        <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--color-text-secondary)' }}>
-                          {c.user_id.slice(0, 12)}…
-                        </span>
+                        <div style={{
+                          width: '26px', height: '26px', borderRadius: '9999px', flexShrink: 0,
+                          background: 'var(--color-primary)', border: '1px solid var(--color-border)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '10px', fontWeight: 700, color: '#fff',
+                          userSelect: 'none',
+                        }}>
+                          {c.first_name.charAt(0).toUpperCase()}{c.last_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                            {c.first_name} {c.last_name}
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                            {c.email}
+                          </div>
+                        </div>
                       </div>
                     </td>
 
@@ -137,25 +160,16 @@ export function MembersPanel() {
                       {confirmRevoke === c.collaborator_id ? (
                         <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>—</span>
                       ) : (
-                        <select
+                        <Select
+                          variant="chip"
                           value={c.role}
-                          onChange={(e) => roleChange.mutate({ userId: c.user_id, role: e.target.value })}
+                          onChange={(role) => roleChange.mutate({ userId: c.user_id, role })}
                           disabled={roleChange.isPending}
-                          style={{
-                            fontSize: '11px', fontWeight: 600, padding: '4px 8px',
-                            borderRadius: '6px',
-                            border: '1px solid var(--color-border)',
-                            background: 'var(--color-surface-subtle)',
-                            color: 'var(--color-text-primary)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {ROLES.map((r) => (
-                            <option key={r} value={r}>
-                              {t(`role${r.charAt(0).toUpperCase() + r.slice(1)}` as any)}
-                            </option>
-                          ))}
-                        </select>
+                          options={ROLES.map(r => ({
+                            value: r,
+                            label: t(`role${r.charAt(0).toUpperCase() + r.slice(1)}` as any),
+                          }))}
+                        />
                       )}
                     </td>
 
