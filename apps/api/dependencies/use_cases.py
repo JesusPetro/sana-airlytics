@@ -31,6 +31,7 @@ from src.device_management.domain.ports.publishers import CommandPublisher
 from src.device_management.domain.ports.repositories import DeviceRepository
 from src.device_management.infrastructure.mqtt_command_publisher import MqttCommandPublisher
 from shared.infrastructure.mqtt.config import MqttConfig
+from src.shared.email.email_service import EmailService
 
 from .audit_logger import get_audit_logger
 from .auth import get_token_service
@@ -54,12 +55,28 @@ _TokenSvc = Annotated[TokenService, Depends(get_token_service)]
 
 # --- access_control ---
 
+def _get_email_service() -> EmailService:
+    """
+    Instancia el servicio de email con configuracion de Resend.
+    Se construye una vez por request via la fabrica del caso de uso.
+    """
+    return EmailService(
+        api_key=settings.RESEND_API_KEY,
+        from_email=settings.RESEND_FROM_EMAIL,
+        frontend_url=settings.FRONTEND_URL,
+        template_reset_password=settings.RESEND_TEMPLATE_RESET_PASSWORD,
+        template_account_created=settings.RESEND_TEMPLATE_ACCOUNT_CREATED,
+        template_alert_event=settings.RESEND_TEMPLATE_ALERT_EVENT,
+        template_collaborator_added=settings.RESEND_TEMPLATE_COLLABORATOR_ADDED,
+    )
+
+
 def get_register_use_case(
     user_repo: _UserRepo,
     audit_logger: _AuditLog,
 ) -> RegisterUserUseCase:
     """Fabrica del caso de uso RegisterUser."""
-    return RegisterUserUseCase(user_repo, audit_logger)
+    return RegisterUserUseCase(user_repo, audit_logger, _get_email_service())
 
 
 def get_authenticate_use_case(
@@ -114,7 +131,10 @@ def get_invite_collaborator_use_case(
     org_repo: _OrgRepo,
 ) -> InviteCollaboratorUseCase:
     """Fabrica del caso de uso InviteCollaborator."""
-    return InviteCollaboratorUseCase(user_repo, workspace_repo, collaborator_repo, org_repo)
+    return InviteCollaboratorUseCase(
+        user_repo, workspace_repo, collaborator_repo, org_repo,
+        _get_email_service(),
+    )
 
 
 def get_update_workspace_use_case(

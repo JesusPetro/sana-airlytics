@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from shared.infrastructure.logger import get_logger
 from uuid import uuid7
 
 from ..domain.ports.repositories import AuditLogger, UserRepository
 from ..domain.user import PasswordTooWeakError as _DomainWeakPassword, User
 from .dtos import RegisterUserInput, RegisterUserOutput
 from .errors import WeakPasswordError
+from src.shared.email.email_service import EmailService
+
+logger = get_logger(__name__)
 
 
 class EmailAlreadyRegisteredError(Exception):
@@ -19,9 +23,11 @@ class RegisterUserUseCase:
         self,
         user_repo: UserRepository,
         audit_logger: AuditLogger,
+        email_service: EmailService | None = None,
     ) -> None:
         self._users = user_repo
         self._audit = audit_logger
+        self._email = email_service
 
     async def execute(self, cmd: RegisterUserInput) -> RegisterUserOutput:
         """
@@ -57,4 +63,16 @@ class RegisterUserUseCase:
             success=True,
             ip_address=None,
         )
+        if self._email is not None:
+            try:
+                await self._email.send_account_created_email(
+                    to_email=user.email,
+                    name=user.first_name,
+                )
+            except Exception:
+                logger.warning(
+                    "email_account_created_failed: user_id=%s email=%s",
+                    str(user.id),
+                    user.email,
+                )
         return RegisterUserOutput(user_id=str(user.id), type=user.type)

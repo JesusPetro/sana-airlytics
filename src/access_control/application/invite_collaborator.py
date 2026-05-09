@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from shared.infrastructure.logger import get_logger
 from uuid import UUID, uuid7
 
 from ..domain.collaborator import Collaborator
@@ -10,6 +11,9 @@ from ..domain.ports.repositories import (
     WorkspaceRepository,
 )
 from .dtos import InviteCollaboratorInput
+from src.shared.email.email_service import EmailService
+
+logger = get_logger(__name__)
 
 
 class InsufficientPrivilegesError(Exception):
@@ -29,11 +33,13 @@ class InviteCollaboratorUseCase:
         workspace_repo: WorkspaceRepository,
         collaborator_repo: CollaboratorRepository,
         org_repo: OrganizationRepository,
+        email_service: EmailService | None = None,
     ) -> None:
         self._users = user_repo
         self._workspaces = workspace_repo
         self._collaborators = collaborator_repo
         self._orgs = org_repo
+        self._email = email_service
 
     async def execute(self, cmd: InviteCollaboratorInput) -> None:
         """
@@ -46,6 +52,8 @@ class InviteCollaboratorUseCase:
         workspace = await self._workspaces.find_by_id(workspace_id)
         if workspace is None:
             raise ValueError(f"Workspace no encontrado: {cmd.workspace_id!r}")
+
+        actor = await self._users.find_by_id(actor_id)
 
         # Verificar si el actor es owner del workspace
         is_owner = workspace.owner_user_id == actor_id
@@ -76,6 +84,20 @@ class InviteCollaboratorUseCase:
                     "El usuario ya es colaborador de este workspace"
                 )
             await self._collaborators.reactivate(invitee.id, workspace_id, cmd.role_name)
+            if self._email is not None:
+                try:
+                    await self._email.send_collaborator_added_email(
+                        to_email=invitee.email,
+                        invitee_name=invitee.first_name,
+                        actor_name=actor.first_name,
+                        workspace_name=workspace.name,
+                        role=cmd.role_name,
+                    )
+                except Exception:
+                    logger.warning(
+                        "email_collaborator_added_failed: invitee_id=%s",
+                        str(invitee.id),
+                    )
             return
 
         collaborator = Collaborator(
@@ -86,3 +108,17 @@ class InviteCollaboratorUseCase:
             is_active=True,
         )
         await self._collaborators.save(collaborator)
+        if self._email is not None:
+            try:
+                await self._email.send_collaborator_added_email(
+                    to_email=invitee.email,
+                    invitee_name=invitee.first_name,
+                    actor_name=actor.first_name,
+                    workspace_name=workspace.name,
+                    role=cmd.role_name,
+                )
+            except Exception:
+                logger.warning(
+                    "email_collaborator_added_failed: invitee_id=%s",
+                    str(invitee.id),
+                )
