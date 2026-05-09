@@ -13,8 +13,8 @@ _PERMISSIONS: dict[str, set[str]] = {
     "annotation:create":         {"editor", "admin"},
     "alert_rule:create":         {"editor", "admin"},
     "sensor:register":           {"editor", "admin"},
-    "collaborator:invite":       {"editor", "admin"},
-    "collaborator:role_change":  {"editor", "admin"},
+    "collaborator:invite":       {"admin"},
+    "collaborator:role_change":  {"admin"},
     # Eliminacion — editor y admin
     "alert_rule:delete":         {"editor", "admin"},
     "sensor:delete":             {"admin"},
