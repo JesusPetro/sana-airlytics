@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { X, CheckCircle } from 'lucide-react';
 import { inviteCollaborator } from '@/lib/api/workspaces';
+import { Select } from '@/components/ui/Select';
 
 const ROLES = ['viewer', 'editor', 'admin'] as const;
 
@@ -23,8 +24,9 @@ export function InviteMemberModal({ workspaceId, onClose }: InviteMemberModalPro
   const mutation = useMutation({
     mutationFn: () => inviteCollaborator(workspaceId, { email: email.trim(), role }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['collaborators', workspaceId] });
+      qc.refetchQueries({ queryKey: ['collaborators', workspaceId] });
       setDone(true);
+      setTimeout(onClose, 1500);
     },
   });
 
@@ -89,11 +91,14 @@ export function InviteMemberModal({ workspaceId, onClose }: InviteMemberModalPro
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <label style={labelStyle}>{t('fieldRole')}</label>
-                <select value={role} onChange={(e) => setRole(e.target.value)} style={inputStyle}>
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>{t(`role${r.charAt(0).toUpperCase() + r.slice(1)}` as any)}</option>
-                  ))}
-                </select>
+                <Select
+                  value={role}
+                  onChange={setRole}
+                  options={ROLES.map(r => ({
+                    value: r,
+                    label: t(`role${r.charAt(0).toUpperCase() + r.slice(1)}` as any),
+                  }))}
+                />
               </div>
               {mutation.isError && (
                 <p style={{ fontSize: '12px', color: 'var(--color-aqi-critical)', margin: 0 }}>

@@ -8,6 +8,7 @@ import { useTimeRange, rangeToISO } from '@/hooks/useTimeRange';
 import { TS_VARS } from '@/lib/constants';
 import { VarChips } from './VarChips';
 import { TimeSeriesChart } from './TimeSeriesChart';
+import { Select } from '@/components/ui/Select';
 import type { DatastreamResponse } from '@/types/analytics';
 
 interface Props {
@@ -77,23 +78,12 @@ export function TimeSeriesCard({ datastreams }: Props) {
         </span>
 
         {devices.length > 0 ? (
-          <select
+          <Select
             value={selectedDeviceId}
-            onChange={(e) => setSelectedDeviceId(e.target.value)}
-            style={{
-              fontSize:     '12px',
-              padding:      '4px 8px',
-              borderRadius: '6px',
-              border:       '1px solid var(--color-border)',
-              background:   'var(--color-surface-subtle)',
-              color:        'var(--color-text-primary)',
-              cursor:       'pointer',
-            }}
-          >
-            {devices.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
+            onChange={setSelectedDeviceId}
+            options={devices.map(d => ({ value: d.id, label: d.name }))}
+            style={{ width: 'auto', padding: '4px 8px', fontSize: '12px', borderRadius: '6px' }}
+          />
         ) : (
           <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
             {t('timeSeries.noDevice')}

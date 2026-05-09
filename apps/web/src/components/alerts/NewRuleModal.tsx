@@ -7,6 +7,7 @@ import { X, CheckCircle } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDevices } from '@/hooks/useDevices';
 import { createAlertRule } from '@/lib/api/alerts';
+import { Select } from '@/components/ui/Select';
 
 const METRICS = [
   { code: 'pm2_5', label: 'PM2.5', unit: 'µg/m³' },
@@ -121,16 +122,19 @@ export function NewRuleModal({ onClose }: NewRuleModalProps) {
               {/* Metric + Operator + Threshold */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '8px', alignItems: 'end' }}>
                 <Field label={t('fieldMetric')}>
-                  <select value={metric} onChange={(e) => setMetric(e.target.value)} style={inputStyle}>
-                    {METRICS.map((m) => (
-                      <option key={m.code} value={m.code}>{m.label}{m.unit ? ` (${m.unit})` : ''}</option>
-                    ))}
-                  </select>
+                  <Select
+                    value={metric}
+                    onChange={setMetric}
+                    options={METRICS.map(m => ({ value: m.code, label: `${m.label}${m.unit ? ` (${m.unit})` : ''}` }))}
+                  />
                 </Field>
                 <Field label={t('fieldOperator')}>
-                  <select value={operator} onChange={(e) => setOperator(e.target.value)} style={{ ...inputStyle, width: '70px' }}>
-                    {OPERATORS.map((op) => <option key={op} value={op}>{op}</option>)}
-                  </select>
+                  <Select
+                    value={operator}
+                    onChange={setOperator}
+                    options={OPERATORS.map(op => ({ value: op, label: op }))}
+                    style={{ width: '70px' }}
+                  />
                 </Field>
                 <Field label={t('fieldThreshold')}>
                   <input
@@ -146,12 +150,14 @@ export function NewRuleModal({ onClose }: NewRuleModalProps) {
               {/* Device scope (optional) */}
               {devices.length > 0 && (
                 <Field label={`${t('fieldDevice')} (${t('optional')})`}>
-                  <select value={unitId} onChange={(e) => setUnitId(e.target.value)} style={inputStyle}>
-                    <option value="">{t('allDevices')}</option>
-                    {devices.map((d) => (
-                      <option key={d.device_id} value={d.device_id}>{d.name} — {d.code}</option>
-                    ))}
-                  </select>
+                  <Select
+                    value={unitId}
+                    onChange={setUnitId}
+                    options={[
+                      { value: '', label: t('allDevices') },
+                      ...devices.map(d => ({ value: d.device_id, label: `${d.name} — ${d.code}` })),
+                    ]}
+                  />
                 </Field>
               )}
 

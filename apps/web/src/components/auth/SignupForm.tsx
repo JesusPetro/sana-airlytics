@@ -5,6 +5,7 @@ import Link from 'next/link';
 import gsap from 'gsap';
 import { PasswordInput }   from './PasswordInput';
 import { PasswordStrength } from './PasswordStrength';
+import { Select } from '@/components/ui/Select';
 
 /* ── Password rules ───────────────────────────────────── */
 const RULES = [
@@ -350,16 +351,16 @@ export function SignupForm({ locale }: Props) {
               {/* Org type */}
               <div className="space-y-1.5">
                 <label htmlFor="orgType" className={LABEL_CLS}>{s.orgType}</label>
-                <select
-                  id="orgType"
+                <Select
                   value={orgType}
-                  onChange={e => setOrgType(e.target.value as typeof orgType)}
-                  className={INPUT_CLS}
-                >
-                  <option value="commercial">{s.commercial}</option>
-                  <option value="academic">{s.academic}</option>
-                  <option value="government">{s.government}</option>
-                </select>
+                  onChange={v => setOrgType(v as typeof orgType)}
+                  options={[
+                    { value: 'commercial', label: s.commercial },
+                    { value: 'academic',   label: s.academic },
+                    { value: 'government', label: s.government },
+                  ]}
+                  style={{ padding: '12px 16px', fontSize: '14px', borderRadius: '12px' }}
+                />
               </div>
 
               {/* Org description */}
