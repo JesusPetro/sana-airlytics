@@ -9,7 +9,8 @@ import { useGSAP } from '@gsap/react';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { formatRelative, formatValue } from '@/lib/format';
 import { KPI_SPECS_THRESH, KPI_SPECS_NOTHRESH } from '@/lib/constants';
-import { useDeviceSnapshot } from '@/hooks/useDeviceSnapshot';
+import { useDeviceLatestSnapshot } from '@/hooks/useDeviceLatestSnapshot';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import type { DeviceStatusResponse } from '@/types/sensor';
 
 gsap.registerPlugin(useGSAP);
@@ -33,7 +34,9 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
   const backdropRef = useRef<HTMLDivElement>(null);
   const closing     = useRef(false);
 
-  const { data: snapshot, isLoading: snapshotLoading, refetch: refetchSnapshot } = useDeviceSnapshot(device.device_id);
+  const { activeWorkspace } = useWorkspace();
+  const { data: snapshot, isLoading: snapshotLoading, refetch: refetchSnapshot } =
+    useDeviceLatestSnapshot(device.device_id, activeWorkspace?.workspace_id);
 
   useGSAP(() => {
     gsap.fromTo(backdropRef.current, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' });
