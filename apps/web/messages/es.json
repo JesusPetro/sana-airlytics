@@ -48,7 +48,9 @@
     "title": "Dashboard",
     "withThreshold": "Variables con umbral",
     "noThreshold": "Variables sin umbral",
-    "noWorkspace": "Ningún workspace seleccionado"
+    "noWorkspace": "Ningún workspace seleccionado",
+    "noSensors": "Este workspace no tiene sensores registrados",
+    "noSensorsHint": "Ve a Dispositivos para reclamar un sensor"
   },
   "workspace": {
     "select": "Seleccionar workspace",
@@ -229,7 +231,8 @@
     "ruleCreated": "Regla creada exitosamente",
     "confirmDelete": "Eliminar",
     "cancel": "Cancelar",
-    "done": "Listo"
+    "done": "Listo",
+    "selectMetric": "Seleccionar métrica"
   },
   "map": {
     "title": "Mapa de sensores",

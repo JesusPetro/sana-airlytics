@@ -48,7 +48,9 @@
     "title": "Dashboard",
     "withThreshold": "Threshold variables",
     "noThreshold": "Non-threshold variables",
-    "noWorkspace": "No workspace selected"
+    "noWorkspace": "No workspace selected",
+    "noSensors": "This workspace has no registered sensors",
+    "noSensorsHint": "Go to Devices to claim a sensor"
   },
   "workspace": {
     "select": "Select workspace",
@@ -229,7 +231,8 @@
     "ruleCreated": "Rule created successfully",
     "confirmDelete": "Delete",
     "cancel": "Cancel",
-    "done": "Done"
+    "done": "Done",
+    "selectMetric": "Select metric"
   },
   "map": {
     "title": "Sensor Map",
