@@ -34,7 +34,7 @@ export function MapStage() {
   const isDark = useDarkMode();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
   const { range } = useTimeRange();
-  const { from, to } = rangeToISO(range);
+  const { from, to } = useMemo(() => rangeToISO(range), [range]);
 
   const [layer, setLayer] = useState<LayerMode>('points');
   const [contaminant, setContaminant] = useState<ContaminantCode>('pm2_5');

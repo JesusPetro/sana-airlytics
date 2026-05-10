@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useTimeSeries } from '@/hooks/useTimeSeries';
@@ -19,7 +19,7 @@ export function TimeSeriesCard({ datastreams }: Props) {
   const t = useTranslations();
   const { activeWorkspace } = useWorkspace();
   const { range } = useTimeRange();
-  const { from, to } = rangeToISO(range);
+  const { from, to } = useMemo(() => rangeToISO(range), [range]);
 
   const devices = Array.from(
     new Map(datastreams.map((d) => [d.sensor_id, { id: d.sensor_id, name: d.sensor_name }])).values(),
