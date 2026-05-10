@@ -2,8 +2,15 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRef, type ReactNode } from 'react';
-import { WorkspaceProvider } from '@/context/WorkspaceContext';
+import { WorkspaceProvider, useWorkspace } from '@/context/WorkspaceContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { useAlertNotifier } from '@/hooks/useAlertNotifier';
+
+function AlertNotifierMount() {
+  const { activeWorkspace } = useWorkspace();
+  useAlertNotifier(activeWorkspace?.workspace_id);
+  return null;
+}
 
 function makeQueryClient() {
   return new QueryClient({
@@ -27,7 +34,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={clientRef.current}>
       <AuthProvider>
-        <WorkspaceProvider>{children}</WorkspaceProvider>
+        <WorkspaceProvider>
+          <AlertNotifierMount />
+          {children}
+        </WorkspaceProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,7 +1,9 @@
 export interface DatastreamResponse {
   datastream_id: string;
   name: string;
+  description: string | null;
   sensor_id: string;
+  unit_id: string;
   sensor_code: string;
   sensor_name: string;
   property_code: string;
