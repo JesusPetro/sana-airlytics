@@ -74,8 +74,14 @@ export function useAlertNotifier(workspaceId: string | undefined): void {
     rootRef.current = createRoot(div);
     return () => {
       if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-      rootRef.current?.unmount();
-      if (containerRef.current) document.body.removeChild(containerRef.current);
+      const root      = rootRef.current;
+      const container = containerRef.current;
+      // Defer unmount to avoid "synchronous unmount during render" warning
+      setTimeout(() => {
+        root?.unmount();
+        if (container && document.body.contains(container))
+          document.body.removeChild(container);
+      }, 0);
     };
   }, []);
 
