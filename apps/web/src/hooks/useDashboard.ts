@@ -31,7 +31,7 @@ export function useDashboard(
 
   const aggQueries = useQueries({
     queries: ALL_CODES.map((code) => {
-      const ds = datastreams.find((d) => d.property_code === code);
+      const ds = datastreams.find((d) => d.property_code.toLowerCase() === code);
       return {
         queryKey:  ['aggregations', workspaceId, ds?.datastream_id ?? code, from, to],
         queryFn:   () => getAggregations(workspaceId!, ds!.datastream_id, from, to),
@@ -44,7 +44,7 @@ export function useDashboard(
 
   const result: Record<string, DashboardEntry> = {};
   ALL_CODES.forEach((code, idx) => {
-    const ds = datastreams.find((d) => d.property_code === code);
+    const ds = datastreams.find((d) => d.property_code.toLowerCase() === code);
     if (!ds) return;
     const buckets: AggregationBucketResponse[] = (aggQueries[idx]?.data as AggregationBucketResponse[] | undefined) ?? [];
     const last = [...buckets].reverse().find((b) => b.avg_value !== null);

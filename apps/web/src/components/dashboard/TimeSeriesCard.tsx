@@ -40,7 +40,7 @@ export function TimeSeriesCard({ datastreams }: Props) {
   const datastreamIds = selectedCodes
     .map((code) =>
       datastreams.find(
-        (d) => d.property_code === code && d.sensor_id === selectedDeviceId,
+        (d) => d.property_code.toLowerCase() === code && d.sensor_id === selectedDeviceId,
       ),
     )
     .filter(Boolean)
@@ -57,7 +57,7 @@ export function TimeSeriesCard({ datastreams }: Props) {
     .map((code) => {
       const tsVar = TS_VARS.find((v) => v.code === code);
       const ds    = datastreams.find(
-        (d) => d.property_code === code && d.sensor_id === selectedDeviceId,
+        (d) => d.property_code.toLowerCase() === code && d.sensor_id === selectedDeviceId,
       );
       if (!tsVar || !ds) return null;
       return {
