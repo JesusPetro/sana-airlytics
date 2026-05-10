@@ -276,11 +276,11 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                 <div style={{
                   fontSize: '12px', padding: '8px 12px', borderRadius: '8px',
                   background: saveMessage.type === 'success'
-                    ? 'var(--color-success-surface, #f0fdf4)'
-                    : 'var(--color-error-surface, #fef2f2)',
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : 'rgba(239, 68, 68, 0.12)',
                   color: saveMessage.type === 'success'
-                    ? 'var(--color-success, #16a34a)'
-                    : 'var(--color-error, #dc2626)',
+                    ? 'var(--color-aqi-good)'
+                    : 'var(--color-aqi-critical)',
                 }}>
                   {saveMessage.text}
                 </div>
@@ -345,8 +345,8 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                   {deleteError && (
                     <div style={{
                       fontSize: '12px', padding: '8px 12px', borderRadius: '8px',
-                      background: 'var(--color-error-surface, #fef2f2)',
-                      color: 'var(--color-error, #dc2626)',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      color: 'var(--color-aqi-critical)',
                     }}>
                       {deleteError}
                     </div>
