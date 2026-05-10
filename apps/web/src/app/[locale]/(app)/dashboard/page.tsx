@@ -17,9 +17,14 @@ export default function DashboardPage() {
   const { range } = useTimeRange();
   const { from, to } = rangeToISO(range);
 
-  const { data, isLoading } = useDashboard(activeWorkspace?.workspace_id, from, to);
+  const { data, isLoading, dsIsLoading } = useDashboard(
+    activeWorkspace?.workspace_id,
+    from,
+    to,
+  );
 
   const datastreams = Object.values(data).map((e) => e.datastream);
+  const hasData = Object.keys(data).length > 0;
 
   if (wsLoading) {
     return <EmptyWorkspace msg={t('common.loading')} />;
@@ -27,6 +32,28 @@ export default function DashboardPage() {
 
   if (!activeWorkspace) {
     return <EmptyWorkspace msg={t('dashboard.noWorkspace')} />;
+  }
+
+  if (!dsIsLoading && !hasData) {
+    return (
+      <div
+        style={{
+          display:        'flex',
+          flexDirection:  'column',
+          alignItems:     'center',
+          justifyContent: 'center',
+          height:         'calc(100vh - var(--topbar-h))',
+          gap:            '8px',
+        }}
+      >
+        <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: 500 }}>
+          {t('dashboard.noSensors')}
+        </span>
+        <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+          {t('dashboard.noSensorsHint')}
+        </span>
+      </div>
+    );
   }
 
   return (
