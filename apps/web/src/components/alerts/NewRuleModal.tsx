@@ -1,27 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { X, CheckCircle } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
-import { useDevices } from '@/hooks/useDevices';
 import { createAlertRule } from '@/lib/api/alerts';
+import { getDatastreams } from '@/lib/api/analytics';
 import { Select } from '@/components/ui/Select';
 
-const METRICS = [
-  { code: 'pm2_5', label: 'PM2.5', unit: 'µg/m³' },
-  { code: 'pm10',  label: 'PM10',  unit: 'µg/m³' },
-  { code: 'co2',   label: 'CO₂',   unit: 'ppm' },
-  { code: 'voc_index',   label: 'VOC Index', unit: '' },
-  { code: 'nox_index',   label: 'NOx Index', unit: '' },
-  { code: 'pm1',         label: 'PM1',       unit: 'µg/m³' },
-  { code: 'pm4',         label: 'PM4',       unit: 'µg/m³' },
-  { code: 'temperature', label: 'Temp',      unit: '°C' },
-  { code: 'humidity',    label: 'Humidity',  unit: '%' },
+const OPERATOR_OPTIONS = [
+  { symbol: '>',  code: 'GT'  },
+  { symbol: '>=', code: 'GTE' },
+  { symbol: '<',  code: 'LT'  },
+  { symbol: '<=', code: 'LTE' },
 ];
-
-const OPERATORS = ['>', '>=', '<', '<=', '=='];
 
 interface NewRuleModalProps {
   onClose: () => void;
@@ -31,36 +24,62 @@ export function NewRuleModal({ onClose }: NewRuleModalProps) {
   const t = useTranslations('alerts');
   const { activeWorkspace } = useWorkspace();
   const qc = useQueryClient();
-  const { data: devices = [] } = useDevices(activeWorkspace?.workspace_id);
 
-  const [name,      setName]      = useState('');
-  const [metric,    setMetric]    = useState('pm2_5');
-  const [operator,  setOperator]  = useState('>');
-  const [threshold, setThreshold] = useState('');
-  const [unitId,    setUnitId]    = useState('');
-  const [done,      setDone]      = useState(false);
+  const [name,           setName]           = useState('');
+  const [selectedUnitId, setSelectedUnitId] = useState('');
+  const [selectedSymbol, setSelectedSymbol] = useState('>');
+  const [threshold,      setThreshold]      = useState('');
+  const [done,           setDone]           = useState(false);
+
+  const { data: datastreams = [] } = useQuery({
+    queryKey: ['datastreams', activeWorkspace?.workspace_id],
+    queryFn: () => getDatastreams(activeWorkspace!.workspace_id),
+    enabled: !!activeWorkspace?.workspace_id,
+  });
+
+  const metricOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return datastreams
+      .filter((ds) => {
+        if (seen.has(ds.unit_id)) return false;
+        seen.add(ds.unit_id);
+        return true;
+      })
+      .map((ds) => ({
+        unit_id:       ds.unit_id,
+        label:         `${ds.property_name} (${ds.unit_symbol})`,
+        unit_symbol:   ds.unit_symbol,
+        property_name: ds.property_name,
+      }));
+  }, [datastreams]);
+
+  const selectedOption = metricOptions.find((o) => o.unit_id === selectedUnitId);
+
+  const thresholdNum = Number(threshold);
+  const isValid =
+    name.trim().length > 0 &&
+    selectedUnitId !== '' &&
+    threshold !== '' &&
+    !Number.isNaN(thresholdNum) &&
+    thresholdNum > 0;
+
+  const preview = selectedOption && threshold
+    ? `${t('previewIf')} ${selectedOption.property_name} ${selectedSymbol} ${threshold} ${selectedOption.unit_symbol} → ${name}`
+    : t('previewFillForm');
 
   const mutation = useMutation({
     mutationFn: () => createAlertRule(activeWorkspace!.workspace_id, {
       name,
-      metric,
-      operator,
-      threshold: threshold !== '' ? Number(threshold) : undefined,
-      unit_id:   unitId || undefined,
+      metric: 'THRESHOLD',
+      operator: OPERATOR_OPTIONS.find((o) => o.symbol === selectedSymbol)!.code,
+      threshold: thresholdNum,
+      unit_id: selectedUnitId,
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['alert-rules', activeWorkspace?.workspace_id] });
       setDone(true);
     },
   });
-
-  const metricObj   = METRICS.find((m) => m.code === metric);
-  const deviceLabel = devices.find((d) => d.device_id === unitId)?.name ?? '';
-  const isValid     = name.trim().length > 0;
-
-  const preview = isValid
-    ? `${t('previewIf')} ${metricObj?.label ?? metric} ${operator} ${threshold || '?'} ${metricObj?.unit ?? ''}${deviceLabel ? ` (${deviceLabel})` : ''} → ${name}`
-    : t('previewFillForm');
 
   return (
     <>
@@ -123,16 +142,19 @@ export function NewRuleModal({ onClose }: NewRuleModalProps) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '8px', alignItems: 'end' }}>
                 <Field label={t('fieldMetric')}>
                   <Select
-                    value={metric}
-                    onChange={setMetric}
-                    options={METRICS.map(m => ({ value: m.code, label: `${m.label}${m.unit ? ` (${m.unit})` : ''}` }))}
+                    value={selectedUnitId}
+                    onChange={setSelectedUnitId}
+                    options={[
+                      { value: '', label: t('selectMetric') },
+                      ...metricOptions.map((o) => ({ value: o.unit_id, label: o.label })),
+                    ]}
                   />
                 </Field>
                 <Field label={t('fieldOperator')}>
                   <Select
-                    value={operator}
-                    onChange={setOperator}
-                    options={OPERATORS.map(op => ({ value: op, label: op }))}
+                    value={selectedSymbol}
+                    onChange={setSelectedSymbol}
+                    options={OPERATOR_OPTIONS.map((o) => ({ value: o.symbol, label: o.symbol }))}
                     style={{ width: '70px' }}
                   />
                 </Field>
@@ -146,20 +168,6 @@ export function NewRuleModal({ onClose }: NewRuleModalProps) {
                   />
                 </Field>
               </div>
-
-              {/* Device scope (optional) */}
-              {devices.length > 0 && (
-                <Field label={`${t('fieldDevice')} (${t('optional')})`}>
-                  <Select
-                    value={unitId}
-                    onChange={setUnitId}
-                    options={[
-                      { value: '', label: t('allDevices') },
-                      ...devices.map(d => ({ value: d.device_id, label: `${d.name} — ${d.code}` })),
-                    ]}
-                  />
-                </Field>
-              )}
 
               {/* Preview */}
               <div style={{
