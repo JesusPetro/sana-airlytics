@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { WorkspacePill } from './WorkspacePill';
-import { RangePills } from '@/components/ui/RangePills';
 import { ThemeToggle } from '@/components/landing/ThemeToggle';
 import { LangToggle } from '@/components/landing/LangToggle';
 
@@ -48,8 +47,7 @@ export function Topbar({ locale }: TopbarProps) {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Right — Range pills + Lang + Theme */}
-      <RangePills />
+      {/* Right — Lang + Theme */}
       <LangToggle />
       <ThemeToggle />
     </header>

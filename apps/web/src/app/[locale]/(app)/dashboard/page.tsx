@@ -1,10 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useTimeRange, rangeToISO } from '@/hooks/useTimeRange';
 import { KpiGrid } from '@/components/dashboard/KpiGrid';
 import { KpiGridNoThresh } from '@/components/dashboard/KpiGridNoThresh';
 import { TimeSeriesCard } from '@/components/dashboard/TimeSeriesCard';
@@ -15,14 +13,8 @@ import { EmptyWorkspace } from '@/components/ui/EmptyWorkspace';
 export default function DashboardPage() {
   const t = useTranslations();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
-  const { range } = useTimeRange();
-  const { from, to } = useMemo(() => rangeToISO(range), [range]);
 
-  const { data, isLoading, dsIsLoading } = useDashboard(
-    activeWorkspace?.workspace_id,
-    from,
-    to,
-  );
+  const { data, isLoading, dsIsLoading } = useDashboard(activeWorkspace?.workspace_id);
 
   const datastreams = Object.values(data).map((e) => e.datastream);
   const hasData = Object.keys(data).length > 0;
@@ -68,20 +60,16 @@ export default function DashboardPage() {
         alignItems: 'start',
       }}>
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
-              {t('dashboard.withThreshold')}
-            </h2>
-          </div>
+          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+            {t('dashboard.withThreshold')}
+          </h2>
           <KpiGrid data={data} isLoading={isLoading} />
         </section>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
-              {t('dashboard.noThreshold')}
-            </h2>
-          </div>
+          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+            {t('dashboard.noThreshold')}
+          </h2>
           <KpiGridNoThresh data={data} isLoading={isLoading} />
         </section>
       </div>
