@@ -22,6 +22,17 @@ export function toggleAlertRule(wsId: string, ruleId: string, isActive: boolean)
   });
 }
 
+export function editAlertRule(
+  wsId: string,
+  ruleId: string,
+  body: { name?: string; operator?: string; threshold?: number },
+): Promise<void> {
+  return apiClient<void>(`/api/v1/workspaces/${wsId}/alert-rules/${ruleId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+
 export function deleteAlertRule(wsId: string, ruleId: string): Promise<void> {
   return apiClient<void>(`/api/v1/workspaces/${wsId}/alert-rules/${ruleId}`, {
     method: 'DELETE',

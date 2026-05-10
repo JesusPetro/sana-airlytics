@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAlertRules, toggleAlertRule, deleteAlertRule } from '@/lib/api/alerts';
+import { getAlertRules, toggleAlertRule, deleteAlertRule, editAlertRule } from '@/lib/api/alerts';
 
 export function useAlertRules(workspaceId: string | undefined) {
   const qc = useQueryClient();
@@ -24,5 +24,20 @@ export function useAlertRules(workspaceId: string | undefined) {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
 
-  return { ...query, toggle, remove };
+  const edit = useMutation({
+    mutationFn: ({
+      ruleId,
+      name,
+      operator,
+      threshold,
+    }: {
+      ruleId: string;
+      name?: string;
+      operator?: string;
+      threshold?: number;
+    }) => editAlertRule(workspaceId!, ruleId, { name, operator, threshold }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
+
+  return { ...query, toggle, remove, edit };
 }
