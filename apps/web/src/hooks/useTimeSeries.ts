@@ -1,29 +1,77 @@
-import { useQueries } from '@tanstack/react-query';
-import { getAggregations } from '@/lib/api/analytics';
-import type { AggregationBucketResponse } from '@/types/analytics';
+import { useMemo } from 'react';
+import { useQueries, keepPreviousData } from '@tanstack/react-query';
+import { getObservations, getAggregations } from '@/lib/api/analytics';
+import type {
+  AggregationBucketResponse,
+  ChartPoint,
+  ObservationPointResponse,
+} from '@/types/analytics';
+
+export type BucketOption = '5m' | '15m' | '30m' | '1h' | '6h' | '1d' | 'raw';
+
+const BUCKET_DAYS: Record<BucketOption, number> = {
+  raw:   2,
+  '5m':  2,
+  '15m': 7,
+  '30m': 7,
+  '1h':  30,
+  '6h':  90,
+  '1d':  90,
+};
+
+const STALE_TIME = 270 * 1000;
+const GC_TIME    = 600 * 1000;
+
+function computeWindow(bucket: BucketOption) {
+  const to   = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - BUCKET_DAYS[bucket]);
+  return { from: from.toISOString(), to: to.toISOString() };
+}
 
 export function useTimeSeries(
-  workspaceId: string | undefined,
+  workspaceId:   string | undefined,
   datastreamIds: string[],
-  from: string,
-  to: string,
-) {
+  bucket:        BucketOption,
+): { data: Record<string, ChartPoint[]>; isLoading: boolean; isFetching: boolean } {
+  const { from, to } = useMemo(() => computeWindow(bucket), [bucket]);
+  const isRaw = bucket === 'raw';
+
   const queries = useQueries({
     queries: datastreamIds.map((dsId) => ({
-      queryKey:  ['timeseries', workspaceId, dsId, from, to],
-      queryFn:   () => getAggregations(workspaceId!, dsId, from, to, '1h'),
-      enabled:   !!workspaceId && !!dsId,
-      staleTime: 4 * 60 * 1000 + 30 * 1000,
-      gcTime:    10 * 60 * 1000,
+      queryKey:        ['timeseries', workspaceId, dsId, bucket, from],
+      queryFn:         isRaw
+        ? () => getObservations(workspaceId!, dsId, from, to)
+        : () => getAggregations(workspaceId!, dsId, from, to, bucket),
+      enabled:         !!workspaceId && !!dsId,
+      staleTime:       STALE_TIME,
+      gcTime:          GC_TIME,
+      placeholderData: keepPreviousData,
     })),
   });
 
-  const data: Record<string, AggregationBucketResponse[]> = {};
-  datastreamIds.forEach((dsId, idx) => {
-    data[dsId] = queries[idx]?.data ?? [];
-  });
+  const data = useMemo<Record<string, ChartPoint[]>>(() => {
+    const result: Record<string, ChartPoint[]> = {};
+    datastreamIds.forEach((dsId, idx) => {
+      const rows = queries[idx]?.data ?? [];
+      if (isRaw) {
+        result[dsId] = (rows as ObservationPointResponse[]).map((r) => ({
+          time:  r.phenomenon_time,
+          value: r.result,
+        }));
+      } else {
+        result[dsId] = (rows as AggregationBucketResponse[]).map((r) => ({
+          time:  r.bucket,
+          value: r.avg_value,
+        }));
+      }
+    });
+    return result;
+  }, [queries, isRaw, datastreamIds]);
 
-  const isLoading = queries.some((q) => q.isLoading);
-
-  return { data, isLoading };
+  return {
+    data,
+    isLoading:  queries.length > 0 && queries.every((q) => q.isLoading && !q.isPlaceholderData),
+    isFetching: queries.some((q) => q.isFetching),
+  };
 }
