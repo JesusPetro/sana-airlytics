@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shared.infrastructure.orm_models import WorkspaceModel
 
 from ..domain.workspace import Workspace
+from .orm_models import CollaboratorModel, RoleModel
 
 
 class PostgresWorkspaceRepository:
@@ -53,6 +54,21 @@ class PostgresWorkspaceRepository:
         )
         rows = (await self._session.execute(stmt)).scalars().all()
         return [self._to_domain(m) for m in rows]
+
+    async def find_by_collaborator_user(self, user_id: UUID) -> list[tuple[Workspace, str]]:
+        """Retorna los workspaces donde el usuario es colaborador activo, con su rol. Una sola query."""
+        stmt = (
+            select(WorkspaceModel, RoleModel.name)
+            .join(CollaboratorModel, CollaboratorModel.workspace_id == WorkspaceModel.id)
+            .join(RoleModel, RoleModel.id == CollaboratorModel.role_id)
+            .where(
+                CollaboratorModel.user_id == user_id,
+                CollaboratorModel.is_active.is_(True),
+                WorkspaceModel.deleted_at.is_(None),
+            )
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [(self._to_domain(ws_model), role_name) for ws_model, role_name in rows]
 
     async def soft_delete(self, workspace_id: UUID) -> None:
         """
