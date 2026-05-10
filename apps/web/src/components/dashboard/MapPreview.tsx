@@ -10,7 +10,6 @@ import { Maximize2 } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDevices } from '@/hooks/useDevices';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useTimeRange, rangeToISO } from '@/hooks/useTimeRange';
 import { levelFromValue } from '@/lib/aqi';
 import type { DeviceStatusResponse } from '@/types/sensor';
 
@@ -33,8 +32,6 @@ export function MapPreview() {
   const router = useRouter();
   const locale = useLocale();
   const { activeWorkspace } = useWorkspace();
-  const { range } = useTimeRange();
-  const { from, to } = useMemo(() => rangeToISO(range), [range]);
   const [heatmap, setHeatmap] = useState(false);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const pillRefs = [useRef<HTMLButtonElement>(null), useRef<HTMLButtonElement>(null)];
@@ -52,7 +49,7 @@ export function MapPreview() {
   }, [heatmap]);
 
   const { data: devices = [] } = useDevices(activeWorkspace?.workspace_id);
-  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id, from, to);
+  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id);
 
   const pm2_5Map = useMemo(() => {
     const m: Record<string, number | null> = {};

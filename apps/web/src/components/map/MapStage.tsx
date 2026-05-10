@@ -7,7 +7,6 @@ import 'leaflet/dist/leaflet.css';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDevices } from '@/hooks/useDevices';
 import { useDashboard } from '@/hooks/useDashboard';
-import { rangeToISO } from '@/hooks/useTimeRange';
 import { MapAutoResize } from './MapAutoResize';
 import { TrackPoints } from './TrackPoints';
 import { SensorMarker } from './SensorMarker';
@@ -33,15 +32,11 @@ export function MapStage() {
   const t = useTranslations();
   const isDark = useDarkMode();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
-  // Fixed 24H window — map page has no range pill
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { from, to } = useMemo(() => rangeToISO('24H'), []);
-
   const [layer, setLayer] = useState<LayerMode>('points');
   const [contaminant, setContaminant] = useState<ContaminantCode>('pm2_5');
 
   const { data: devices = [], isLoading: devLoading } = useDevices(activeWorkspace?.workspace_id);
-  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id, from, to);
+  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id);
   const tracks = useDeviceTracks(devices, contaminant);
   const [trajectory, setTrajectory] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceStatusResponse | null>(null);
