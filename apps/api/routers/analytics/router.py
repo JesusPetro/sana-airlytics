@@ -437,11 +437,11 @@ async def update_annotation(
     authorize: _AuthorizeUC,
     use_case: _UpdateAnnotUC,
 ) -> None:
-    """Edita el cuerpo de la anotacion. Solo el creador puede modificarla. Requiere rol editor."""
+    """Edita el cuerpo de la anotacion. Solo el creador puede modificarla. Requiere permiso annotation:update."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="annotation:create",
+            action="annotation:update",
             workspace_id=ws_id,
         )
     )
@@ -474,11 +474,11 @@ async def delete_annotation(
     authorize: _AuthorizeUC,
     use_case: _DeleteAnnotUC,
 ) -> None:
-    """Elimina la anotacion. Solo el creador puede eliminarla. Requiere rol editor."""
+    """Elimina la anotacion. Solo el creador puede eliminarla. Requiere permiso annotation:delete."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="annotation:create",
+            action="annotation:delete",
             workspace_id=ws_id,
         )
     )
@@ -543,11 +543,11 @@ async def list_alert_rules(
     authorize: _AuthorizeUC,
     use_case: _GetRulesUC,
 ) -> list[AlertRuleResponse]:
-    """Retorna todas las reglas del workspace. Requiere rol viewer."""
+    """Retorna todas las reglas del workspace. Requiere permiso alert_rule:read."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="observation:read",
+            action="alert_rule:read",
             workspace_id=ws_id,
         )
     )
@@ -569,11 +569,11 @@ async def update_alert_rule(
     authorize: _AuthorizeUC,
     use_case: _UpdateRuleUC,
 ) -> None:
-    """Activa o desactiva la regla indicada. Requiere rol editor."""
+    """Activa o desactiva la regla indicada. Requiere permiso alert_rule:update."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="alert_rule:create",
+            action="alert_rule:update",
             workspace_id=ws_id,
         )
     )
@@ -624,11 +624,11 @@ async def list_alert_events(
     from_dt: datetime | None = Query(None, alias="from"),
     to_dt: datetime | None = Query(None, alias="to"),
 ) -> list[AlertEventResponse]:
-    """Retorna el historico de alertas disparadas. Requiere rol viewer."""
+    """Retorna el historico de alertas disparadas. Requiere permiso alert_event:read."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="observation:read",
+            action="alert_event:read",
             workspace_id=ws_id,
         )
     )
@@ -652,11 +652,11 @@ async def create_zone(
     authorize: _AuthorizeUC,
     use_case: _CreateZoneUC,
 ) -> ZoneResponse:
-    """Crea una zona geografica circular en el workspace. Requiere rol editor."""
+    """Crea una zona geografica circular en el workspace. Requiere permiso zone:create."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="annotation:create",
+            action="zone:create",
             workspace_id=ws_id,
         )
     )
@@ -688,11 +688,11 @@ async def list_zones(
     authorize: _AuthorizeUC,
     use_case: _GetZonesUC,
 ) -> list[ZoneResponse]:
-    """Retorna todas las zonas del workspace. Requiere rol viewer."""
+    """Retorna todas las zonas del workspace. Requiere permiso zone:read."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="sensor:read",
+            action="zone:read",
             workspace_id=ws_id,
         )
     )
@@ -750,11 +750,11 @@ async def update_zone(
     authorize: _AuthorizeUC,
     use_case: _UpdateZoneUC,
 ) -> None:
-    """Edita los campos de la zona. Requiere rol editor."""
+    """Edita los campos de la zona. Requiere permiso zone:update."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="zone:create",
+            action="zone:update",
             workspace_id=ws_id,
         )
     )
@@ -787,11 +787,11 @@ async def delete_zone(
     authorize: _AuthorizeUC,
     use_case: _DeleteZoneUC,
 ) -> None:
-    """Elimina la zona. Requiere rol editor."""
+    """Elimina la zona. Requiere permiso zone:delete."""
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="zone:create",
+            action="zone:delete",
             workspace_id=ws_id,
         )
     )

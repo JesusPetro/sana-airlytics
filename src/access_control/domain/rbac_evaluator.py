@@ -6,20 +6,33 @@ from dataclasses import dataclass
 # Mapa de permisos: accion → conjunto de roles que pueden ejecutarla
 _PERMISSIONS: dict[str, set[str]] = {
     # Lectura — todos los roles
-    "observation:read":          {"viewer", "editor", "admin"},
-    "annotation:read":           {"viewer", "editor", "admin"},
-    "sensor:read":               {"viewer", "editor", "admin"},
+    "observation:read":         {"viewer", "editor", "admin"},
+    "annotation:read":          {"viewer", "editor", "admin"},
+    "sensor:read":              {"viewer", "editor", "admin"},
+    "alert_rule:read":          {"viewer", "editor", "admin"},
+    "alert_event:read":         {"viewer", "editor", "admin"},
+    "collaborator:read":        {"viewer", "editor", "admin"},
+    "zone:read":                {"viewer", "editor", "admin"},
+
     # Creacion — editor y admin
-    "annotation:create":         {"editor", "admin"},
-    "alert_rule:create":         {"editor", "admin"},
-    "sensor:register":           {"editor", "admin"},
-    "collaborator:invite":       {"admin"},
-    "collaborator:role_change":  {"admin"},
-    # Eliminacion — editor y admin
-    "alert_rule:delete":         {"editor", "admin"},
-    "sensor:delete":             {"admin"},
-    "collaborator:remove":       {"admin"},
-    "workspace:delete":          {"admin"},
+    "annotation:create":        {"editor", "admin"},
+    "alert_rule:create":        {"editor", "admin"},
+    "alert_rule:update":        {"editor", "admin"},
+    "sensor:register":          {"editor", "admin"},
+    "zone:create":              {"editor", "admin"},
+    "zone:update":              {"editor", "admin"},
+
+    # Eliminacion o acciones restringidas a admin
+    "alert_rule:delete":        {"editor","admin"},
+    "annotation:delete":        {"editor", "admin"},
+    "annotation:update":        {"editor", "admin"},
+    "sensor:delete":            {"admin"},
+    "zone:delete":              {"editor","admin"},
+    "collaborator:invite":      {"admin"},
+    "collaborator:role_change": {"admin"},
+    "collaborator:remove":      {"admin"},
+    "workspace:update":         {"admin"},
+    "workspace:delete":         {"admin"},
 }
 
 
