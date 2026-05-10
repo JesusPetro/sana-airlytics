@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { getDatastreams, getAggregations } from '@/lib/api/analytics';
 import { KPI_SPECS_THRESH, KPI_SPECS_NOTHRESH } from '@/lib/constants';
@@ -9,16 +10,21 @@ const ALL_CODES = [
 ];
 
 export interface DashboardEntry {
-  datastream: DatastreamResponse;
-  buckets: AggregationBucketResponse[];
+  datastream:  DatastreamResponse;
+  buckets:     AggregationBucketResponse[];
   latestValue: number | null;
 }
 
-export function useDashboard(
-  workspaceId: string | undefined,
-  from: string,
-  to: string,
-) {
+function kpiWindow() {
+  const to   = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - 7);
+  return { from: from.toISOString(), to: to.toISOString() };
+}
+
+export function useDashboard(workspaceId: string | undefined) {
+  const { from, to } = useMemo(() => kpiWindow(), []);
+
   const dsQuery = useQuery({
     queryKey:  ['datastreams', workspaceId],
     queryFn:   () => getDatastreams(workspaceId!),
@@ -33,8 +39,8 @@ export function useDashboard(
     queries: ALL_CODES.map((code) => {
       const ds = datastreams.find((d) => d.property_code.toLowerCase() === code);
       return {
-        queryKey:  ['aggregations', workspaceId, ds?.datastream_id ?? code, from, to],
-        queryFn:   () => getAggregations(workspaceId!, ds!.datastream_id, from, to),
+        queryKey:  ['kpi', workspaceId, ds?.datastream_id ?? code, from],
+        queryFn:   () => getAggregations(workspaceId!, ds!.datastream_id, from, to, '30m'),
         enabled:   !!workspaceId && !!ds,
         staleTime: 4 * 60 * 1000 + 30 * 1000,
         gcTime:    10 * 60 * 1000,
@@ -55,8 +61,7 @@ export function useDashboard(
     };
   });
 
-  // isFetching covers the case where dsQuery finishes but re-fetches in background
-  const dsIsLoading  = dsQuery.isLoading || dsQuery.isFetching;
+  const dsIsLoading  = dsQuery.isLoading;
   const aggIsLoading = aggQueries.some((q) => q.isLoading);
   const isLoading    = dsIsLoading || aggIsLoading;
 
