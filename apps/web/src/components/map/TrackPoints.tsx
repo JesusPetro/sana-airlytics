@@ -25,6 +25,24 @@ function pointColor(contaminant: string | undefined, value: number | null | unde
   return level ? resolveColor(level.color) : DEFAULT_COLOR;
 }
 
+function getMapBounds() {
+  const style = getComputedStyle(document.documentElement);
+  return {
+    topbarH:  parseFloat(style.getPropertyValue('--topbar-h'))          || 56,
+    sidebarW: parseFloat(style.getPropertyValue('--sidebar-current-w')) || 0,
+  };
+}
+
+function isInMapArea(pixelX: number, pixelY: number): boolean {
+  const { topbarH, sidebarW } = getMapBounds();
+  return (
+    pixelY > topbarH &&
+    pixelX > sidebarW &&
+    pixelX < window.innerWidth &&
+    pixelY < window.innerHeight
+  );
+}
+
 interface ActiveBubble {
   deviceCode: string;
   snapshot: Snapshot;
@@ -56,18 +74,24 @@ function TrackCircle({
   const color = pointColor(contaminant, contaminantValue);
 
   const map = useMapEvents({
-    moveend: () => {
+    move: () => {
       if (isThisActive && active) {
         const p = map.latLngToContainerPoint([lat, lng]);
         const rect = map.getContainer().getBoundingClientRect();
-        onOpen({ ...active, pixelX: rect.left + p.x, pixelY: rect.top + p.y });
+        const px = rect.left + p.x;
+        const py = rect.top  + p.y;
+        if (!isInMapArea(px, py)) { onClose(); return; }
+        onOpen({ ...active, pixelX: px, pixelY: py });
       }
     },
     zoomend: () => {
       if (isThisActive && active) {
         const p = map.latLngToContainerPoint([lat, lng]);
         const rect = map.getContainer().getBoundingClientRect();
-        onOpen({ ...active, pixelX: rect.left + p.x, pixelY: rect.top + p.y });
+        const px = rect.left + p.x;
+        const py = rect.top  + p.y;
+        if (!isInMapArea(px, py)) { onClose(); return; }
+        onOpen({ ...active, pixelX: px, pixelY: py });
       }
     },
   });
@@ -125,23 +149,36 @@ export function TrackPoints({ tracks, contaminant }: Props) {
         ))
       )}
 
-      {active && typeof document !== 'undefined' && createPortal(
-        <div style={{
-          position: 'fixed',
-          left: active.pixelX,
-          top: active.pixelY,
-          transform: 'translate(-50%, calc(-100% - 14px))',
-          zIndex: 2000,
-          pointerEvents: 'auto',
-        }}>
-          <TrackPointBubble
-            snapshot={active.snapshot}
-            deviceCode={active.deviceCode}
-            onClose={() => setActive(null)}
-          />
-        </div>,
-        document.body,
-      )}
+      {active && typeof document !== 'undefined' && (() => {
+        const { topbarH, sidebarW } = getMapBounds();
+        return createPortal(
+          <div style={{
+            position: 'fixed',
+            top: topbarH,
+            left: sidebarW,
+            right: 0,
+            bottom: 0,
+            overflow: 'hidden',
+            pointerEvents: 'none',
+            zIndex: 2000,
+          }}>
+            <div style={{
+              position: 'absolute',
+              left: active.pixelX - sidebarW,
+              top: active.pixelY - topbarH,
+              transform: 'translate(-50%, calc(-100% - 14px))',
+              pointerEvents: 'auto',
+            }}>
+              <TrackPointBubble
+                snapshot={active.snapshot}
+                deviceCode={active.deviceCode}
+                onClose={() => setActive(null)}
+              />
+            </div>
+          </div>,
+          document.body,
+        );
+      })()}
     </>
   );
 }
