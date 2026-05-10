@@ -21,6 +21,7 @@ class GetDatastreamsUseCase:
                 name=r["name"],
                 description=r["description"],
                 sensor_id=str(r["sensor_id"]),
+                unit_id=str(r["unit_id"]),
                 sensor_code=r["sensor_code"],
                 sensor_name=r["sensor_name"],
                 property_code=r["property_code"],

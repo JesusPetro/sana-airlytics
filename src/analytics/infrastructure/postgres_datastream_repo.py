@@ -33,6 +33,7 @@ class PostgresDatastreamReadRepository:
                 DatastreamModel.name,
                 DatastreamModel.description,
                 DatastreamModel.sensor_id,
+                DatastreamModel.unit_id,
                 DatastreamModel.status,
                 DatastreamModel.phenomenon_time_start,
                 DatastreamModel.phenomenon_time_end,
