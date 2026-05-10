@@ -3,14 +3,14 @@
 import dynamic from 'next/dynamic';
 import { useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { X } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { formatRelative, formatValue } from '@/lib/format';
 import { KPI_SPECS_THRESH, KPI_SPECS_NOTHRESH } from '@/lib/constants';
+import { useDeviceSnapshot } from '@/hooks/useDeviceSnapshot';
 import type { DeviceStatusResponse } from '@/types/sensor';
-import type { DashboardEntry } from '@/hooks/useDashboard';
 
 gsap.registerPlugin(useGSAP);
 
@@ -23,16 +23,17 @@ const ALL_SPECS = [...KPI_SPECS_THRESH, ...KPI_SPECS_NOTHRESH];
 
 interface DeviceDetailPanelProps {
   device: DeviceStatusResponse;
-  dashData: Record<string, DashboardEntry>;
   onClose: () => void;
 }
 
-export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPanelProps) {
+export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
   const t = useTranslations();
   const locale = useLocale();
   const panelRef    = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const closing     = useRef(false);
+
+  const { data: snapshot, isLoading: snapshotLoading, refetch: refetchSnapshot } = useDeviceSnapshot(device.device_id);
 
   useGSAP(() => {
     gsap.fromTo(backdropRef.current, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' });
@@ -46,15 +47,16 @@ export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPan
     gsap.to(backdropRef.current, { opacity: 0, duration: 0.2, ease: 'power2.in', onComplete: onClose });
   }
 
+  const snapshotMap = Object.fromEntries(
+    (snapshot?.variables ?? []).map((v) => [v.property_code, v.result]),
+  ) as Record<string, number | null>;
+
   const pm2_5Map: Record<string, number | null> = {
-    [device.device_id]: dashData['pm2_5']?.latestValue ?? null,
+    [device.device_id]: snapshotMap['pm2_5'] ?? null,
   };
 
-  function readingForDevice(code: string): number | null {
-    const entry = dashData[code];
-    if (!entry) return null;
-    if (entry.datastream.sensor_code !== device.code) return null;
-    return entry.latestValue;
+  function readingFromSnapshot(code: string): number | null {
+    return snapshotMap[code] ?? null;
   }
 
   const hasLocation = device.latitude != null && device.longitude != null;
@@ -156,10 +158,42 @@ export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPan
           </Section>
 
           {/* Lecturas actuales */}
-          <Section title={t('devices.currentReadings')}>
+          <div>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: '10px',
+            }}>
+              <div style={{
+                fontSize: '11px', fontWeight: 700, color: 'var(--color-text-secondary)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+              }}>
+                {t('devices.currentReadings')}
+              </div>
+              <button
+                onClick={() => refetchSnapshot()}
+                disabled={snapshotLoading}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-secondary)', padding: '2px',
+                  display: 'flex', borderRadius: '4px',
+                  opacity: snapshotLoading ? 0.4 : 1,
+                }}
+                title={t('common.refresh')}
+              >
+                <RefreshCw
+                  size={13}
+                  style={{ animation: snapshotLoading ? 'spin 1s linear infinite' : undefined }}
+                />
+              </button>
+            </div>
+            {snapshot?.phenomenon_time && (
+              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
+                {formatRelative(snapshot.phenomenon_time, locale)}
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {ALL_SPECS.map((spec) => {
-                const val = readingForDevice(spec.code);
+                const val = readingFromSnapshot(spec.code);
                 return (
                   <div key={spec.code} style={{
                     background: 'var(--color-surface-subtle)',
@@ -176,7 +210,7 @@ export function DeviceDetailPanel({ device, dashData, onClose }: DeviceDetailPan
                 );
               })}
             </div>
-          </Section>
+          </div>
 
           {/* Identificadores MQTT */}
           <Section title={t('devices.mqttIdentifiers')}>

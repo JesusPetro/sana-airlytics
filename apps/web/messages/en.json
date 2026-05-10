@@ -10,7 +10,8 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "noData": "No data available",
-    "close": "Close"
+    "close": "Close",
+    "refresh": "Refresh"
   },
   "landing": {
     "nav": {

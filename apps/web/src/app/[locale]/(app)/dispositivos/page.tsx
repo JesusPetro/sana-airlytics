@@ -148,7 +148,6 @@ export default function DispositivosPage() {
       {selectedDevice && (
         <DeviceDetailPanel
           device={selectedDevice}
-          dashData={dashData}
           onClose={() => setSelectedDevice(null)}
         />
       )}

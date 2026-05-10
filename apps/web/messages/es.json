@@ -10,7 +10,8 @@
     "loading": "Cargando...",
     "error": "Ocurrió un error",
     "noData": "Sin datos disponibles",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "refresh": "Actualizar"
   },
   "landing": {
     "nav": {
