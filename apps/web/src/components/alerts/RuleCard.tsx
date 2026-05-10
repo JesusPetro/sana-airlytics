@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Bell, WifiOff, Battery, Trash2 } from 'lucide-react';
+import { Bell, WifiOff, Battery, Pencil, Trash2 } from 'lucide-react';
 import type { AlertRuleResponse, DatastreamResponse } from '@/types/analytics';
 
 const METRIC_ICON: Record<string, React.ElementType> = {
@@ -22,12 +22,13 @@ interface RuleCardProps {
   rule: AlertRuleResponse;
   datastreams?: DatastreamResponse[];
   onToggle: (ruleId: string, isActive: boolean) => void;
+  onEdit: (rule: AlertRuleResponse) => void;
   onDelete: (ruleId: string) => void;
   isToggling: boolean;
   isDeleting: boolean;
 }
 
-export function RuleCard({ rule, datastreams, onToggle, onDelete, isToggling, isDeleting }: RuleCardProps) {
+export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isToggling, isDeleting }: RuleCardProps) {
   const t = useTranslations('alerts');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -127,6 +128,25 @@ export function RuleCard({ rule, datastreams, onToggle, onDelete, isToggling, is
                 width: 12, height: 12, borderRadius: '50%',
                 background: '#fff', transition: 'left 0.2s',
               }} />
+            </button>
+
+            {/* Edit */}
+            <button
+              onClick={() => onEdit(rule)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                color: 'var(--color-text-disabled)', borderRadius: '6px', display: 'flex',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--color-primary)';
+                e.currentTarget.style.background = 'var(--color-surface-subtle)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--color-text-disabled)';
+                e.currentTarget.style.background = 'none';
+              }}
+            >
+              <Pencil size={14} />
             </button>
 
             {/* Delete */}

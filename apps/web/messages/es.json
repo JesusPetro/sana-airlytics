@@ -232,7 +232,13 @@
     "confirmDelete": "Eliminar",
     "cancel": "Cancelar",
     "done": "Listo",
-    "selectMetric": "Seleccionar métrica"
+    "selectMetric": "Seleccionar métrica",
+    "editRule": "Editar regla",
+    "editRuleTitle": "Editar regla",
+    "saveChanges": "Guardar cambios",
+    "saving": "Guardando…",
+    "editSuccess": "Regla actualizada",
+    "editError": "No se pudo actualizar la regla. Intenta de nuevo."
   },
   "map": {
     "title": "Mapa de sensores",

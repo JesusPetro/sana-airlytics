@@ -232,7 +232,13 @@
     "confirmDelete": "Delete",
     "cancel": "Cancel",
     "done": "Done",
-    "selectMetric": "Select metric"
+    "selectMetric": "Select metric",
+    "editRule": "Edit rule",
+    "editRuleTitle": "Edit rule",
+    "saveChanges": "Save changes",
+    "saving": "Saving…",
+    "editSuccess": "Rule updated",
+    "editError": "Failed to update rule. Please try again."
   },
   "map": {
     "title": "Sensor Map",

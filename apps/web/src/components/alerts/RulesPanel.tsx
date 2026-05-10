@@ -1,12 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAlertRules } from '@/hooks/useAlertRules';
 import { getDatastreams } from '@/lib/api/analytics';
+import { EditRuleModal } from './EditRuleModal';
 import { RuleCard } from './RuleCard';
 import { Skel } from '@/components/ui/Skeleton';
+import type { AlertRuleResponse } from '@/types/analytics';
 
 interface RulesPanelProps {
   onNewRule?: () => void;
@@ -15,7 +18,8 @@ interface RulesPanelProps {
 export function RulesPanel({ onNewRule }: RulesPanelProps) {
   const t = useTranslations('alerts');
   const { activeWorkspace } = useWorkspace();
-  const { data: rules = [], isLoading, toggle, remove } = useAlertRules(activeWorkspace?.workspace_id);
+  const { data: rules = [], isLoading, toggle, remove, edit } = useAlertRules(activeWorkspace?.workspace_id);
+  const [editingRule, setEditingRule] = useState<AlertRuleResponse | null>(null);
 
   const { data: datastreams = [] } = useQuery({
     queryKey:  ['datastreams', activeWorkspace?.workspace_id],
@@ -99,6 +103,7 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
               rule={rule}
               datastreams={datastreams}
               onToggle={(id, active) => toggle.mutate({ ruleId: id, isActive: active })}
+              onEdit={(rule) => setEditingRule(rule)}
               onDelete={(id) => remove.mutate(id)}
               isToggling={toggle.isPending}
               isDeleting={remove.isPending}
@@ -106,6 +111,21 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
           ))
         )}
       </div>
+
+      {editingRule && (
+        <EditRuleModal
+          rule={editingRule}
+          datastreams={datastreams}
+          onClose={() => setEditingRule(null)}
+          onSave={(ruleId, name, operator, threshold) => {
+            edit.mutate(
+              { ruleId, name, operator, threshold },
+              { onSuccess: () => setEditingRule(null) },
+            );
+          }}
+          isSaving={edit.isPending}
+        />
+      )}
     </div>
   );
 }
