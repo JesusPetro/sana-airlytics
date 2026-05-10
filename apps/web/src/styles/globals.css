@@ -433,6 +433,20 @@ html {
   to   { transform: rotate(360deg); }
 }
 
+/* ── Recharts — zoom/pan suave ─────────────────────── */
+.recharts-line-curve {
+  transition: d 120ms ease-out;
+}
+.recharts-cartesian-axis-tick-value {
+  transition: all 80ms ease-out;
+}
+
+/* ── Recharts Brush — texto visible ───────────────── */
+.recharts-brush-texts text {
+  fill: var(--color-text-secondary) !important;
+  font-size: 10px;
+}
+
 /* ── Leaflet attribution (landing fullscreen) ──────── */
 .leaflet-control-attribution {
   font-size: 9px !important;

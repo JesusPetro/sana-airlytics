@@ -51,6 +51,11 @@ export interface AlertRuleResponse {
   created_at: string;
 }
 
+export interface ChartPoint {
+  time:  string;
+  value: number | null;
+}
+
 export interface HeatmapPointResponse {
   latitude: number;
   longitude: number;
