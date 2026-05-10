@@ -5,9 +5,8 @@ export async function LandingFooter() {
 
   return (
     <footer
-      className="flex flex-col items-center justify-center px-6 text-center"
+      className="flex flex-col items-center justify-center px-6 py-8 text-center"
       style={{
-        minHeight:  '100vh',
         borderTop:  '1px solid var(--color-border)',
         background: 'var(--color-bg)',
       }}
