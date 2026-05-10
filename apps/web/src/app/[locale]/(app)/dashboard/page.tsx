@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -15,7 +16,7 @@ export default function DashboardPage() {
   const t = useTranslations();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
   const { range } = useTimeRange();
-  const { from, to } = rangeToISO(range);
+  const { from, to } = useMemo(() => rangeToISO(range), [range]);
 
   const { data, isLoading, dsIsLoading } = useDashboard(
     activeWorkspace?.workspace_id,

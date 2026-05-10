@@ -34,7 +34,7 @@ export function MapPreview() {
   const locale = useLocale();
   const { activeWorkspace } = useWorkspace();
   const { range } = useTimeRange();
-  const { from, to } = rangeToISO(range);
+  const { from, to } = useMemo(() => rangeToISO(range), [range]);
   const [heatmap, setHeatmap] = useState(false);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const pillRefs = [useRef<HTMLButtonElement>(null), useRef<HTMLButtonElement>(null)];

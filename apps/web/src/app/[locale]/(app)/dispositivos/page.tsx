@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -29,7 +29,7 @@ export default function DispositivosPage() {
   const t = useTranslations();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
   const { range } = useTimeRange();
-  const { from, to } = rangeToISO(range);
+  const { from, to } = useMemo(() => rangeToISO(range), [range]);
 
   const { data: devices = [], isLoading: devLoading } = useDevices(activeWorkspace?.workspace_id);
   const { data: dashData } = useDashboard(activeWorkspace?.workspace_id, from, to);
