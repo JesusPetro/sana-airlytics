@@ -33,7 +33,8 @@ export function useTimeRange() {
 }
 
 export function rangeToISO(range: TimeRange): { from: string; to: string } {
-  const to   = new Date();
+  const to = new Date();
+  to.setSeconds(0, 0); // floor to minute → stable React Query key within same minute
   const from = new Date(to);
   switch (range) {
     case '1H':  from.setHours(to.getHours() - 1);   break;
