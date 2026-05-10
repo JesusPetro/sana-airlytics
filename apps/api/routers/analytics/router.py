@@ -559,7 +559,7 @@ async def list_alert_rules(
 @router.patch(
     "/workspaces/{ws_id}/alert-rules/{rule_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Activar o desactivar regla de alerta",
+    summary="Editar campos de una regla de alerta",
 )
 async def update_alert_rule(
     ws_id: str,
@@ -569,7 +569,12 @@ async def update_alert_rule(
     authorize: _AuthorizeUC,
     use_case: _UpdateRuleUC,
 ) -> None:
-    """Activa o desactiva la regla indicada. Requiere permiso alert_rule:update."""
+    """
+    Actualiza los campos presentes en el body. Todos son opcionales.
+    Soporta activar/desactivar (is_active), renombrar (name) y
+    modificar condicion (operator, threshold). Requiere permiso
+    alert_rule:update.
+    """
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
@@ -579,9 +584,19 @@ async def update_alert_rule(
     )
     _require_allowed(result)
     try:
-        await use_case.execute(UpdateAlertRuleInput(rule_id=rule_id, is_active=body.is_active))
+        await use_case.execute(
+            UpdateAlertRuleInput(
+                rule_id=rule_id,
+                is_active=body.is_active,
+                name=body.name,
+                operator=body.operator,
+                threshold=body.threshold,
+            )
+        )
     except AlertRuleNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
 
 @router.delete(

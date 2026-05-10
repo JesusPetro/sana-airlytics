@@ -112,8 +112,11 @@ class CreateAlertRuleRequest(BaseModel):
 
 
 class UpdateAlertRuleRequest(BaseModel):
-    """Activar o desactivar una regla de alerta."""
-    is_active: bool
+    """Campos editables de una regla de alerta. Todos opcionales — se aplican solo los presentes."""
+    is_active: bool | None = None
+    name: str | None = None
+    operator: str | None = None
+    threshold: float | None = None
 
 
 class AlertRuleResponse(BaseModel):

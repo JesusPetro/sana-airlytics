@@ -133,9 +133,12 @@ class CreateAlertRuleInput:
 
 @dataclass(frozen=True)
 class UpdateAlertRuleInput:
-    """Datos para activar o desactivar una regla de alerta."""
+    """Campos a actualizar en una regla de alerta. Solo los no-None se aplican."""
     rule_id: str
-    is_active: bool
+    is_active: bool | None = None
+    name: str | None = None
+    operator: str | None = None
+    threshold: float | None = None
 
 
 @dataclass(frozen=True)
