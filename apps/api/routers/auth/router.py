@@ -5,7 +5,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.access_control.application.authenticate_user import (
     AuthenticateUserUseCase,
@@ -41,19 +40,15 @@ from src.access_control.domain.ports.token_service import (
     TokenInvalidError,
     TokenService,
 )
-from src.access_control.infrastructure.jwt_token_service import JwtTokenService
-from src.access_control.infrastructure.postgres_user_repo import PostgresUserRepository
-from src.shared.email.email_service import EmailService
-
 from ...config.settings import settings
 from ...dependencies.auth import get_current_user, get_token_service
-from ...dependencies.database import get_async_session
 from ...dependencies.limiter import limiter
 from ...dependencies.repositories import get_user_repository
 from ...dependencies.use_cases import (
     get_authenticate_use_case,
     get_delete_user_account_use_case,
     get_register_use_case,
+    get_request_reset_use_case,
     get_reset_password_use_case,
     get_update_user_profile_use_case,
     get_user_profile_use_case,
@@ -81,36 +76,11 @@ _ResetPasswordUC = Annotated[ResetPasswordUseCase, Depends(get_reset_password_us
 _GetProfileUC = Annotated[GetUserProfileUseCase, Depends(get_user_profile_use_case)]
 _UpdateProfileUC = Annotated[UpdateUserProfileUseCase, Depends(get_update_user_profile_use_case)]
 _DeleteAccountUC = Annotated[DeleteUserAccountUseCase, Depends(get_delete_user_account_use_case)]
+_RequestResetUC = Annotated[RequestPasswordResetUseCase, Depends(get_request_reset_use_case)]
 _TokenSvc = Annotated[TokenService, Depends(get_token_service)]
 _UserRepo = Annotated[UserRepository, Depends(get_user_repository)]
 _CurrentUser = Annotated[TokenClaims, Depends(get_current_user)]
-_Session = Annotated[AsyncSession, Depends(get_async_session)]
 
-
-def _build_request_reset_use_case(db: AsyncSession) -> RequestPasswordResetUseCase:
-    token_service = JwtTokenService(
-        secret_key=settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM,
-        access_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
-        refresh_expire_days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS,
-        reset_expire_minutes=settings.JWT_RESET_TOKEN_EXPIRE_MINUTES,
-    )
-    email_service = EmailService(
-        api_key=settings.RESEND_API_KEY,
-        from_email=settings.RESEND_FROM_EMAIL,
-        frontend_url=settings.FRONTEND_URL,
-        template_reset_password=settings.RESEND_TEMPLATE_RESET_PASSWORD,
-        template_account_created=settings.RESEND_TEMPLATE_ACCOUNT_CREATED,
-        template_alert_event=settings.RESEND_TEMPLATE_ALERT_EVENT,
-        template_collaborator_added=settings.RESEND_TEMPLATE_COLLABORATOR_ADDED,
-    )
-    return RequestPasswordResetUseCase(
-        user_repo=PostgresUserRepository(db),
-        token_service=token_service,
-        email_sender=email_service,
-        is_development=settings.is_development,
-        resend_configured=settings.resend_configured,
-    )
 
 
 @router.post(
@@ -267,10 +237,9 @@ async def refresh(
 async def request_reset(
     request: Request,
     body: RequestResetRequest,
-    db: _Session,
+    use_case: _RequestResetUC,
 ) -> dict:
     """Envia el email de reset; la respuesta es generica para no revelar si el email existe."""
-    use_case = _build_request_reset_use_case(db)
     output = await use_case.execute(RequestPasswordResetInput(email=str(body.email)))
     result: dict = {"message": output.message}
     if output.reset_token is not None:
@@ -328,7 +297,7 @@ async def me(current_user: _CurrentUser) -> MeResponse:
     "/token",
     response_model=TokenDevResponse,
     summary="[DEV ONLY] Obtener JWT en body para Swagger",
-    include_in_schema=True,
+    include_in_schema=settings.is_development,
 )
 @limiter.limit("5/minute")
 async def token_dev(

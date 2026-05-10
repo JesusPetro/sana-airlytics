@@ -24,6 +24,7 @@ from src.device_management.domain.errors import DeviceNotFoundError
 from src.device_management.domain.ports.repositories import DeviceRepository
 
 from ...dependencies.auth import get_current_user
+from ...dependencies.helpers import require_allowed
 from ...dependencies.repositories import get_device_repository
 from ...dependencies.use_cases import (
     get_authorize_use_case,
@@ -52,14 +53,6 @@ _StatusUC = Annotated[GetDeviceStatusUseCase, Depends(get_device_status_use_case
 _UpdateConfigUC = Annotated[UpdateDeviceConfigUseCase, Depends(get_update_device_config_use_case)]
 _DeviceRepo = Annotated[DeviceRepository, Depends(get_device_repository)]
 
-
-def _require_allowed(result) -> None:
-    """Lanza HTTP 403 si el resultado de autorizacion indica acceso denegado."""
-    if not result.allowed:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=result.reason or "Forbidden.",
-        )
 
 
 @router.post(
@@ -132,7 +125,7 @@ async def claim_device(
             workspace_id=body.workspace_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     try:
         await use_case.execute(
@@ -142,8 +135,7 @@ async def claim_device(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
         ) from exc
-    except Exception as exc:
-        # DeviceAlreadyExistsError se usa tambien para devices ya reclamados
+    except DeviceAlreadyExistsError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail=str(exc)
         ) from exc
@@ -276,7 +268,7 @@ async def get_device_status(
                 workspace_id=device.workspace_id,
             )
         )
-        _require_allowed(result)
+        require_allowed(result)
 
     output = await use_case.execute(device_id)
     return DeviceStatusResponse(
@@ -320,7 +312,7 @@ async def list_workspace_devices(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     devices = await device_repo.find_by_workspace(ws_id)
     return [
@@ -386,7 +378,7 @@ async def update_device_config(
             workspace_id=device.workspace_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     try:
         await use_case.execute(

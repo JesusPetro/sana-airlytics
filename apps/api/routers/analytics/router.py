@@ -45,6 +45,7 @@ from src.analytics.application.get_zones import GetZonesUseCase
 from src.analytics.application.update_alert_rule import AlertRuleNotFoundError, UpdateAlertRuleUseCase
 
 from ...dependencies.auth import get_current_user
+from ...dependencies.helpers import require_allowed
 from ...dependencies.repositories import get_annotation_repository, get_zone_repository
 from src.analytics.infrastructure.postgres_annotation_repo import PostgresAnnotationRepository
 from src.analytics.infrastructure.postgres_zone_repo import PostgresZoneRepository
@@ -125,14 +126,6 @@ _UpdateZoneUC = Annotated[UpdateZoneUseCase, Depends(get_update_zone_use_case)]
 _DeleteZoneUC = Annotated[DeleteZoneUseCase, Depends(get_delete_zone_use_case)]
 
 
-def _require_allowed(result) -> None:
-    """Lanza HTTP 403 si el resultado de autorizacion indica acceso denegado."""
-    if not result.allowed:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=result.reason or "Forbidden.",
-        )
-
 
 # Datastreams
 
@@ -155,7 +148,7 @@ async def list_datastreams(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dtos = await use_case.execute(ws_id)
     return [DatastreamResponse(**vars(d)) for d in dtos]
 
@@ -190,7 +183,7 @@ async def get_observations(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dtos = await use_case.execute(ds_id, from_dt, to_dt, qualifier, exclude_oor)
     return [ObservationPointResponse(**vars(d)) for d in dtos]
 
@@ -223,7 +216,7 @@ async def get_aggregations(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         dtos = await use_case.execute(ds_id, from_dt, to_dt, bucket)
     except ValueError as exc:
@@ -323,7 +316,7 @@ async def get_heatmap(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dtos = await use_case.execute(ws_id, property_code, from_dt, to_dt)
     return [HeatmapPointResponse(**vars(d)) for d in dtos]
 
@@ -351,7 +344,7 @@ async def create_annotation(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dto = await use_case.execute(
         CreateAnnotationInput(
             workspace_id=ws_id,
@@ -385,7 +378,7 @@ async def list_annotations(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dtos = await use_case.execute(ws_id, entity_type, entity_id)
     return [AnnotationResponse(**vars(d)) for d in dtos]
 
@@ -410,7 +403,7 @@ async def get_annotation(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     annotation = await repo.find_by_id(UUID(annotation_id))
     if annotation is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Annotation not found.")
@@ -445,7 +438,7 @@ async def update_annotation(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         await use_case.execute(
             UpdateAnnotationInput(
@@ -482,7 +475,7 @@ async def delete_annotation(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         await use_case.execute(annotation_id, current_user.user_id)
     except AnnotationNotFoundError as exc:
@@ -514,7 +507,7 @@ async def create_alert_rule(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         dto = await use_case.execute(
             CreateAlertRuleInput(
@@ -551,7 +544,7 @@ async def list_alert_rules(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dtos = await use_case.execute(ws_id)
     return [AlertRuleResponse(**vars(d)) for d in dtos]
 
@@ -582,7 +575,7 @@ async def update_alert_rule(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         await use_case.execute(
             UpdateAlertRuleInput(
@@ -619,7 +612,7 @@ async def delete_alert_rule(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         await use_case.execute(rule_id)
     except AlertRuleNotFoundError as exc:
@@ -647,7 +640,7 @@ async def list_alert_events(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dtos = await use_case.execute(ws_id, from_dt, to_dt)
     return [AlertEventResponse(**vars(d)) for d in dtos]
 
@@ -675,7 +668,7 @@ async def create_zone(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         dto = await use_case.execute(
             CreateZoneInput(
@@ -711,7 +704,7 @@ async def list_zones(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     dtos = await use_case.execute(ws_id)
     return [ZoneResponse(**vars(d)) for d in dtos]
 
@@ -736,10 +729,12 @@ async def get_zone(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     zone = await repo.find_by_id(UUID(zone_id))
     if zone is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Zone not found.")
+    if zone.workspace_id != UUID(ws_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Zone does not belong to this workspace.")
     return ZoneResponse(
         zone_id=str(zone.id),
         workspace_id=str(zone.workspace_id),
@@ -773,7 +768,7 @@ async def update_zone(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         await use_case.execute(
             UpdateZoneInput(
@@ -810,7 +805,7 @@ async def delete_zone(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         await use_case.execute(zone_id)
     except ZoneUpdateNotFoundError as exc:

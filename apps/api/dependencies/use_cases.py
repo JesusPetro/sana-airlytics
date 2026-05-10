@@ -11,6 +11,7 @@ from src.access_control.application.delete_user_account import DeleteUserAccount
 from src.access_control.application.get_user_profile import GetUserProfileUseCase
 from src.access_control.application.invite_collaborator import InviteCollaboratorUseCase
 from src.access_control.application.register_user import RegisterUserUseCase
+from src.access_control.application.request_password_reset import RequestPasswordResetUseCase
 from src.access_control.application.reset_password import ResetPasswordUseCase
 from src.access_control.application.update_user_profile import UpdateUserProfileUseCase
 from src.access_control.application.update_workspace import UpdateWorkspaceUseCase
@@ -94,6 +95,20 @@ def get_reset_password_use_case(
 ) -> ResetPasswordUseCase:
     """Fabrica del caso de uso ResetPassword."""
     return ResetPasswordUseCase(user_repo, token_service)
+
+
+def get_request_reset_use_case(
+    user_repo: _UserRepo,
+    token_service: _TokenSvc,
+) -> RequestPasswordResetUseCase:
+    """Fabrica del caso de uso RequestPasswordReset."""
+    return RequestPasswordResetUseCase(
+        user_repo=user_repo,
+        token_service=token_service,
+        email_sender=_get_email_service(),
+        is_development=settings.is_development,
+        resend_configured=settings.resend_configured,
+    )
 
 
 def get_authorize_use_case(

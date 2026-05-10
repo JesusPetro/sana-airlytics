@@ -32,6 +32,7 @@ from src.access_control.domain.ports.token_service import TokenClaims
 from src.access_control.domain.workspace import Workspace
 
 from ...dependencies.auth import get_current_user
+from ...dependencies.helpers import require_allowed
 from ...dependencies.repositories import get_collaborator_repository, get_workspace_repository
 from ...dependencies.use_cases import (
     get_authorize_use_case,
@@ -61,17 +62,6 @@ _WsRepo = Annotated[WorkspaceRepository, Depends(get_workspace_repository)]
 _CollabRepo = Annotated[CollaboratorRepository, Depends(get_collaborator_repository)]
 _UpdateWsUC = Annotated[UpdateWorkspaceUseCase, Depends(get_update_workspace_use_case)]
 
-
-def _require_allowed(result) -> None:
-    """
-    Lanza HTTP 403 si el resultado de autorizacion indica acceso denegado.
-    Funcion auxiliar para reducir repeticion en los endpoints.
-    """
-    if not result.allowed:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=result.reason or "Forbidden.",
-        )
 
 
 def _workspace_to_summary(ws: Workspace) -> WorkspaceSummary:
@@ -138,7 +128,6 @@ async def create_workspace(
 async def list_workspaces(
     current_user: _CurrentUser,
     ws_repo: _WsRepo,
-    collab_repo: _CollabRepo,
 ) -> list[WorkspaceSummary]:
     """
     Retorna todos los workspaces accesibles por el usuario:
@@ -152,12 +141,9 @@ async def list_workspaces(
     owned_ids: set[UUID] = {ws.id for ws in owned}
     result: list[WorkspaceSummary] = [_workspace_to_summary(ws) for ws in owned]
 
-    collabs = await collab_repo.find_by_user(user_id)
-    for collab in collabs:
-        if collab.workspace_id in owned_ids:
-            continue
-        ws = await ws_repo.find_by_id(collab.workspace_id)
-        if ws is None:
+    collab_workspaces = await ws_repo.find_by_collaborator_user(user_id)
+    for ws, role_name in collab_workspaces:
+        if ws.id in owned_ids:
             continue
         result.append(
             WorkspaceSummary(
@@ -167,7 +153,7 @@ async def list_workspaces(
                 is_private=ws.is_private,
                 owner_user_id=str(ws.owner_user_id) if ws.owner_user_id else None,
                 owner_org_id=str(ws.owner_org_id) if ws.owner_org_id else None,
-                role=collab.role_name,
+                role=role_name,
                 membership_type="collaborator",
             )
         )
@@ -199,7 +185,7 @@ async def get_workspace(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     ws = await ws_repo.find_by_id(UUID(ws_id))
     if ws is None:
@@ -234,7 +220,7 @@ async def delete_workspace(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     ws = await ws_repo.find_by_id(UUID(ws_id))
     if ws is None:
@@ -268,11 +254,11 @@ async def update_workspace(
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="workspace:delete",
+            action="workspace:update",
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
     try:
         await use_case.execute(
             UpdateWorkspaceInput(
@@ -318,7 +304,7 @@ async def invite_collaborator(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     try:
         await use_case.execute(
@@ -359,11 +345,11 @@ async def list_collaborators(
     result = await authorize.execute(
         AuthorizeActionInput(
             user_id=current_user.user_id,
-            action="sensor:read",
+            action="collaborator:read",
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     collaborators = await collab_repo.find_by_workspace_with_user_info(UUID(ws_id))
     return [CollaboratorSummary(**c) for c in collaborators]
@@ -395,7 +381,7 @@ async def change_collaborator_role(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     collab = await collab_repo.find(UUID(user_id), UUID(ws_id))
     if collab is None:
@@ -448,7 +434,7 @@ async def remove_collaborator(
             workspace_id=ws_id,
         )
     )
-    _require_allowed(result)
+    require_allowed(result)
 
     collab = await collab_repo.find(UUID(user_id), UUID(ws_id))
     if collab is None:
