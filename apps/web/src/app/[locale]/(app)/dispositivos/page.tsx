@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDevices } from '@/hooks/useDevices';
 import { useDashboard } from '@/hooks/useDashboard';
-import { rangeToISO } from '@/hooks/useTimeRange';
 import { DevicesTable } from '@/components/devices/DevicesTable';
 import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
 import { RegisterDeviceModal } from '@/components/devices/RegisterDeviceModal';
@@ -28,12 +27,8 @@ const STATUS_LABELS: Record<SensorStatus, string> = {
 export default function DispositivosPage() {
   const t = useTranslations();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
-  // Fixed 24H window — not driven by the dashboard range pill
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { from, to } = useMemo(() => rangeToISO('24H'), []);
-
   const { data: devices = [], isLoading: devLoading } = useDevices(activeWorkspace?.workspace_id);
-  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id, from, to);
+  const { data: dashData } = useDashboard(activeWorkspace?.workspace_id);
 
   const [selectedDevice, setSelectedDevice] = useState<DeviceStatusResponse | null>(null);
   const [showModal, setShowModal] = useState(false);
