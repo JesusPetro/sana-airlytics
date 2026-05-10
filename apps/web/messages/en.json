@@ -4,7 +4,8 @@
     "map": "Map",
     "devices": "Devices",
     "alerts": "Alerts",
-    "settings": "Settings"
+    "settings": "Settings",
+    "profile": "My profile"
   },
   "common": {
     "loading": "Loading...",
