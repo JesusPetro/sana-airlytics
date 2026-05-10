@@ -2,44 +2,45 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Bell, Wind, Zap, Thermometer, Droplets, Trash2 } from 'lucide-react';
-import type { AlertRuleResponse } from '@/types/analytics';
+import { Bell, WifiOff, Battery, Trash2 } from 'lucide-react';
+import type { AlertRuleResponse, DatastreamResponse } from '@/types/analytics';
 
 const METRIC_ICON: Record<string, React.ElementType> = {
-  pm2_5:       Wind,
-  pm10:        Wind,
-  pm1:         Wind,
-  pm4:         Wind,
-  co2:         Zap,
-  voc_index:   Zap,
-  nox_index:   Zap,
-  temperature: Thermometer,
-  humidity:    Droplets,
+  THRESHOLD:      Bell,
+  SENSOR_OFFLINE: WifiOff,
+  BATTERY_LOW:    Battery,
 };
 
-const METRIC_LABEL: Record<string, string> = {
-  pm2_5: 'PM2.5', pm10: 'PM10', pm1: 'PM1', pm4: 'PM4',
-  co2: 'CO₂', voc_index: 'VOC', nox_index: 'NOx',
-  temperature: 'Temp', humidity: 'Humidity',
+const OPERATOR_SYMBOL: Record<string, string> = {
+  GT:  '>',
+  LT:  '<',
+  GTE: '>=',
+  LTE: '<=',
 };
 
 interface RuleCardProps {
   rule: AlertRuleResponse;
+  datastreams?: DatastreamResponse[];
   onToggle: (ruleId: string, isActive: boolean) => void;
   onDelete: (ruleId: string) => void;
   isToggling: boolean;
   isDeleting: boolean;
 }
 
-export function RuleCard({ rule, onToggle, onDelete, isToggling, isDeleting }: RuleCardProps) {
+export function RuleCard({ rule, datastreams, onToggle, onDelete, isToggling, isDeleting }: RuleCardProps) {
   const t = useTranslations('alerts');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const Icon = METRIC_ICON[rule.metric] ?? Bell;
-  const metricLabel = METRIC_LABEL[rule.metric] ?? rule.metric;
 
-  const description = rule.operator && rule.threshold != null
-    ? `${metricLabel} ${rule.operator} ${rule.threshold}`
+  const metricEntry = datastreams?.find((ds) => ds.unit_id === rule.unit_id);
+  const metricLabel = metricEntry
+    ? `${metricEntry.property_name} (${metricEntry.unit_symbol})`
+    : rule.name;
+
+  const opSymbol = rule.operator ? (OPERATOR_SYMBOL[rule.operator] ?? rule.operator) : null;
+  const description = opSymbol && rule.threshold != null
+    ? `${metricLabel} ${opSymbol} ${rule.threshold}`
     : metricLabel;
 
   return (

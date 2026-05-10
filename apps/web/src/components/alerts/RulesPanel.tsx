@@ -1,8 +1,10 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAlertRules } from '@/hooks/useAlertRules';
+import { getDatastreams } from '@/lib/api/analytics';
 import { RuleCard } from './RuleCard';
 import { Skel } from '@/components/ui/Skeleton';
 
@@ -14,6 +16,13 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
   const t = useTranslations('alerts');
   const { activeWorkspace } = useWorkspace();
   const { data: rules = [], isLoading, toggle, remove } = useAlertRules(activeWorkspace?.workspace_id);
+
+  const { data: datastreams = [] } = useQuery({
+    queryKey:  ['datastreams', activeWorkspace?.workspace_id],
+    queryFn:   () => getDatastreams(activeWorkspace!.workspace_id),
+    enabled:   !!activeWorkspace?.workspace_id,
+    staleTime: 10 * 60 * 1000,
+  });
 
   return (
     <div style={{
@@ -88,6 +97,7 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
             <RuleCard
               key={rule.rule_id}
               rule={rule}
+              datastreams={datastreams}
               onToggle={(id, active) => toggle.mutate({ ruleId: id, isActive: active })}
               onDelete={(id) => remove.mutate(id)}
               isToggling={toggle.isPending}

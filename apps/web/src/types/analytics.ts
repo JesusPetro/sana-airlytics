@@ -45,6 +45,7 @@ export interface AlertRuleResponse {
   metric: string;
   operator: string;
   threshold: number;
+  unit_id?: string;
   is_active: boolean;
   created_by: string;
   created_at: string;
