@@ -9,7 +9,14 @@ const MapStage = dynamic(
 
 export default function MapaPage() {
   return (
-    <div style={{ position: 'fixed', inset: 0, top: 'var(--topbar-h)', paddingLeft: 'var(--sidebar-current-w, var(--sidebar-w-collapsed))' }}>
+    <div style={{
+      position: 'fixed',
+      top: 'var(--topbar-h)',
+      left: 'var(--sidebar-current-w, var(--sidebar-w-collapsed))',
+      right: 0,
+      bottom: 0,
+      zIndex: 10,
+    }}>
       <MapStage />
     </div>
   );

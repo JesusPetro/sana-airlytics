@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDevices } from '@/hooks/useDevices';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useTimeRange, rangeToISO } from '@/hooks/useTimeRange';
+import { rangeToISO } from '@/hooks/useTimeRange';
 import { MapAutoResize } from './MapAutoResize';
 import { TrackPoints } from './TrackPoints';
 import { SensorMarker } from './SensorMarker';
@@ -33,8 +33,9 @@ export function MapStage() {
   const t = useTranslations();
   const isDark = useDarkMode();
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
-  const { range } = useTimeRange();
-  const { from, to } = useMemo(() => rangeToISO(range), [range]);
+  // Fixed 24H window — map page has no range pill
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { from, to } = useMemo(() => rangeToISO('24H'), []);
 
   const [layer, setLayer] = useState<LayerMode>('points');
   const [contaminant, setContaminant] = useState<ContaminantCode>('pm2_5');
