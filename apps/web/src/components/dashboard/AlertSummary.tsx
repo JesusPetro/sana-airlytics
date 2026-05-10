@@ -8,11 +8,8 @@ import { formatRelative } from '@/lib/format';
 import { Badge } from '@/components/ui/Badge';
 import { Skel } from '@/components/ui/Skeleton';
 
-function inferSeverity(message: string): 'info' | 'warning' | 'critical' {
-  const lower = message.toLowerCase();
-  if (lower.includes('critical') || lower.includes('hazardous')) return 'critical';
-  if (lower.includes('unhealthy') || lower.includes('elevated'))  return 'warning';
-  return 'info';
+function getSeverity(_message: string): 'critical' | 'warning' | 'info' {
+  return 'warning';
 }
 
 export function AlertSummary() {
@@ -70,7 +67,7 @@ export function AlertSummary() {
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {recent.map((ev) => {
-            const severity = inferSeverity(ev.message);
+            const severity = getSeverity(ev.message);
             return (
               <li
                 key={ev.event_id}

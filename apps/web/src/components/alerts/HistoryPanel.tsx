@@ -10,11 +10,8 @@ import { formatRelative } from '@/lib/format';
 
 type Severity = 'all' | 'critical' | 'warning' | 'info';
 
-function inferSeverity(message: string): 'critical' | 'warning' | 'info' {
-  const l = message.toLowerCase();
-  if (l.includes('critical') || l.includes('hazardous')) return 'critical';
-  if (l.includes('unhealthy') || l.includes('elevated') || l.includes('warning')) return 'warning';
-  return 'info';
+function getSeverity(_message: string): 'critical' | 'warning' | 'info' {
+  return 'warning';
 }
 
 const PAGE_SIZE = 10;
@@ -30,7 +27,7 @@ export function HistoryPanel() {
 
   const filtered = useMemo(() => {
     if (filter === 'all') return events;
-    return events.filter((e) => inferSeverity(e.message) === filter);
+    return events.filter((e) => getSeverity(e.message) === filter);
   }, [events, filter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -139,7 +136,7 @@ export function HistoryPanel() {
               </tr>
             ) : (
               pageEvents.map((ev) => {
-                const severity = inferSeverity(ev.message);
+                const severity = getSeverity(ev.message);
                 return (
                   <tr
                     key={ev.event_id}
@@ -150,12 +147,8 @@ export function HistoryPanel() {
                     <td style={tdStyle}>
                       <Badge severity={severity} label={t(`severity${severity.charAt(0).toUpperCase() + severity.slice(1)}` as any)} />
                     </td>
-                    <td style={{ ...tdStyle, maxWidth: '280px' }}>
-                      <span style={{
-                        fontSize: '12px', color: 'var(--color-text-primary)',
-                        display: 'block', overflow: 'hidden',
-                        textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
+                    <td style={tdStyle}>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-primary)' }}>
                         {ev.message}
                       </span>
                     </td>
