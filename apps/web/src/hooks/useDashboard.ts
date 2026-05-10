@@ -55,7 +55,10 @@ export function useDashboard(
     };
   });
 
-  const isLoading = dsQuery.isLoading || aggQueries.some((q) => q.isLoading);
+  // isFetching covers the case where dsQuery finishes but re-fetches in background
+  const dsIsLoading  = dsQuery.isLoading || dsQuery.isFetching;
+  const aggIsLoading = aggQueries.some((q) => q.isLoading);
+  const isLoading    = dsIsLoading || aggIsLoading;
 
-  return { data: result, isLoading };
+  return { data: result, isLoading, dsIsLoading };
 }
