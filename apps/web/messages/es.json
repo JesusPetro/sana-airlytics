@@ -250,5 +250,29 @@
     "expand": "Expandir mapa",
     "noDevices": "Sin dispositivos con coordenadas",
     "loading": "Cargando mapa..."
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "email": "Correo electronico",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "middleName": "Segundo nombre",
+    "phone": "Telefono",
+    "address": "Direccion",
+    "optional": "opcional",
+    "saveChanges": "Guardar cambios",
+    "saving": "Guardando...",
+    "saveSuccess": "Perfil actualizado",
+    "saveError": "No se pudo guardar. Intenta de nuevo.",
+    "dangerZone": "Zona de peligro",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteConfirmTitle": "Eliminar cuenta",
+    "deleteConfirmText": "Esta accion es permanente. Tu cuenta sera desactivada.",
+    "deleteConfirm": "Si, eliminar",
+    "deleteCancel": "Cancelar",
+    "deleting": "Eliminando...",
+    "deleteError": "No se pudo eliminar la cuenta. Intenta de nuevo.",
+    "editProfile": "Editar perfil",
+    "logout": "Cerrar sesion"
   }
 }
