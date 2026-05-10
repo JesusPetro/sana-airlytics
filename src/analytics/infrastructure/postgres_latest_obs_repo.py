@@ -18,7 +18,8 @@ _LATEST_OBS_QUERY = text("""
         d.id             AS datastream_id,
         d.sensor_id,
         s.name           AS sensor_name,
-        op.code          AS property_code
+        op.code          AS property_code,
+        u.symbol         AS unit_symbol
     FROM observations o
     JOIN datastreams d   ON d.id = o.datastream_id
     JOIN sensors s       ON s.id = d.sensor_id
@@ -65,6 +66,7 @@ class PostgresLatestObservationRepository:
                 sensor_id=r["sensor_id"],
                 sensor_name=r["sensor_name"],
                 property_code=r["property_code"],
+                unit_symbol=r["unit_symbol"],
                 value=r["value"],
                 qualifier=r["qualifier"],
                 observed_at=r["observed_at"],

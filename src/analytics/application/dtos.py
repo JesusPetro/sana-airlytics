@@ -14,6 +14,7 @@ class DatastreamDTO:
     name: str
     description: str | None
     sensor_id: str
+    unit_id: str
     sensor_code: str
     sensor_name: str
     property_code: str

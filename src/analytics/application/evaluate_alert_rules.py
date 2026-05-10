@@ -40,6 +40,14 @@ _COOLDOWN_MINUTES: dict[str, int] = {
 }
 _DEFAULT_COOLDOWN_MINUTES: int = 60
 
+# Traduccion de codigos internos a simbolos legibles para el mensaje de alerta.
+_OPERATOR_LABELS: dict[str, str] = {
+    "GT":  ">",
+    "LT":  "<",
+    "GTE": ">=",
+    "LTE": "<=",
+}
+
 # Operadores para evaluacion de threshold
 _OPERATORS: dict[str, Callable[[float, float], bool]] = {
     "GT":  lambda v, t: v > t,
@@ -105,8 +113,8 @@ class EvaluateAlertRulesUseCase:
         """
         if obs.qualifier == "SENSOR_OUT_OF_RANGE":
             message = (
-                f"El sensor '{obs.sensor_name}' reporto un valor fuera "
-                f"de rango del hardware ({obs.value})."
+                f"[{obs.property_code}] {obs.sensor_name}: "
+                f"valor fuera de rango del hardware ({obs.value} {obs.unit_symbol})."
             )
             await self._fire_if_not_in_cooldown(rule, obs, message)
             return
@@ -117,9 +125,10 @@ class EvaluateAlertRulesUseCase:
         if not comparator(obs.value, rule.threshold):
             return
 
+        op_label = _OPERATOR_LABELS.get(rule.operator, rule.operator)
         message = (
-            f"El sensor '{obs.sensor_name}' supero el umbral: "
-            f"{obs.value} {rule.operator} {rule.threshold}."
+            f"[{obs.property_code}] {obs.sensor_name}: "
+            f"{obs.value} {obs.unit_symbol} {op_label} {rule.threshold} {obs.unit_symbol}."
         )
         await self._fire_if_not_in_cooldown(rule, obs, message)
 

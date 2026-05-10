@@ -22,6 +22,7 @@ class LatestObservationDTO:
     sensor_id: UUID
     sensor_name: str
     property_code: str
+    unit_symbol: str
     value: float
     qualifier: str
     observed_at: datetime
