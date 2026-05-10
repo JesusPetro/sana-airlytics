@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useTimeSeries } from '@/hooks/useTimeSeries';
@@ -26,6 +26,15 @@ export function TimeSeriesCard({ datastreams }: Props) {
   );
 
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>(devices[0]?.id ?? '');
+
+  // Sincroniza el device inicial cuando los datastreams llegan despues del primer render.
+  // Es necesario porque useState solo evalua el valor inicial una vez.
+  useEffect(() => {
+    if (selectedDeviceId === '' && devices.length > 0) {
+      setSelectedDeviceId(devices[0].id);
+    }
+  }, [devices, selectedDeviceId]);
+
   const [selectedCodes, setSelectedCodes]       = useState<string[]>(['pm2_5']);
 
   const datastreamIds = selectedCodes
