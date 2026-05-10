@@ -10,7 +10,7 @@ interface Props {
   max?: number;
 }
 
-export function VarChips({ vars, selected, onChange, max = 3 }: Props) {
+export function VarChips({ vars, selected, onChange, max = 4 }: Props) {
   const t = useTranslations();
 
   function toggle(code: string) {
@@ -22,32 +22,37 @@ export function VarChips({ vars, selected, onChange, max = 3 }: Props) {
   }
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-      {vars.map((v) => {
-        const active = selected.includes(v.code);
-        const disabled = !active && selected.length >= max;
-        return (
-          <button
-            key={v.code}
-            onClick={() => toggle(v.code)}
-            disabled={disabled}
-            style={{
-              padding:       '4px 10px',
-              borderRadius:  '999px',
-              fontSize:      '12px',
-              fontWeight:    500,
-              cursor:        disabled ? 'not-allowed' : 'pointer',
-              border:        `1.5px solid ${active ? v.color : 'var(--color-border)'}`,
-              background:    active ? v.color + '22' : 'transparent',
-              color:         active ? v.color : 'var(--color-text-secondary)',
-              opacity:       disabled ? 0.4 : 1,
-              transition:    'all 150ms ease',
-            }}
-          >
-            {t(v.labelKey)}
-          </button>
-        );
-      })}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        {vars.map((v) => {
+          const active = selected.includes(v.code);
+          const disabled = !active && selected.length >= max;
+          return (
+            <button
+              key={v.code}
+              onClick={() => toggle(v.code)}
+              disabled={disabled}
+              style={{
+                padding:       '4px 10px',
+                borderRadius:  '999px',
+                fontSize:      '12px',
+                fontWeight:    500,
+                cursor:        disabled ? 'not-allowed' : 'pointer',
+                border:        `1.5px solid ${active ? v.color : 'var(--color-border)'}`,
+                background:    active ? v.color + '22' : 'transparent',
+                color:         active ? v.color : 'var(--color-text-secondary)',
+                opacity:       disabled ? 0.4 : 1,
+                transition:    'all 150ms ease',
+              }}
+            >
+              {t(v.labelKey)}
+            </button>
+          );
+        })}
+      </div>
+      <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+        * Podés seleccionar hasta {max} variables al mismo tiempo
+      </span>
     </div>
   );
 }
