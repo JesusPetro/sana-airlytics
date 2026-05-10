@@ -29,7 +29,7 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
       const freshList = await refreshWorkspaces();
       setActiveWorkspace(
         freshList?.find((w) => w.workspace_id === res.workspace_id) ??
-        { workspace_id: res.workspace_id, name: name.trim(), description: description.trim() || null, is_private: false, owner_user_id: null, owner_org_id: null }
+        { workspace_id: res.workspace_id, name: name.trim(), description: description.trim() || null, is_private: false, owner_user_id: null, owner_org_id: null, role: null, membership_type: 'direct' }
       );
       setDone(true);
     },
