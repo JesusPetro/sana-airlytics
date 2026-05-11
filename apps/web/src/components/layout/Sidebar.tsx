@@ -1,11 +1,12 @@
 'use client';
 
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, User, Trash2 } from 'lucide-react';
+import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { NAV_ITEMS } from '@/lib/nav';
 import { useAuth } from '@/context/AuthContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -33,6 +34,9 @@ interface SidebarProps {
 export function Sidebar({ locale }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [popoverOpen,   setPopoverOpen]   = useState(false);
+  const [profileOpen,   setProfileOpen]   = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const t = useTranslations();
   const { user, logout } = useAuth();
@@ -59,6 +63,17 @@ export function Sidebar({ locale }: SidebarProps) {
     setSidebarCssVar(isExpanded);
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!popoverOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setPopoverOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [popoverOpen]);
 
   function toggle() {
     const next = !expanded;
@@ -258,15 +273,84 @@ export function Sidebar({ locale }: SidebarProps) {
         {expanded ? <ChevronLeft size={11} /> : <ChevronRight size={11} />}
       </button>
 
-      {/* User account — very last element, flush to bottom */}
       {user && (
         <div
+          ref={popoverRef}
           style={{
             borderTop: '1px solid var(--color-border-subtle)',
             padding: '8px',
+            position: 'relative',
           }}
         >
-          <div
+          {/* Popover menu */}
+          {popoverOpen && (
+            <div style={{
+              position: 'absolute',
+              bottom: 'calc(100% + 6px)',
+              left: '8px',
+              right: '8px',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              borderRadius: '10px',
+              boxShadow: 'var(--shadow-md)',
+              zIndex: 50,
+              padding: '4px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2px',
+            }}>
+              {/* Info del usuario en el popover */}
+              <div style={{
+                padding: '8px 10px 6px',
+                borderBottom: '1px solid var(--color-border-subtle)',
+                marginBottom: '2px',
+              }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.email}
+                </div>
+              </div>
+
+              {/* Editar perfil */}
+              <button
+                onClick={() => { setPopoverOpen(false); setProfileOpen(true); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  width: '100%', padding: '7px 10px',
+                  background: 'none', border: 'none',
+                  borderRadius: '7px', cursor: 'pointer',
+                  fontSize: '13px', color: 'var(--color-text-primary)',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+              >
+                <User size={15} />
+                {t('nav.profile')}
+              </button>
+
+              {/* Cerrar sesion */}
+              <button
+                onClick={handleLogout}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  width: '100%', padding: '7px 10px',
+                  background: 'none', border: 'none',
+                  borderRadius: '7px', cursor: 'pointer',
+                  fontSize: '13px', color: 'var(--color-text-secondary)',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+              >
+                <LogOut size={15} />
+                {t('profile.logout')}
+              </button>
+            </div>
+          )}
+
+          {/* Trigger: bloque del usuario */}
+          <button
+            onClick={() => setPopoverOpen((prev) => !prev)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -274,80 +358,50 @@ export function Sidebar({ locale }: SidebarProps) {
               padding: expanded ? '6px 8px' : '6px 0',
               justifyContent: expanded ? 'flex-start' : 'center',
               borderRadius: '8px',
-              overflow: 'hidden',
+              width: '100%',
+              background: popoverOpen ? 'var(--color-surface-subtle)' : 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background 140ms',
             }}
+            onMouseEnter={(e) => { if (!popoverOpen) e.currentTarget.style.background = 'var(--color-surface-subtle)'; }}
+            onMouseLeave={(e) => { if (!popoverOpen) e.currentTarget.style.background = 'none'; }}
           >
             {/* Avatar */}
-            <span
-              style={{
-                flexShrink: 0,
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                background: 'var(--color-primary)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '10px',
-                fontWeight: 700,
-                letterSpacing: '0.02em',
-              }}
-            >
+            <span style={{
+              flexShrink: 0,
+              width: '28px', height: '28px',
+              borderRadius: '50%',
+              background: 'var(--color-primary)',
+              color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em',
+            }}>
               {initials(user.email) || '?'}
             </span>
 
-            {/* Email */}
-            <span
-              style={{
-                overflow: 'hidden',
-                opacity: expanded ? 1 : 0,
-                maxWidth: expanded ? '160px' : '0px',
-                transition: 'opacity 200ms ease 60ms, max-width 200ms ease',
-                flex: 1,
-                minWidth: 0,
-                fontSize: '11px',
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-              }}
-            >
+            {/* Email — visible solo cuando expandido */}
+            <span style={{
+              overflow: 'hidden',
+              opacity: expanded ? 1 : 0,
+              maxWidth: expanded ? '160px' : '0px',
+              transition: 'opacity 200ms, max-width 200ms',
+              fontSize: '12px',
+              color: 'var(--color-text-secondary)',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+              textAlign: 'left',
+            }}>
               {user.email}
             </span>
+          </button>
 
-            {/* Logout */}
-            {expanded && (
-              <button
-                onClick={handleLogout}
-                style={{
-                  flexShrink: 0,
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--color-text-disabled)',
-                  transition: 'background 140ms, color 140ms',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--color-surface-subtle)';
-                  e.currentTarget.style.color = '#EF4444';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--color-text-disabled)';
-                }}
-                title="Cerrar sesión"
-              >
-                <LogOut size={13} />
-              </button>
-            )}
-          </div>
+          {/* ProfileSheet */}
+          <ProfileSheet
+            isOpen={profileOpen}
+            onClose={() => setProfileOpen(false)}
+            locale={locale}
+          />
         </div>
       )}
     </aside>

@@ -4,7 +4,8 @@
     "map": "Map",
     "devices": "Devices",
     "alerts": "Alerts",
-    "settings": "Settings"
+    "settings": "Settings",
+    "profile": "My profile"
   },
   "common": {
     "loading": "Loading...",
@@ -251,5 +252,29 @@
     "expand": "Expand map",
     "noDevices": "No devices with coordinates",
     "loading": "Loading map..."
+  },
+  "profile": {
+    "title": "My profile",
+    "email": "Email",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "middleName": "Middle name",
+    "phone": "Phone",
+    "address": "Address",
+    "optional": "optional",
+    "saveChanges": "Save changes",
+    "saving": "Saving...",
+    "saveSuccess": "Profile updated",
+    "saveError": "Could not save. Please try again.",
+    "dangerZone": "Danger zone",
+    "deleteAccount": "Delete account",
+    "deleteConfirmTitle": "Delete account",
+    "deleteConfirmText": "This action is permanent. Your account will be deactivated.",
+    "deleteConfirm": "Yes, delete",
+    "deleteCancel": "Cancel",
+    "deleting": "Deleting...",
+    "deleteError": "Could not delete account. Please try again.",
+    "editProfile": "Edit profile",
+    "logout": "Sign out"
   }
 }
