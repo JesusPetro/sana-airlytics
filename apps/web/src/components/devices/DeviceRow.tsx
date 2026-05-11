@@ -1,15 +1,18 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { X } from 'lucide-react';
 import { formatRelative } from '@/lib/format';
 import { levelFromValue } from '@/lib/aqi';
 import type { DeviceStatusResponse } from '@/types/sensor';
 
 interface DeviceRowProps {
-  device: DeviceStatusResponse;
-  pm2_5?: number | null;
-  isSelected: boolean;
-  onClick: (device: DeviceStatusResponse) => void;
+  device:           DeviceStatusResponse;
+  pm2_5?:           number | null;
+  lastSeenFallback?: string | null;
+  isSelected:       boolean;
+  onClick:          (device: DeviceStatusResponse) => void;
+  onClose:          () => void;
 }
 
 const STATUS_COLOR = {
@@ -24,8 +27,9 @@ const STATUS_LABEL = {
   INACTIVE: 'Offline',
 } as const;
 
-export function DeviceRow({ device, pm2_5, isSelected, onClick }: DeviceRowProps) {
-  const t = useTranslations('devices');
+export function DeviceRow({ device, pm2_5, lastSeenFallback, isSelected, onClick, onClose }: DeviceRowProps) {
+  const t  = useTranslations('devices');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const pm2_5Level = pm2_5 != null ? levelFromValue('pm2_5', pm2_5) : null;
   const statusColor = STATUS_COLOR[device.status] ?? 'var(--color-text-disabled)';
@@ -89,8 +93,8 @@ export function DeviceRow({ device, pm2_5, isSelected, onClick }: DeviceRowProps
 
       {/* Last seen */}
       <td style={{ ...td, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-        {device.last_seen
-          ? formatRelative(device.last_seen, locale)
+        {(device.last_seen ?? lastSeenFallback)
+          ? formatRelative((device.last_seen ?? lastSeenFallback)!, locale)
           : <span style={{ color: 'var(--color-text-disabled)' }}>{t('never')}</span>}
       </td>
 
@@ -120,30 +124,50 @@ export function DeviceRow({ device, pm2_5, isSelected, onClick }: DeviceRowProps
 
       {/* Action */}
       <td style={{ ...td, textAlign: 'right' }}>
-        <button
-          onClick={(e) => { e.stopPropagation(); onClick(device); }}
-          style={{
-            fontSize: '11px',
-            fontWeight: 500,
-            color: isSelected ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '5px 10px',
-            borderRadius: '6px',
-            transition: 'background 140ms, color 140ms',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-primary-surface)';
-            e.currentTarget.style.color = 'var(--color-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-            e.currentTarget.style.color = isSelected ? 'var(--color-primary)' : 'var(--color-text-secondary)';
-          }}
-        >
-          {t('details')}
-        </button>
+        {isSelected ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              background: 'var(--color-primary-surface)',
+              border: '1px solid color-mix(in oklab, var(--color-primary) 30%, transparent)',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: 500,
+              transition: 'background 140ms',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'color-mix(in oklab, var(--color-primary) 18%, transparent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--color-primary-surface)')}
+          >
+            <X size={12} />
+            {tc('close')}
+          </button>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); onClick(device); }}
+            style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              color: 'var(--color-primary)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '5px 10px',
+              borderRadius: '6px',
+              transition: 'background 140ms',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-primary-surface)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+          >
+            {t('details')}
+          </button>
+        )}
       </td>
     </tr>
   );

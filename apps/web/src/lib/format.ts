@@ -28,11 +28,17 @@ export function formatTime(iso: string): string {
 }
 
 export function formatRelative(iso: string, locale: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+  const now  = new Date();
+  const then = new Date(iso);
+  const diff    = now.getTime() - then.getTime();
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours   = Math.floor(minutes / 60);
-  const days    = Math.floor(hours / 24);
+
+  // Calendar-day difference (midnight boundaries), not hours/24
+  const nowMidnight  = new Date(now.getFullYear(),  now.getMonth(),  now.getDate());
+  const thenMidnight = new Date(then.getFullYear(), then.getMonth(), then.getDate());
+  const days = Math.round((nowMidnight.getTime() - thenMidnight.getTime()) / 86_400_000);
 
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
 

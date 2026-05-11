@@ -3,10 +3,9 @@
 import dynamic from 'next/dynamic';
 import { useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { X, RefreshCw } from 'lucide-react';
+import { X } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { StatusDot } from '@/components/ui/StatusDot';
 import { formatRelative, formatValue } from '@/lib/format';
 import { KPI_SPECS_THRESH, KPI_SPECS_NOTHRESH } from '@/lib/constants';
 import { useDeviceLatestSnapshot } from '@/hooks/useDeviceLatestSnapshot';
@@ -35,7 +34,7 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
   const closing     = useRef(false);
 
   const { activeWorkspace } = useWorkspace();
-  const { data: snapshot, isLoading: snapshotLoading, refetch: refetchSnapshot } =
+  const { data: snapshot, isFetching: snapshotLoading, refetch: refetchSnapshot } =
     useDeviceLatestSnapshot(device.device_id, activeWorkspace?.workspace_id);
 
   useGSAP(() => {
@@ -51,7 +50,7 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
   }
 
   const snapshotMap = Object.fromEntries(
-    (snapshot?.variables ?? []).map((v) => [v.property_code, v.result]),
+    (snapshot?.variables ?? []).map((v) => [v.property_code.toLowerCase(), v.result]),
   ) as Record<string, number | null>;
 
   const pm2_5Map: Record<string, number | null> = {
@@ -71,7 +70,8 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
         ref={backdropRef}
         onClick={handleClose}
         style={{
-          position: 'fixed', inset: 0,
+          position: 'fixed',
+          top: 'var(--topbar-h)', left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.25)',
           zIndex: 200,
           backdropFilter: 'blur(2px)',
@@ -81,7 +81,7 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
       {/* Panel */}
       <div ref={panelRef} style={{
         position: 'fixed',
-        top: 0, right: 0, bottom: 0,
+        top: 'var(--topbar-h)', right: 0, bottom: 0,
         width: '380px',
         zIndex: 201,
         background: 'var(--color-surface)',
@@ -89,26 +89,15 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
         boxShadow: 'var(--shadow-lg)',
         display: 'flex',
         flexDirection: 'column',
-        overflowY: 'auto',
+        overflow: 'hidden',
       }}>
         {/* Header */}
         <div style={{
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-          padding: '20px 20px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+          padding: '4px 8px',
           borderBottom: '1px solid var(--color-border-subtle)',
           flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <StatusDot status={device.status} />
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)' }}>
-                {device.name}
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontFamily: 'monospace', marginTop: '2px' }}>
-                {device.code}
-              </div>
-            </div>
-          </div>
           <button
             onClick={handleClose}
             style={{
@@ -123,7 +112,7 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
           </button>
         </div>
 
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', flex: 1 }}>
           {/* Info general */}
           <Section title={t('devices.deviceInfo')}>
             <InfoRow label={t('devices.model')}    value={device.model} />
@@ -131,7 +120,13 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
             {device.site_type && <InfoRow label={t('devices.siteType')} value={device.site_type} />}
             <InfoRow
               label={t('devices.lastSeen')}
-              value={device.last_seen ? formatRelative(device.last_seen, locale) : t('devices.never')}
+              value={
+                device.last_seen
+                  ? formatRelative(device.last_seen, locale)
+                  : snapshot?.phenomenon_time
+                    ? formatRelative(snapshot.phenomenon_time, locale)
+                    : t('devices.never')
+              }
             />
             <InfoRow
               label={t('devices.samplingInterval')}
@@ -162,36 +157,19 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
 
           {/* Lecturas actuales */}
           <div>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: '10px',
-            }}>
+            <div style={{ marginBottom: '10px' }}>
               <div style={{
                 fontSize: '11px', fontWeight: 700, color: 'var(--color-text-secondary)',
                 textTransform: 'uppercase', letterSpacing: '0.05em',
               }}>
                 {t('devices.currentReadings')}
               </div>
-              <button
-                onClick={() => refetchSnapshot()}
-                disabled={snapshotLoading}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--color-text-secondary)', padding: '2px',
-                  display: 'flex', borderRadius: '4px',
-                  opacity: snapshotLoading ? 0.4 : 1,
-                }}
-                title={t('common.refresh')}
-              >
-                <RefreshCw
-                  size={13}
-                  style={{ animation: snapshotLoading ? 'spin 1s linear infinite' : undefined }}
-                />
-              </button>
             </div>
             {snapshot?.phenomenon_time && (
-              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-                {formatRelative(snapshot.phenomenon_time, locale)}
+              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <span>{new Date(snapshot.phenomenon_time).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                <span style={{ opacity: 0.6 }}>·</span>
+                <span>{formatRelative(snapshot.phenomenon_time, locale)}</span>
               </div>
             )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>

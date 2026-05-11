@@ -6,16 +6,27 @@ import type { DeviceStatusResponse } from '@/types/sensor';
 import type { DashboardEntry } from '@/hooks/useDashboard';
 
 interface DevicesTableProps {
-  devices: DeviceStatusResponse[];
-  dashData: Record<string, DashboardEntry>;
-  isLoading: boolean;
-  onSelectDevice: (device: DeviceStatusResponse) => void;
+  devices:          DeviceStatusResponse[];
+  dashData:         Record<string, DashboardEntry>;
+  isLoading:        boolean;
+  onSelectDevice:   (device: DeviceStatusResponse) => void;
+  onCloseDevice:    () => void;
   selectedDeviceId: string | null;
+}
+
+function latestBucketForDevice(dashData: Record<string, DashboardEntry>, deviceId: string): string | null {
+  return Object.values(dashData)
+    .filter((e) => e.datastream.sensor_id === deviceId)
+    .flatMap((e) => e.buckets)
+    .filter((b) => b.avg_value !== null)
+    .map((b) => b.bucket)
+    .sort()
+    .at(-1) ?? null;
 }
 
 const HEADERS = ['devices.colStatus', 'devices.colName', 'devices.colModel', 'devices.colLastSeen', 'devices.colPm25', ''];
 
-export function DevicesTable({ devices, dashData, isLoading, onSelectDevice, selectedDeviceId }: DevicesTableProps) {
+export function DevicesTable({ devices, dashData, isLoading, onSelectDevice, onCloseDevice, selectedDeviceId }: DevicesTableProps) {
   const t = useTranslations();
 
   function pm2_5ForDevice(device: DeviceStatusResponse): number | null {
@@ -74,8 +85,10 @@ export function DevicesTable({ devices, dashData, isLoading, onSelectDevice, sel
                   key={d.device_id}
                   device={d}
                   pm2_5={pm2_5ForDevice(d)}
+                  lastSeenFallback={latestBucketForDevice(dashData, d.device_id)}
                   isSelected={d.device_id === selectedDeviceId}
                   onClick={onSelectDevice}
+                  onClose={onCloseDevice}
                 />
               ))
             )}
