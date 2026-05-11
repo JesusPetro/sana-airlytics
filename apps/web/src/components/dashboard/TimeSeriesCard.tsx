@@ -111,6 +111,7 @@ export function TimeSeriesCard({ datastreams }: Props) {
       </div>
 
       {/* Bucket pills */}
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', alignSelf: 'flex-start', maxWidth: '100%' }}>
       <div
         role="tablist"
         aria-label="Agrupación"
@@ -122,7 +123,7 @@ export function TimeSeriesCard({ datastreams }: Props) {
           borderRadius: 'var(--radius-full)',
           padding:      '3px',
           gap:          '2px',
-          alignSelf:    'flex-start',
+          whiteSpace:   'nowrap',
         }}
       >
         {BUCKETS.map((b) => {
@@ -151,6 +152,7 @@ export function TimeSeriesCard({ datastreams }: Props) {
             </button>
           );
         })}
+      </div>
       </div>
 
       <VarChips vars={TS_VARS} selected={selectedCodes} onChange={setSelectedCodes} max={4} />

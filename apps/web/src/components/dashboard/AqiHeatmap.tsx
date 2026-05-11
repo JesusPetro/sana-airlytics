@@ -89,60 +89,64 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
         })}
       </div>
 
-      {/* Hour axis */}
-      <div style={{ display: 'flex', marginLeft: 28, gap: 2 }}>
-        {HOURS.map(h => (
-          <div key={h} style={{ flex: 1, fontSize: '9px', color: 'var(--color-text-disabled)', textAlign: 'center' }}>
-            {h % 6 === 0 ? String(h).padStart(2, '0') : ''}
-          </div>
-        ))}
+      {/* Hour axis — same grid layout as rows so labels align */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div style={{ width: 26, flexShrink: 0 }} />
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '2px' }}>
+          {HOURS.map(h => (
+            <div key={h} style={{ fontSize: '9px', color: 'var(--color-text-disabled)', textAlign: 'center' }}>
+              {h % 6 === 0 ? String(h).padStart(2, '0') : ''}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Grid */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
         {grid.map((row, ri) => (
-          <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div style={{
-              width:       26,
-              flexShrink:  0,
-              fontSize:    '10px',
-              color:       'var(--color-text-disabled)',
-              fontWeight:  500,
-              textAlign:   'right',
+              width:        26,
+              flexShrink:   0,
+              fontSize:     '10px',
+              color:        'var(--color-text-disabled)',
+              fontWeight:   500,
+              textAlign:    'right',
               paddingRight: 4,
             }}>
               {row.label}
             </div>
-            {row.hours.map((cell, hi) => (
-              <div
-                key={hi}
-                style={{
-                  flex:        1,
-                  aspectRatio: '1',
-                  borderRadius: '2px',
-                  background:   isLoading ? 'var(--color-surface-2)' : cell.color,
-                  opacity:      isLoading ? 0.4 : 1,
-                  position:    'relative',
-                }}
-                onMouseEnter={e => {
-                  const el = e.currentTarget as HTMLElement;
-                  gsap.to(el, { scale: 1.5, zIndex: 20, duration: 0.12, ease: 'power2.out', overwrite: true });
-                  if (cell.val !== null && containerRef.current) {
-                    const cr = containerRef.current.getBoundingClientRect();
-                    const er = el.getBoundingClientRect();
-                    setTooltip({
-                      x: er.left + er.width / 2 - cr.left,
-                      y: er.top - cr.top - 6,
-                      text: `${String(hi).padStart(2, '0')}:00 — ${cell.val.toFixed(1)}${spec?.unit ? ' ' + spec.unit : ''}`,
-                    });
-                  }
-                }}
-                onMouseLeave={e => {
-                  gsap.to(e.currentTarget as HTMLElement, { scale: 1, zIndex: 1, duration: 0.12, ease: 'power2.out', overwrite: true });
-                  setTooltip(null);
-                }}
-              />
-            ))}
+            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '2px' }}>
+              {row.hours.map((cell, hi) => (
+                <div
+                  key={hi}
+                  style={{
+                    aspectRatio:  '1',
+                    borderRadius: '2px',
+                    background:   isLoading ? 'var(--color-surface-2)' : cell.color,
+                    opacity:      isLoading ? 0.4 : 1,
+                    position:     'relative',
+                  }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    gsap.to(el, { scale: 1.5, zIndex: 20, duration: 0.12, ease: 'power2.out', overwrite: true });
+                    if (cell.val !== null && containerRef.current) {
+                      const cr = containerRef.current.getBoundingClientRect();
+                      const er = el.getBoundingClientRect();
+                      setTooltip({
+                        x: er.left + er.width / 2 - cr.left,
+                        y: er.top - cr.top - 6,
+                        text: `${String(hi).padStart(2, '0')}:00 — ${cell.val.toFixed(1)}${spec?.unit ? ' ' + spec.unit : ''}`,
+                      });
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    gsap.to(e.currentTarget as HTMLElement, { scale: 1, zIndex: 1, duration: 0.12, ease: 'power2.out', overwrite: true });
+                    setTooltip(null);
+                  }}
+                />
+              ))}
+            </div>
           </div>
         ))}
       </div>

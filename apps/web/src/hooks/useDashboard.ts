@@ -40,7 +40,7 @@ export function useDashboard(workspaceId: string | undefined) {
       const ds = datastreams.find((d) => d.property_code.toLowerCase() === code);
       return {
         queryKey:  ['kpi', workspaceId, ds?.datastream_id ?? code, from],
-        queryFn:   () => getAggregations(workspaceId!, ds!.datastream_id, from, to, '30m'),
+        queryFn:   () => getAggregations(workspaceId!, ds!.datastream_id, from, to, '1d'),
         enabled:   !!workspaceId && !!ds,
         staleTime: 4 * 60 * 1000 + 30 * 1000,
         gcTime:    10 * 60 * 1000,
@@ -53,11 +53,12 @@ export function useDashboard(workspaceId: string | undefined) {
     const ds = datastreams.find((d) => d.property_code.toLowerCase() === code);
     if (!ds) return;
     const buckets: AggregationBucketResponse[] = (aggQueries[idx]?.data as AggregationBucketResponse[] | undefined) ?? [];
-    const last = [...buckets].reverse().find((b) => b.avg_value !== null);
+    const withData = buckets.filter((b) => b.avg_value !== null);
+    const lastDay  = withData.at(-1) ?? null;
     result[code] = {
       datastream:  ds,
       buckets,
-      latestValue: last?.avg_value ?? null,
+      latestValue: lastDay?.avg_value ?? null,
     };
   });
 

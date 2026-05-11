@@ -50,16 +50,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="flex flex-col gap-5 p-4 md:px-8 md:py-6">
 
       {/* Row 1 — métricas sin umbral | heatmap AQI */}
-      <div style={{
-        display:             'grid',
-        gridTemplateColumns: 'minmax(0, 1.7fr) minmax(0, 1fr)',
-        gap:                 '16px',
-        alignItems:          'stretch',
-      }}>
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '4px 0', height: '100%' }}>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] md:items-stretch">
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '4px 0' }}>
           <h2 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)', letterSpacing: '-0.01em' }}>
             {t('dashboard.noThreshold')}
           </h2>
@@ -88,12 +83,7 @@ export default function DashboardPage() {
       </section>
 
       {/* Row 3 — Mapa | Alertas */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)',
-        gap: '20px',
-        alignItems: 'start',
-      }}>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] md:items-start">
         <section>
           <MapPreview />
         </section>

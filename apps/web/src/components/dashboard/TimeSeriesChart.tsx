@@ -116,7 +116,8 @@ export function TimeSeriesChart({ series, isLoading, isFetching, noDataMsg, char
             tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
             tickLine={false}
             axisLine={false}
-            width={36}
+            width={40}
+            tickFormatter={(v) => Number(v).toFixed(2)}
           />
           <Tooltip
             isAnimationActive={false}
@@ -127,6 +128,7 @@ export function TimeSeriesChart({ series, isLoading, isFetching, noDataMsg, char
               fontSize:     '12px',
             }}
             labelFormatter={(v) => formatTime(String(v))}
+            formatter={(v) => [typeof v === 'number' ? v.toFixed(2) : v]}
           />
           <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--color-text-secondary)' }} />
           {series.map((s) => (

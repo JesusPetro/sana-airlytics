@@ -72,13 +72,13 @@ export function MapPreview() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '12px 16px',
+        padding: '14px 20px',
         borderBottom: '1px solid var(--color-border-subtle)',
       }}>
         <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-text-primary)' }}>
           {t('map.title')}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Points / Heatmap pill toggle — GSAP animated indicator */}
           <div style={{
             position: 'relative',
@@ -87,22 +87,22 @@ export function MapPreview() {
             background: 'var(--color-surface-subtle)',
             border: '1px solid var(--color-border-subtle)',
             borderRadius: '9999px',
-            padding: '3px',
-            gap: '2px',
+            padding: '4px',
+            gap: '4px',
           }}>
             {/* Sliding indicator */}
             <span
               ref={indicatorRef}
               style={{
                 position: 'absolute',
-                top: '3px',
-                left: '3px',
-                height: 'calc(100% - 6px)',
+                top: '4px',
+                left: '4px',
+                height: 'calc(100% - 8px)',
                 borderRadius: '9999px',
                 background: 'var(--color-surface)',
                 boxShadow: 'var(--shadow-sm)',
                 pointerEvents: 'none',
-                width: '56px',
+                width: '60px',
               }}
             />
             {([false, true] as const).map((isHeat, i) => (
@@ -113,8 +113,8 @@ export function MapPreview() {
                 style={{
                   position: 'relative',
                   zIndex: 1,
-                  padding: '0 12px',
-                  height: '26px',
+                  padding: '0 16px',
+                  height: '28px',
                   fontSize: '12px',
                   fontFamily: 'inherit',
                   fontWeight: 500,
@@ -131,6 +131,16 @@ export function MapPreview() {
               </button>
             ))}
           </div>
+
+          {/* Separator */}
+          <span style={{
+            display: 'block',
+            width: '1px',
+            height: '18px',
+            background: 'var(--color-border-subtle)',
+            flexShrink: 0,
+          }} />
+
           <button
             onClick={(e) => {
               const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();

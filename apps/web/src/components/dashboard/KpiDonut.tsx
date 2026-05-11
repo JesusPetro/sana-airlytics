@@ -44,7 +44,7 @@ export function KpiDonut({ spec, latestValue, isLoading, size = 88 }: Props) {
         background: 'var(--color-surface)', borderRadius: '14px',
         padding: `${pad}px ${Math.round(pad * 0.75)}px`, boxShadow: 'var(--shadow-sm)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
-        flex: 1, justifyContent: 'center',
+        flex: '1 1 130px', minWidth: '130px', justifyContent: 'center',
       }}>
         <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
           <svg width={SIZE} height={SIZE}>
@@ -70,7 +70,8 @@ export function KpiDonut({ spec, latestValue, isLoading, size = 88 }: Props) {
       alignItems:     'center',
       justifyContent: 'center',
       gap:            '10px',
-      flex:           1,
+      flex:           '1 1 130px',
+      minWidth:       '130px',
     }}>
       <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
         <svg width={SIZE} height={SIZE}>
