@@ -23,7 +23,8 @@ const STALE_TIME = 270 * 1000;
 const GC_TIME    = 600 * 1000;
 
 function computeWindow(bucket: BucketOption) {
-  const to   = new Date();
+  const to = new Date();
+  to.setSeconds(0, 0); // floor to minute → stable query key across concurrent mounts
   const from = new Date(to);
   from.setDate(from.getDate() - BUCKET_DAYS[bucket]);
   return { from: from.toISOString(), to: to.toISOString() };
