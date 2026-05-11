@@ -42,7 +42,7 @@ export async function LandingNav({ locale }: { locale: string }) {
         <ThemeToggle />
         <Link
           href={`/${locale}/login`}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95 whitespace-nowrap"
           style={{ background: 'var(--color-primary)' }}
         >
           {t('cta')}
