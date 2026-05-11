@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     RESEND_TEMPLATE_COLLABORATOR_ADDED: str = ""
 
     # --- Frontend ---
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # --- API ---
     API_TITLE: str = "SANA Airlytics API"
@@ -102,9 +102,14 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        """Convierte CORS_ORIGINS a lista. Soporta '*' y lista separada por comas."""
+        """Convierte CORS_ORIGINS a lista. Soporta '*' y lista separada por comas.
+
+        Wildcard '*' con allow_credentials=True es invalido en CORS — el browser
+        rechaza la response. Cuando se detecta '*', se usa FRONTEND_URL como fallback.
+        Para permitir multiples origenes, separar con comas en CORS_ORIGINS.
+        """
         if self.CORS_ORIGINS.strip() == "*":
-            return ["*"]
+            return [self.FRONTEND_URL]
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     @property

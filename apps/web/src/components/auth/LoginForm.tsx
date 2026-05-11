@@ -50,6 +50,12 @@ export function LoginForm({ locale }: Props) {
   const [loading,  setLoading]  = useState(false);
 
   useEffect(() => {
+    import('@/lib/api/auth').then(({ me }) =>
+      me().then(() => { window.location.replace(`/${locale}/dashboard`); }).catch(() => {})
+    );
+  }, [locale]);
+
+  useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         '[data-a]',

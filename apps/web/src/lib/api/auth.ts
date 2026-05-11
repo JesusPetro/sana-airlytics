@@ -19,7 +19,7 @@ export function logout(): Promise<void> {
 }
 
 export function me(): Promise<MeResponse> {
-  return apiClient<MeResponse>('/api/v1/auth/me');
+  return apiClient<MeResponse>('/api/v1/auth/me', { skipAuthRedirect: true });
 }
 
 export function register(body: {
