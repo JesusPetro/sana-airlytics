@@ -13,9 +13,10 @@ export function KpiGridNoThresh({ data, isLoading }: Props) {
   return (
     <div
       style={{
-        display:             'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-        gap:                 '12px',
+        display:    'flex',
+        flex:       1,
+        gap:        '12px',
+        alignItems: 'stretch',
       }}
     >
       {KPI_SPECS_NOTHRESH.map((spec) => (
@@ -24,6 +25,7 @@ export function KpiGridNoThresh({ data, isLoading }: Props) {
           spec={spec}
           latestValue={data[spec.code]?.latestValue ?? null}
           isLoading={isLoading}
+          size={130}
         />
       ))}
     </div>

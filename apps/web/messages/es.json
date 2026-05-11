@@ -49,6 +49,7 @@
     "title": "Dashboard",
     "withThreshold": "Variables con umbral",
     "noThreshold": "Variables sin umbral",
+    "aqiHistory": "Historial de calidad",
     "noWorkspace": "Ningún workspace seleccionado",
     "noSensors": "Este workspace no tiene sensores registrados",
     "noSensorsHint": "Ve a Dispositivos para reclamar un sensor"

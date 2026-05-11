@@ -3,8 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useDashboard } from '@/hooks/useDashboard';
-import { KpiGrid } from '@/components/dashboard/KpiGrid';
 import { KpiGridNoThresh } from '@/components/dashboard/KpiGridNoThresh';
+import { AqiHeatmap } from '@/components/dashboard/AqiHeatmap';
 import { TimeSeriesCard } from '@/components/dashboard/TimeSeriesCard';
 import { AlertSummary } from '@/components/dashboard/AlertSummary';
 import { MapPreview } from '@/components/dashboard/MapPreview';
@@ -52,25 +52,33 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* Row 1 — KPIs con umbral | sin umbral */}
+      {/* Row 1 — métricas sin umbral | heatmap AQI */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.25fr) minmax(0, 1fr)',
-        gap: '20px',
-        alignItems: 'start',
+        display:             'grid',
+        gridTemplateColumns: 'minmax(0, 1.7fr) minmax(0, 1fr)',
+        gap:                 '16px',
+        alignItems:          'stretch',
       }}>
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
-            {t('dashboard.withThreshold')}
-          </h2>
-          <KpiGrid data={data} isLoading={isLoading} />
-        </section>
-
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '4px 0', height: '100%' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)', letterSpacing: '-0.01em' }}>
             {t('dashboard.noThreshold')}
           </h2>
           <KpiGridNoThresh data={data} isLoading={isLoading} />
+        </section>
+
+        <section style={{
+          background:    'var(--color-surface)',
+          border:        '1px solid var(--color-border)',
+          borderRadius:  '12px',
+          padding:       '18px',
+          display:       'flex',
+          flexDirection: 'column',
+          gap:           '14px',
+        }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)', letterSpacing: '-0.01em' }}>
+            {t('dashboard.aqiHistory')}
+          </h2>
+          <AqiHeatmap workspaceId={activeWorkspace?.workspace_id} datastreams={datastreams} />
         </section>
       </div>
 

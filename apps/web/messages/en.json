@@ -49,6 +49,7 @@
     "title": "Dashboard",
     "withThreshold": "Threshold variables",
     "noThreshold": "Non-threshold variables",
+    "aqiHistory": "Air quality history",
     "noWorkspace": "No workspace selected",
     "noSensors": "This workspace has no registered sensors",
     "noSensorsHint": "Go to Devices to claim a sensor"
