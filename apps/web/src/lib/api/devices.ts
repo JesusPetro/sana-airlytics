@@ -38,9 +38,11 @@ export interface Snapshot {
   variables: SnapshotVariable[];
 }
 
-export function getDeviceSnapshot(deviceId: string, at: string): Promise<Snapshot> {
-  const params = new URLSearchParams({ at });
-  return apiClient<Snapshot>(`/api/v1/sensors/${deviceId}/snapshot?${params}`);
+export function getDeviceSnapshot(deviceId: string, at?: string): Promise<Snapshot> {
+  const params = new URLSearchParams();
+  if (at) params.set('at', at);
+  const qs = params.size ? `?${params}` : '';
+  return apiClient<Snapshot>(`/api/v1/sensors/${deviceId}/snapshot${qs}`);
 }
 
 export function findDeviceByCode(code: string): Promise<DeviceStatusResponse> {
