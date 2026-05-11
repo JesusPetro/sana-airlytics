@@ -10,7 +10,7 @@ from .dtos import AggregationBucketDTO
 class GetAggregationsUseCase:
     """Caso de uso: obtener agregaciones temporales de un datastream."""
 
-    VALID_BUCKETS = {"1h", "1d"}
+    VALID_BUCKETS = {"5m", "15m", "30m", "1h", "6h", "1d"}
 
     def __init__(self, repo: ObservationReadRepository) -> None:
         self._repo = repo

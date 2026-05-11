@@ -119,14 +119,29 @@ class PostgresLocationReadRepository:
     async def find_snapshot(
         self,
         sensor_id: UUID,
-        at_dt: datetime,
+        at_dt: datetime | None,
         window_seconds: int = 30,
     ) -> list[dict]:
         """
         Retorna todas las variables del sensor cuyo phenomenon_time caiga
         dentro de [at_dt - window, at_dt + window].
-        Si hay varias filas por variable, queda la más cercana a at_dt.
+        Si at_dt es None, busca la observación más reciente del sensor y usa
+        su phenomenon_time como pivote.
         """
+        if at_dt is None:
+            # Obtener el phenomenon_time de la observacion mas reciente del sensor
+            latest_stmt = (
+                select(ObservationModel.phenomenon_time)
+                .join(DatastreamModel, ObservationModel.datastream_id == DatastreamModel.id)
+                .where(DatastreamModel.sensor_id == sensor_id)
+                .order_by(ObservationModel.phenomenon_time.desc())
+                .limit(1)
+            )
+            latest = (await self._session.execute(latest_stmt)).scalar_one_or_none()
+            if latest is None:
+                return []
+            at_dt = latest
+
         window = timedelta(seconds=window_seconds)
         stmt = (
             select(

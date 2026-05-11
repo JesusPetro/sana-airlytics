@@ -13,7 +13,7 @@ class GetSensorSnapshotUseCase:
     def __init__(self, repo: LocationReadRepository) -> None:
         self._repo = repo
 
-    async def execute(self, sensor_id: str, at_dt: datetime) -> SnapshotDTO | None:
+    async def execute(self, sensor_id: str, at_dt: datetime | None) -> SnapshotDTO | None:
         rows = await self._repo.find_snapshot(UUID(sensor_id), at_dt)
         if not rows:
             return None

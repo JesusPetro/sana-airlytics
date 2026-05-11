@@ -5,7 +5,10 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+
+_CC_RANGE  = "private, max-age=60, stale-while-revalidate=300"   # endpoints con from/to
+_CC_META   = "private, max-age=300, stale-while-revalidate=600"  # metadata estable
 
 from src.access_control.application.authorize_action import AuthorizeActionUseCase
 from src.access_control.application.dtos import AuthorizeActionInput
@@ -139,6 +142,7 @@ async def list_datastreams(
     current_user: _CurrentUser,
     authorize: _AuthorizeUC,
     use_case: _GetDatastreamsUC,
+    response: Response,
 ) -> list[DatastreamResponse]:
     """Retorna los datastreams activos del workspace. Requiere rol viewer."""
     result = await authorize.execute(
@@ -150,6 +154,7 @@ async def list_datastreams(
     )
     require_allowed(result)
     dtos = await use_case.execute(ws_id)
+    response.headers["Cache-Control"] = _CC_META
     return [DatastreamResponse(**vars(d)) for d in dtos]
 
 
@@ -166,6 +171,7 @@ async def get_observations(
     current_user: _CurrentUser,
     authorize: _AuthorizeUC,
     use_case: _GetObsUC,
+    response: Response,
     from_dt: datetime = Query(..., alias="from"),
     to_dt: datetime = Query(..., alias="to"),
     qualifier: str | None = Query(None),
@@ -185,6 +191,7 @@ async def get_observations(
     )
     require_allowed(result)
     dtos = await use_case.execute(ds_id, from_dt, to_dt, qualifier, exclude_oor)
+    response.headers["Cache-Control"] = _CC_RANGE
     return [ObservationPointResponse(**vars(d)) for d in dtos]
 
 
@@ -201,6 +208,7 @@ async def get_aggregations(
     current_user: _CurrentUser,
     authorize: _AuthorizeUC,
     use_case: _GetAggUC,
+    response: Response,
     from_dt: datetime = Query(..., alias="from"),
     to_dt: datetime = Query(..., alias="to"),
     bucket: str = Query("1h"),
@@ -221,6 +229,7 @@ async def get_aggregations(
         dtos = await use_case.execute(ds_id, from_dt, to_dt, bucket)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    response.headers["Cache-Control"] = _CC_RANGE
     return [AggregationBucketResponse(**vars(d)) for d in dtos]
 
 
@@ -259,6 +268,7 @@ async def get_sensor_track(
     sensor_id: str,
     current_user: _CurrentUser,
     use_case: _GetTrackUC,
+    response: Response,
     from_dt: datetime = Query(..., alias="from"),
     to_dt: datetime = Query(..., alias="to"),
     contaminant: str | None = Query(None),
@@ -266,6 +276,7 @@ async def get_sensor_track(
     """Retorna la trayectoria GPS historica del sensor en el rango indicado.
     Si se indica contaminant, cada punto incluye el valor de esa variable."""
     dtos = await use_case.execute(sensor_id, from_dt, to_dt, contaminant)
+    response.headers["Cache-Control"] = _CC_RANGE
     return [TrackPointResponse(**vars(d)) for d in dtos]
 
 
@@ -278,12 +289,15 @@ async def get_sensor_snapshot(
     sensor_id: str,
     current_user: _CurrentUser,
     use_case: _GetSnapshotUC,
-    at: datetime = Query(...),
+    response: Response,
+    at: datetime | None = Query(default=None),
 ) -> SnapshotResponse:
-    """Retorna todas las variables del sensor cuyo phenomenon_time este cercano a `at`."""
+    """Retorna todas las variables del sensor cuyo phenomenon_time este cercano a `at`.
+    Si `at` se omite, devuelve el snapshot más reciente disponible."""
     dto = await use_case.execute(sensor_id, at)
     if dto is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No snapshot found at this timestamp.")
+    response.headers["Cache-Control"] = _CC_RANGE
     return SnapshotResponse(
         sensor_id=dto.sensor_id,
         phenomenon_time=dto.phenomenon_time,
@@ -301,6 +315,7 @@ async def get_heatmap(
     current_user: _CurrentUser,
     authorize: _AuthorizeUC,
     use_case: _GetHeatmapUC,
+    response: Response,
     property_code: str = Query(...),
     from_dt: datetime = Query(..., alias="from"),
     to_dt: datetime = Query(..., alias="to"),
@@ -318,6 +333,7 @@ async def get_heatmap(
     )
     require_allowed(result)
     dtos = await use_case.execute(ws_id, property_code, from_dt, to_dt)
+    response.headers["Cache-Control"] = _CC_RANGE
     return [HeatmapPointResponse(**vars(d)) for d in dtos]
 
 
