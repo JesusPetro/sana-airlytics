@@ -127,7 +127,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(0,0,0,0.35)',
-          zIndex: 400,
+          zIndex: 1300,
           backdropFilter: 'blur(3px)',
         }}
       />
@@ -140,7 +140,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
           height: '100vh',
           width: '400px',
           maxWidth: 'calc(100vw - 32px)',
-          zIndex: 401,
+          zIndex: 1301,
           background: 'var(--color-surface)',
           borderLeft: '1px solid var(--color-border)',
           boxShadow: 'var(--shadow-lg)',

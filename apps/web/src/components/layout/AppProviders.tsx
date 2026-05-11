@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRef, type ReactNode } from 'react';
 import { WorkspaceProvider, useWorkspace } from '@/context/WorkspaceContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { MobileNavProvider } from '@/context/MobileNavContext';
 import { useAlertNotifier } from '@/hooks/useAlertNotifier';
 
 function AlertNotifierMount() {
@@ -35,8 +36,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={clientRef.current}>
       <AuthProvider>
         <WorkspaceProvider>
-          <AlertNotifierMount />
-          {children}
+          <MobileNavProvider>
+            <AlertNotifierMount />
+            {children}
+          </MobileNavProvider>
         </WorkspaceProvider>
       </AuthProvider>
     </QueryClientProvider>

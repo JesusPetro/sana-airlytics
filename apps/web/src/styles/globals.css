@@ -455,3 +455,21 @@ html {
   color: currentColor !important;
   box-shadow: none !important;
 }
+
+
+/* ── Responsive móvil ──────────────────────────────── */
+@media (max-width: 767px) {
+  /* Main content — sin offset del sidebar */
+  main {
+    padding-left: 0 !important;
+  }
+
+  /* Sidebar — oculto por defecto, slide-in cuando data-mobile-open="true" */
+  aside[data-mobile-open="false"] {
+    transform: translateX(-100%);
+  }
+  aside[data-mobile-open="true"] {
+    transform: translateX(0);
+    width: var(--sidebar-w-expanded) !important;
+  }
+}

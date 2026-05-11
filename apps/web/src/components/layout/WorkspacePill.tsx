@@ -49,8 +49,8 @@ export function WorkspacePill() {
           aria-label={t('workspace.select')}
           aria-expanded={open}
         >
-          <Building2 size={14} style={{ color: 'var(--color-text-secondary)' }} />
-          <span style={{ fontSize: '13px' }}>
+          <Building2 size={14} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+          <span className="hidden md:inline" style={{ fontSize: '13px' }}>
             {activeWorkspace?.name ?? t('workspace.select')}
           </span>
           <ChevronDown

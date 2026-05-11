@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight, LogOut, User, Trash2 } from 'lucide-react';
+import { PanelLeft, LogOut, User, Trash2 } from 'lucide-react';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { NAV_ITEMS } from '@/lib/nav';
 import { useAuth } from '@/context/AuthContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import { useMobileNav } from '@/context/MobileNavContext';
 import { roleLevel } from '@/lib/roles';
 
 function initials(email: string): string {
@@ -21,9 +22,10 @@ const STORAGE_KEY = 'sidebar-expanded';
 const ALERT_COUNT = 0; // hardcoded until API integration in Phase 2
 
 function setSidebarCssVar(expanded: boolean) {
+  const isMobile = window.innerWidth < 768;
   document.documentElement.style.setProperty(
     '--sidebar-current-w',
-    expanded ? 'var(--sidebar-w-expanded)' : 'var(--sidebar-w-collapsed)',
+    isMobile ? '0px' : (expanded ? 'var(--sidebar-w-expanded)' : 'var(--sidebar-w-collapsed)'),
   );
 }
 
@@ -41,6 +43,7 @@ export function Sidebar({ locale }: SidebarProps) {
   const t = useTranslations();
   const { user, logout } = useAuth();
   const { activeWorkspace } = useWorkspace();
+  const { mobileOpen, close: closeMobileNav } = useMobileNav();
   const router = useRouter();
 
   const MIN_LEVELS: Record<string, number> = { editor: 1, admin: 2 };
@@ -62,6 +65,10 @@ export function Sidebar({ locale }: SidebarProps) {
     setExpanded(isExpanded);
     setSidebarCssVar(isExpanded);
     setMounted(true);
+
+    function handleResize() { setSidebarCssVar(isExpanded); }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -83,20 +90,33 @@ export function Sidebar({ locale }: SidebarProps) {
   }
 
   return (
+    <>
+      {/* Backdrop móvil */}
+      {mobileOpen && (
+        <div
+          onClick={closeMobileNav}
+          className="md:hidden fixed inset-0"
+          style={{ background: 'rgba(0,0,0,0.4)', zIndex: 1199, backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
     <aside
       className="fixed flex flex-col"
       style={{
-        top: 'var(--topbar-h)',
-        left: 0,
-        height: 'calc(100vh - var(--topbar-h))',
-        width: expanded ? 'var(--sidebar-w-expanded)' : 'var(--sidebar-w-collapsed)',
-        zIndex: 40,
+        top:        'var(--topbar-h)',
+        left:       0,
+        height:     'calc(100vh - var(--topbar-h))',
+        width:      expanded ? 'var(--sidebar-w-expanded)' : 'var(--sidebar-w-collapsed)',
+        zIndex:     1200,
         background: 'var(--color-surface)',
         borderRight: '1px solid var(--color-border-subtle)',
-        transition: 'width 200ms ease',
-        // Hide until localStorage is read to prevent flash
-        visibility: mounted ? 'visible' : 'hidden',
+        transition:  'width 200ms ease, transform 250ms ease',
+        visibility:  mounted ? 'visible' : 'hidden',
+        // Móvil: off-screen por defecto, slide-in cuando mobileOpen
+        transform:   mobileOpen ? 'translateX(0)' : undefined,
       }}
+      // Clase CSS que controla el slide en móvil
+      data-mobile-open={mobileOpen ? 'true' : 'false'}
     >
       {/* Nav items */}
       <nav className="flex-1 py-3 px-2 flex flex-col justify-between">
@@ -111,6 +131,7 @@ export function Sidebar({ locale }: SidebarProps) {
               <li key={item.id} className="group relative">
                 <Link
                   href={`/${locale}${item.href}`}
+                  onClick={closeMobileNav}
                   className="flex items-center rounded-[10px] transition-colors duration-150"
                   style={{
                     padding: expanded ? '10px 12px' : '10px 0',
@@ -243,34 +264,31 @@ export function Sidebar({ locale }: SidebarProps) {
         aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
         style={{
           position: 'absolute',
-          top: '20px',
-          right: '-16px',
+          top: '18px',
+          right: '-40px',
           zIndex: 50,
-          width: '20px',
-          height: '20px',
+          width: '28px',
+          height: '28px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'var(--color-surface)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '50%',
+          background: 'none',
+          border: 'none',
+          borderRadius: '6px',
           cursor: 'pointer',
           color: 'var(--color-text-secondary)',
-          boxShadow: 'var(--shadow-sm)',
-          transition: 'background 140ms, color 140ms, box-shadow 140ms',
+          transition: 'background 140ms, color 140ms',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--color-surface-subtle)';
           e.currentTarget.style.color = 'var(--color-text-primary)';
-          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'var(--color-surface)';
+          e.currentTarget.style.background = 'none';
           e.currentTarget.style.color = 'var(--color-text-secondary)';
-          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
         }}
       >
-        {expanded ? <ChevronLeft size={11} /> : <ChevronRight size={11} />}
+        <PanelLeft size={15} />
       </button>
 
       {user && (
@@ -285,66 +303,91 @@ export function Sidebar({ locale }: SidebarProps) {
           {/* Popover menu */}
           {popoverOpen && (
             <div style={{
-              position: 'absolute',
-              bottom: 'calc(100% + 6px)',
-              left: '8px',
-              right: '8px',
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: '10px',
-              boxShadow: 'var(--shadow-md)',
-              zIndex: 50,
-              padding: '4px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '2px',
+              position:      'absolute',
+              bottom:        'calc(100% + 8px)',
+              left:          '0',
+              width:         '230px',
+              background:    'var(--color-surface)',
+              border:        '1px solid var(--color-border)',
+              borderRadius:  '12px',
+              boxShadow:     'var(--shadow-lg)',
+              zIndex:        50,
+              overflow:      'hidden',
             }}>
-              {/* Info del usuario en el popover */}
+              {/* Header del usuario */}
               <div style={{
-                padding: '8px 10px 6px',
+                padding:    '14px 14px 12px',
+                background: 'var(--color-surface-subtle)',
                 borderBottom: '1px solid var(--color-border-subtle)',
-                marginBottom: '2px',
+                display:    'flex',
+                alignItems: 'center',
+                gap:        '10px',
               }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.email}
+                <span style={{
+                  flexShrink:     0,
+                  width:          '36px',
+                  height:         '36px',
+                  borderRadius:   '50%',
+                  background:     'linear-gradient(135deg, var(--color-primary), var(--color-accent-violet, #7c3aed))',
+                  color:          '#fff',
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'center',
+                  fontSize:       '13px',
+                  fontWeight:     700,
+                  letterSpacing:  '0.02em',
+                  flexShrink:     0,
+                }}>
+                  {initials(user.email) || '?'}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.email.split('@')[0]}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.email}
+                  </div>
                 </div>
               </div>
 
-              {/* Editar perfil */}
-              <button
-                onClick={() => { setPopoverOpen(false); setProfileOpen(true); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  width: '100%', padding: '7px 10px',
-                  background: 'none', border: 'none',
-                  borderRadius: '7px', cursor: 'pointer',
-                  fontSize: '13px', color: 'var(--color-text-primary)',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-              >
-                <User size={15} />
-                {t('nav.profile')}
-              </button>
+              {/* Acciones */}
+              <div style={{ padding: '6px' }}>
+                <button
+                  onClick={() => { setPopoverOpen(false); setProfileOpen(true); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '9px',
+                    width: '100%', padding: '8px 10px',
+                    background: 'none', border: 'none',
+                    borderRadius: '8px', cursor: 'pointer',
+                    fontSize: '13px', color: 'var(--color-text-primary)',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                >
+                  <User size={14} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+                  {t('nav.profile')}
+                </button>
 
-              {/* Cerrar sesion */}
-              <button
-                onClick={handleLogout}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  width: '100%', padding: '7px 10px',
-                  background: 'none', border: 'none',
-                  borderRadius: '7px', cursor: 'pointer',
-                  fontSize: '13px', color: 'var(--color-text-secondary)',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-              >
-                <LogOut size={15} />
-                {t('profile.logout')}
-              </button>
+                <div style={{ height: '1px', background: 'var(--color-border-subtle)', margin: '4px 0' }} />
+
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '9px',
+                    width: '100%', padding: '8px 10px',
+                    background: 'none', border: 'none',
+                    borderRadius: '8px', cursor: 'pointer',
+                    fontSize: '13px', color: 'var(--color-error, #dc2626)',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(220,38,38,0.07)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                >
+                  <LogOut size={14} style={{ flexShrink: 0 }} />
+                  {t('profile.logout')}
+                </button>
+              </div>
             </div>
           )}
 
@@ -405,5 +448,6 @@ export function Sidebar({ locale }: SidebarProps) {
         </div>
       )}
     </aside>
+    </>
   );
 }

@@ -4,24 +4,21 @@ import { useTranslations } from 'next-intl';
 
 type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
 
-interface LegendEntry {
-  labelKey: string;
-  color: string;
-}
+const LEVELS = [
+  { labelKey: 'aqiLevel.good',      color: '#10B981' },
+  { labelKey: 'aqiLevel.moderate',  color: '#3B82F6' },
+  { labelKey: 'aqiLevel.elevated',  color: '#8B5CF6' },
+  { labelKey: 'aqiLevel.unhealthy', color: '#EC4899' },
+  { labelKey: 'aqiLevel.critical',  color: '#EF4444' },
+  { labelKey: 'aqiLevel.hazardous', color: '#991B1B' },
+] as const;
 
-const LEGEND: LegendEntry[] = [
-  { labelKey: 'aqiLevel.good',      color: 'var(--color-aqi-good)' },
-  { labelKey: 'aqiLevel.moderate',  color: 'var(--color-aqi-moderate)' },
-  { labelKey: 'aqiLevel.elevated',  color: 'var(--color-aqi-elevated)' },
-  { labelKey: 'aqiLevel.unhealthy', color: 'var(--color-aqi-unhealthy)' },
-  { labelKey: 'aqiLevel.critical',  color: 'var(--color-aqi-critical)' },
-  { labelKey: 'aqiLevel.hazardous', color: 'var(--color-aqi-hazardous)' },
-];
+const GRADIENT = `linear-gradient(to right, ${LEVELS.map(l => l.color).join(', ')})`;
 
 const CONTAMINANT_LABEL: Record<ContaminantCode, string> = {
-  pm2_5:     'PM2.5 (µg/m³)',
-  pm10:      'PM10 (µg/m³)',
-  co2:       'CO₂ (ppm)',
+  pm2_5:     'PM2.5 · µg/m³',
+  pm10:      'PM10 · µg/m³',
+  co2:       'CO₂ · ppm',
   nox_index: 'NOx Index',
 };
 
@@ -34,40 +31,66 @@ export function MapLegend({ contaminant }: MapLegendProps) {
 
   return (
     <div style={{
-      position: 'absolute',
-      bottom: '24px',
-      right: '12px',
-      zIndex: 1000,
+      position:   'absolute',
+      bottom:     '24px',
+      right:      '12px',
+      zIndex:     1000,
       background: 'var(--color-surface)',
-      border: '1px solid var(--color-border)',
-      borderRadius: '10px',
-      boxShadow: 'var(--shadow-md)',
-      padding: '10px 12px',
-      minWidth: '130px',
+      border:     '1px solid var(--color-border)',
+      borderRadius: '12px',
+      boxShadow:  'var(--shadow-md)',
+      padding:    '10px 12px 8px',
+      width:      '220px',
     }}>
+      {/* Contaminant label */}
       <div style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: 'var(--color-text-secondary)',
-        marginBottom: '8px',
+        fontSize:      '10px',
+        fontWeight:    600,
+        color:         'var(--color-text-secondary)',
+        marginBottom:  '8px',
         textTransform: 'uppercase',
-        letterSpacing: '0.04em',
+        letterSpacing: '0.05em',
       }}>
         {CONTAMINANT_LABEL[contaminant]}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {LEGEND.map((entry) => (
-          <div key={entry.labelKey} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: entry.color,
-              flexShrink: 0,
+      {/* Gradient bar */}
+      <div style={{
+        height:       '8px',
+        borderRadius: '99px',
+        background:   GRADIENT,
+        marginBottom: '5px',
+      }} />
+
+      {/* Tick marks */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
+        {LEVELS.map((level) => (
+          <div
+            key={level.labelKey}
+            style={{
+              display:    'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap:        '2px',
+              flex:       1,
+            }}
+          >
+            <div style={{
+              width:        '1px',
+              height:       '4px',
+              background:   level.color,
+              borderRadius: '1px',
+              opacity:      0.7,
             }} />
-            <span style={{ fontSize: '11px', color: 'var(--color-text-primary)' }}>
-              {t(entry.labelKey)}
+            <span style={{
+              fontSize:  '8px',
+              fontWeight: 500,
+              color:     'var(--color-text-secondary)',
+              textAlign: 'center',
+              lineHeight: 1.2,
+              whiteSpace: 'nowrap',
+            }}>
+              {t(level.labelKey)}
             </span>
           </div>
         ))}
