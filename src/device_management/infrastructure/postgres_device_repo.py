@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import literal_column, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -99,6 +100,32 @@ class PostgresDeviceRepository:
         )
         rows = (await self._session.execute(stmt)).all()
         return [self._to_domain(sensor, loc) for sensor, loc in rows]
+
+    async def find_by_workspace_with_last_seen(
+        self, workspace_id: str
+    ) -> list[tuple[Device, datetime | None]]:
+        """Retorna devices del workspace junto con el timestamp de su ultima observacion.
+
+        Evita escribir last_seen en sensors; lo deriva en lectura via subquery
+        sobre datastreams -> observations.
+        """
+        last_seen_expr = literal_column(
+            "(SELECT MAX(o.phenomenon_time)"
+            " FROM datastreams d"
+            " JOIN observations o ON o.datastream_id = d.id"
+            " WHERE d.sensor_id = sensors.id)"
+        ).label("last_seen")
+
+        stmt = (
+            select(SensorModel, LocationModel, last_seen_expr)
+            .outerjoin(LocationModel, LocationModel.sensor_id == SensorModel.id)
+            .where(
+                SensorModel.workspace_id == UUID(workspace_id),
+                SensorModel.deleted_at.is_(None),
+            )
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [(self._to_domain(sensor, loc), last_seen) for sensor, loc, last_seen in rows]
 
     async def find_pending(self) -> list[Device]:
         """Retorna todos los devices en estado PENDING disponibles para reclamar."""

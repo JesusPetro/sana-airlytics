@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from shared.infrastructure.logger import get_logger
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -22,6 +22,7 @@ from src.device_management.application.register_device import (
 from src.device_management.application.update_device_config import UpdateDeviceConfigUseCase
 from src.device_management.domain.errors import DeviceNotFoundError
 from src.device_management.domain.ports.repositories import DeviceRepository
+from src.device_management.infrastructure.postgres_device_repo import PostgresDeviceRepository
 
 from ...dependencies.auth import get_current_user
 from ...dependencies.helpers import require_allowed
@@ -314,7 +315,8 @@ async def list_workspace_devices(
     )
     require_allowed(result)
 
-    devices = await device_repo.find_by_workspace(ws_id)
+    pg_repo = cast(PostgresDeviceRepository, device_repo)
+    rows = await pg_repo.find_by_workspace_with_last_seen(ws_id)
     return [
         DeviceStatusResponse(
             device_id=str(d.id),
@@ -325,14 +327,14 @@ async def list_workspace_devices(
             sampling_interval_seconds=d.config.sampling_interval_seconds,
             transmission_interval_seconds=d.config.transmission_interval_seconds,
             keepalive_seconds=d.config.keepalive_seconds,
-            last_seen=d.last_seen,
+            last_seen=last_seen,
             deactivated_at=d.deactivated_at,
             site_type=d.site_type.value if d.site_type else None,
             latitude=d.location.latitude if d.location else None,
             longitude=d.location.longitude if d.location else None,
             elevation=d.location.elevation if d.location else None,
         )
-        for d in devices
+        for d, last_seen in rows
     ]
 
 
