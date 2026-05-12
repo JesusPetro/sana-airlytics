@@ -49,10 +49,12 @@ export function EditRuleModal({ rule, datastreams: _datastreams, onClose, onSave
 
   return (
     <>
-      <div onClick={onClose} style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,0.4)', zIndex: 300, backdropFilter: 'blur(4px)',
-      }} />
+      <div
+        onClick={onClose}
+        role="presentation"
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 300, backdropFilter: 'blur(4px)' }}
+      />
 
       <div style={{
         position: 'fixed', top: '50%', left: '50%',
