@@ -19,7 +19,7 @@ export function Topbar({ locale }: TopbarProps) {
       className="fixed top-0 left-0 right-0 flex items-center gap-3 px-4"
       style={{
         height: 'var(--topbar-h)',
-        zIndex: 1200,
+        zIndex: 1201,
         background: 'color-mix(in srgb, var(--color-surface) 95%, transparent)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',

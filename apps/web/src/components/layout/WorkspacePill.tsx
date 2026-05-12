@@ -73,7 +73,7 @@ export function WorkspacePill() {
             border: '1px solid var(--color-border)',
             borderRadius: '8px',
             boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            zIndex: 50,
+            zIndex: 1300,
             padding: '4px',
           }}>
             {/* Workspace list */}
