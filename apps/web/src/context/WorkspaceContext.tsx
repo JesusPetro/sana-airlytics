@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { WorkspaceSummary } from '@/types/workspace';
 import { getWorkspaces } from '@/lib/api/workspaces';
+import { useAuth } from './AuthContext';
 
 interface WorkspaceContextValue {
   workspaces: WorkspaceSummary[];
@@ -22,6 +23,7 @@ interface WorkspaceContextValue {
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  const { user, isLoading: authLoading } = useAuth();
   const [workspaces, setWorkspaces] = useState<WorkspaceSummary[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,8 +43,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      // me() uses skipAuthRedirect — redirect manually when session is gone
+      if (typeof window !== 'undefined') {
+        const locale = window.location.pathname.split('/')[1] ?? 'es';
+        window.location.href = `/${locale}/login`;
+      }
+      return;
+    }
     load().finally(() => setIsLoading(false));
-  }, [load]);
+  }, [authLoading, user, load]);
 
   const refreshWorkspaces = useCallback(async (): Promise<WorkspaceSummary[] | null> => {
     return load();

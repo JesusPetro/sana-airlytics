@@ -20,6 +20,7 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
   const [description, setDesc] = useState('');
   const [done, setDone]        = useState(false);
 
+  // WorkspaceContext manages workspace state via refreshWorkspaces() — no React Query cache to invalidate
   const mutation = useMutation({
     mutationFn: () => createWorkspace({
       name: name.trim(),
@@ -39,10 +40,12 @@ export function CreateWorkspaceModal({ onClose }: CreateWorkspaceModalProps) {
 
   return createPortal(
     <>
-      <div onClick={onClose} style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,0.4)', zIndex: 300, backdropFilter: 'blur(4px)',
-      }} />
+      <div
+        onClick={onClose}
+        role="presentation"
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 300, backdropFilter: 'blur(4px)' }}
+      />
 
       <div style={{
         position: 'fixed', top: '50%', left: '50%',
