@@ -53,7 +53,8 @@
     "aqiHistory": "Historial de calidad",
     "noWorkspace": "Ningún workspace seleccionado",
     "noSensors": "Este workspace no tiene sensores registrados",
-    "noSensorsHint": "Ve a Dispositivos para reclamar un sensor"
+    "noSensorsHint": "Ve a Dispositivos para reclamar un sensor",
+    "sensor": "Sensor"
   },
   "workspace": {
     "select": "Seleccionar workspace",
@@ -100,7 +101,27 @@
     "selectDevice": "Seleccionar dispositivo",
     "noDevice": "Sin dispositivos disponibles",
     "noVars": "Selecciona hasta 3 variables",
-    "noData": "Sin datos para el rango seleccionado"
+    "noData": "Sin datos para el rango seleccionado",
+    "bucket5m": "5 min",
+    "bucket15m": "15 min",
+    "bucket30m": "30 min",
+    "bucket1h": "1 h",
+    "bucket6h": "6 h",
+    "bucket1d": "1 día",
+    "bucketRaw": "Sin filtros",
+    "groupByLabel": "Agrupar por",
+    "rangeLabel": "Rango",
+    "rangeAll": "Todo",
+    "range1d": "1D",
+    "range7d": "7D",
+    "range30d": "30D",
+    "range90d": "90D",
+    "maxVarsNote": "* Podés seleccionar hasta {max} variables al mismo tiempo",
+    "customRange": "Rango personalizado",
+    "pickEndDate": "Ahora elige la fecha final"
+  },
+  "kpiGrid": {
+    "avgNote": "* Promedio del último día registrado"
   },
   "alertSummary": {
     "title": "Alertas recientes",

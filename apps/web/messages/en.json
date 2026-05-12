@@ -53,7 +53,8 @@
     "aqiHistory": "Air quality history",
     "noWorkspace": "No workspace selected",
     "noSensors": "This workspace has no registered sensors",
-    "noSensorsHint": "Go to Devices to claim a sensor"
+    "noSensorsHint": "Go to Devices to claim a sensor",
+    "sensor": "Sensor"
   },
   "workspace": {
     "select": "Select workspace",
@@ -100,7 +101,27 @@
     "selectDevice": "Select device",
     "noDevice": "No devices available",
     "noVars": "Select up to 3 variables",
-    "noData": "No data for selected range"
+    "noData": "No data for selected range",
+    "bucket5m": "5 min",
+    "bucket15m": "15 min",
+    "bucket30m": "30 min",
+    "bucket1h": "1 h",
+    "bucket6h": "6 h",
+    "bucket1d": "1 day",
+    "bucketRaw": "Raw",
+    "groupByLabel": "Group by",
+    "rangeLabel": "Range",
+    "rangeAll": "All",
+    "range1d": "1D",
+    "range7d": "7D",
+    "range30d": "30D",
+    "range90d": "90D",
+    "maxVarsNote": "* You can select up to {max} variables simultaneously",
+    "customRange": "Custom range",
+    "pickEndDate": "Now pick an end date"
+  },
+  "kpiGrid": {
+    "avgNote": "* Average of the last recorded day"
   },
   "alertSummary": {
     "title": "Recent Alerts",
