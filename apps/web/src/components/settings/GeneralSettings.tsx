@@ -1,12 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Settings2, Copy, Check, AlertTriangle } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { updateWorkspace, deleteWorkspace } from '@/lib/api/workspaces';
 import { useRouter, usePathname } from 'next/navigation';
+import type { WorkspaceSummary } from '@/types/workspace';
+
+type FormState = {
+  name: string;
+  description: string;
+  saveOk: boolean;
+  deleteInput: string;
+  showDeleteZone: boolean;
+  idCopied: boolean;
+};
+
+function initForm(ws: WorkspaceSummary | null): FormState {
+  return {
+    name: ws?.name ?? '',
+    description: ws?.description ?? '',
+    saveOk: false,
+    deleteInput: '',
+    showDeleteZone: false,
+    idCopied: false,
+  };
+}
 
 export function GeneralSettings() {
   const t = useTranslations('settings');
@@ -14,27 +35,30 @@ export function GeneralSettings() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [name, setName]        = useState(activeWorkspace?.name ?? '');
-  const [description, setDesc] = useState(activeWorkspace?.description ?? '');
-  const [saveOk, setSaveOk]    = useState(false);
-  const [deleteInput, setDeleteInput] = useState('');
-  const [showDeleteZone, setShowDeleteZone] = useState(false);
-  const [idCopied, setIdCopied] = useState(false);
+  const [form, setForm] = useState<FormState>(() => initForm(activeWorkspace));
+  const { name, description, saveOk, deleteInput, showDeleteZone, idCopied } = form;
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setName(activeWorkspace?.name ?? '');
-    setDesc(activeWorkspace?.description ?? '');
-    setSaveOk(false);
-    setDeleteInput('');
-    setIdCopied(false);
+    setForm(initForm(activeWorkspace));
   }, [activeWorkspace?.workspace_id]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const copyId = () => {
     navigator.clipboard.writeText(activeWorkspace!.workspace_id);
-    setIdCopied(true);
-    setTimeout(() => setIdCopied(false), 2000);
+    setForm(prev => ({ ...prev, idCopied: true }));
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setForm(prev => ({ ...prev, idCopied: false })), 2000);
   };
 
+  // WorkspaceContext manages workspace state via refreshWorkspaces() — no React Query cache to invalidate
   const saveMutation = useMutation({
     mutationFn: () => updateWorkspace(activeWorkspace!.workspace_id, {
       name: name.trim() || null,
@@ -42,11 +66,13 @@ export function GeneralSettings() {
     }),
     onSuccess: async () => {
       await refreshWorkspaces();
-      setSaveOk(true);
-      setTimeout(() => setSaveOk(false), 2500);
+      setForm(prev => ({ ...prev, saveOk: true }));
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setForm(prev => ({ ...prev, saveOk: false })), 2500);
     },
   });
 
+  // WorkspaceContext manages workspace state via refreshWorkspaces() — no React Query cache to invalidate
   const deleteMutation = useMutation({
     mutationFn: () => deleteWorkspace(activeWorkspace!.workspace_id),
     onSuccess: async () => {
@@ -61,8 +87,8 @@ export function GeneralSettings() {
   if (!activeWorkspace) return null;
 
   const canDelete = deleteInput.trim() === activeWorkspace.name;
-  const isDirty = name !== activeWorkspace.name ||
-                  (description ?? '') !== (activeWorkspace.description ?? '');
+  const isDirty = name.trim() !== (activeWorkspace.name ?? '') ||
+                  description.trim() !== (activeWorkspace.description ?? '');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -83,12 +109,12 @@ export function GeneralSettings() {
         </div>
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <Field label={t('workspaceName')}>
-            <input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
+            <input value={name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} style={inputStyle} />
           </Field>
           <Field label={`${t('workspaceDesc')} (${t('optional')})`}>
             <textarea
               value={description}
-              onChange={(e) => setDesc(e.target.value)}
+              onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
@@ -174,7 +200,7 @@ export function GeneralSettings() {
                 </div>
               </div>
               <button
-                onClick={() => setShowDeleteZone(true)}
+                onClick={() => setForm(prev => ({ ...prev, showDeleteZone: true }))}
                 style={{
                   padding: '7px 14px', fontSize: '12px', fontWeight: 600,
                   background: 'none', color: 'var(--color-aqi-critical)',
@@ -192,13 +218,13 @@ export function GeneralSettings() {
               </p>
               <input
                 value={deleteInput}
-                onChange={(e) => setDeleteInput(e.target.value)}
+                onChange={(e) => setForm(prev => ({ ...prev, deleteInput: e.target.value }))}
                 placeholder={activeWorkspace.name}
                 style={{ ...inputStyle, borderColor: 'var(--color-aqi-critical)' }}
               />
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
-                  onClick={() => { setShowDeleteZone(false); setDeleteInput(''); }}
+                  onClick={() => setForm(prev => ({ ...prev, showDeleteZone: false, deleteInput: '' }))}
                   style={{
                     padding: '7px 14px', fontSize: '12px',
                     background: 'var(--color-surface-subtle)',
