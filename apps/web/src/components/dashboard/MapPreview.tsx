@@ -27,7 +27,11 @@ const MiniMap = dynamic(
   },
 );
 
-export function MapPreview() {
+interface MapPreviewProps {
+  selectedSensorId?: string;
+}
+
+export function MapPreview({ selectedSensorId }: MapPreviewProps) {
   const t = useTranslations();
   const router = useRouter();
   const locale = useLocale();
@@ -179,7 +183,7 @@ export function MapPreview() {
 
       {/* Map */}
       <div style={{ height: '260px' }}>
-        <MiniMap devices={devices} pm2_5Map={pm2_5Map} heatmap={heatmap} />
+        <MiniMap devices={devices} pm2_5Map={pm2_5Map} heatmap={heatmap} selectedSensorId={selectedSensorId} />
       </div>
     </div>
   );

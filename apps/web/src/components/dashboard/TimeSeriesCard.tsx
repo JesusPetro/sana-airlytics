@@ -1,56 +1,81 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useTimeSeries, type BucketOption } from '@/hooks/useTimeSeries';
 import { TS_VARS } from '@/lib/constants';
 import { VarChips } from './VarChips';
 import { TimeSeriesChart } from './TimeSeriesChart';
-import { Select } from '@/components/ui/Select';
 import type { DatastreamResponse, ChartPoint } from '@/types/analytics';
 
 interface Props {
-  datastreams: DatastreamResponse[];
+  datastreams:      DatastreamResponse[];
+  selectedSensorId: string;
 }
 
-interface BucketDef {
-  value: BucketOption;
-  label: string;
-}
+const BUCKET_VALUES: BucketOption[] = ['5m', '15m', '30m', '1h', '6h', '1d', 'raw'];
 
-const BUCKETS: BucketDef[] = [
-  { value: '5m',  label: '5 min'  },
-  { value: '15m', label: '15 min' },
-  { value: '30m', label: '30 min' },
-  { value: '1h',  label: '1 h'   },
-  { value: '6h',  label: '6 h'   },
-  { value: '1d',  label: '1 día'  },
-  { value: 'raw', label: 'Sin filtros' },
+const BUCKET_KEY: Record<BucketOption, string> = {
+  '5m':  'timeSeries.bucket5m',
+  '15m': 'timeSeries.bucket15m',
+  '30m': 'timeSeries.bucket30m',
+  '1h':  'timeSeries.bucket1h',
+  '6h':  'timeSeries.bucket6h',
+  '1d':  'timeSeries.bucket1d',
+  'raw': 'timeSeries.bucketRaw',
+};
+
+// days: 0 = "All" (no date window — fetches from 2020-01-01 to now)
+const PRESETS = [
+  { days: 0,  key: 'timeSeries.rangeAll' },
+  { days: 1,  key: 'timeSeries.range1d'  },
+  { days: 7,  key: 'timeSeries.range7d'  },
+  { days: 30, key: 'timeSeries.range30d' },
+  { days: 90, key: 'timeSeries.range90d' },
 ];
 
-export function TimeSeriesCard({ datastreams }: Props) {
+export function TimeSeriesCard({ datastreams, selectedSensorId }: Props) {
   const t = useTranslations();
   const { activeWorkspace } = useWorkspace();
 
-  const devices = Array.from(
-    new Map(datastreams.map((d) => [d.sensor_id, { id: d.sensor_id, name: d.sensor_name }])).values(),
-  );
+  const [selectedCodes, setSelectedCodes] = useState<string[]>(['pm2_5']);
+  const [bucket, setBucket]               = useState<BucketOption>('30m');
+  const [presetDays, setPresetDays]       = useState<number>(7);
 
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(devices[0]?.id ?? '');
-  const [selectedCodes, setSelectedCodes]       = useState<string[]>(['pm2_5']);
-  const [bucket, setBucket]                     = useState<BucketOption>('30m');
+  // Codes available for the currently selected sensor (datastreams already filtered by page)
+  const availableCodes = useMemo(() => new Set(
+    datastreams.map((d) => d.property_code.toLowerCase()),
+  ), [datastreams]);
 
+  // When sensor changes, keep only selected codes that the new sensor has.
   useEffect(() => {
-    if (selectedDeviceId === '' && devices.length > 0) {
-      setSelectedDeviceId(devices[0].id);
+    setSelectedCodes((prev) => {
+      const valid = prev.filter((c) => availableCodes.has(c));
+      if (valid.length > 0) return valid;
+      const first = availableCodes.values().next().value;
+      return first ? [first] : [];
+    });
+  }, [availableCodes]);
+
+  function selectPreset(days: number) { setPresetDays(days); }
+
+  // presetDays === 0 → "All": static far-past/far-future dates so no data is excluded.
+  // Otherwise, compute from/to from presetDays so the hook fetches the correct window.
+  const { resolvedFrom, resolvedTo } = useMemo(() => {
+    if (presetDays === 0) {
+      return { resolvedFrom: '2020-01-01T00:00:00.000Z', resolvedTo: '2099-12-31T23:59:59.000Z' };
     }
-  }, [devices, selectedDeviceId]);
+    const to = new Date();
+    to.setSeconds(0, 0);
+    const from = new Date(to.getTime() - presetDays * 24 * 60 * 60 * 1000);
+    return { resolvedFrom: from.toISOString(), resolvedTo: to.toISOString() };
+  }, [presetDays]);
 
   const datastreamIds = selectedCodes
     .map((code) =>
       datastreams.find(
-        (d) => d.property_code.toLowerCase() === code && d.sensor_id === selectedDeviceId,
+        (d) => d.property_code.toLowerCase() === code && (!selectedSensorId || d.sensor_id === selectedSensorId),
       ),
     )
     .filter(Boolean)
@@ -60,13 +85,15 @@ export function TimeSeriesCard({ datastreams }: Props) {
     activeWorkspace?.workspace_id,
     datastreamIds,
     bucket,
+    resolvedFrom,
+    resolvedTo,
   );
 
   const series = selectedCodes
     .map((code) => {
       const tsVar = TS_VARS.find((v) => v.code === code);
       const ds    = datastreams.find(
-        (d) => d.property_code.toLowerCase() === code && d.sensor_id === selectedDeviceId,
+        (d) => d.property_code.toLowerCase() === code && (!selectedSensorId || d.sensor_id === selectedSensorId),
       );
       if (!tsVar || !ds) return null;
       return {
@@ -77,6 +104,31 @@ export function TimeSeriesCard({ datastreams }: Props) {
       };
     })
     .filter(Boolean) as { code: string; label: string; color: string; data: ChartPoint[] }[];
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    height:       '26px',
+    padding:      '0 12px',
+    borderRadius: 'var(--radius-full)',
+    fontSize:     '0.75rem',
+    fontWeight:   500,
+    border:       'none',
+    cursor:       'pointer',
+    transition:   'background 140ms, color 140ms',
+    background:   active ? 'var(--color-surface)' : 'transparent',
+    color:        active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+    boxShadow:    active ? 'var(--shadow-sm)' : 'none',
+  });
+
+  const pillGroupStyle: React.CSSProperties = {
+    display:      'inline-flex',
+    alignItems:   'center',
+    background:   'var(--color-surface-subtle)',
+    border:       '1px solid var(--color-border-subtle)',
+    borderRadius: 'var(--radius-full)',
+    padding:      '3px',
+    gap:          '2px',
+    whiteSpace:   'nowrap',
+  };
 
   return (
     <div
@@ -95,64 +147,45 @@ export function TimeSeriesCard({ datastreams }: Props) {
         <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
           {t('timeSeries.title')}
         </span>
-
-        {devices.length > 0 ? (
-          <Select
-            value={selectedDeviceId}
-            onChange={setSelectedDeviceId}
-            options={devices.map(d => ({ value: d.id, label: d.name }))}
-            style={{ width: 'auto', padding: '4px 8px', fontSize: '12px', borderRadius: '6px' }}
-          />
-        ) : (
-          <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-            {t('timeSeries.noDevice')}
-          </span>
-        )}
       </div>
 
-      {/* Bucket pills */}
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', alignSelf: 'flex-start', maxWidth: '100%' }}>
-      <div
-        role="tablist"
-        aria-label="Agrupación"
-        style={{
-          display:      'inline-flex',
-          alignItems:   'center',
-          background:   'var(--color-surface-subtle)',
-          border:       '1px solid var(--color-border-subtle)',
-          borderRadius: 'var(--radius-full)',
-          padding:      '3px',
-          gap:          '2px',
-          whiteSpace:   'nowrap',
-        }}
-      >
-        {BUCKETS.map((b) => {
-          const active = b.value === bucket;
-          return (
+      {/* Controls row: bucket + presets + date picker */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+
+        {/* Bucket pills */}
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, minWidth: 0 }}>
+          <div role="tablist" aria-label={t('timeSeries.groupByLabel')} style={pillGroupStyle}>
+            {BUCKET_VALUES.map((val) => (
+              <button
+                key={val}
+                type="button"
+                role="tab"
+                aria-selected={val === bucket}
+                onClick={() => setBucket(val)}
+                style={pillStyle(val === bucket)}
+              >
+                {t(BUCKET_KEY[val])}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Preset range pills */}
+        <div role="tablist" aria-label={t('timeSeries.rangeLabel')} style={{ ...pillGroupStyle, flexShrink: 0 }}>
+          {PRESETS.map((r) => (
             <button
-              key={b.value}
+              key={r.days}
+              type="button"
               role="tab"
-              aria-selected={active}
-              onClick={() => setBucket(b.value)}
-              style={{
-                height:       '26px',
-                padding:      '0 12px',
-                borderRadius: 'var(--radius-full)',
-                fontSize:     '0.75rem',
-                fontWeight:   500,
-                border:       'none',
-                cursor:       'pointer',
-                transition:   'background 140ms, color 140ms',
-                background:   active ? 'var(--color-surface)' : 'transparent',
-                color:        active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                boxShadow:    active ? 'var(--shadow-sm)' : 'none',
-              }}
+              aria-selected={presetDays === r.days}
+              onClick={() => selectPreset(r.days)}
+              style={pillStyle(presetDays === r.days)}
             >
-              {b.label}
+              {t(r.key)}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+
       </div>
 
       <VarChips vars={TS_VARS} selected={selectedCodes} onChange={setSelectedCodes} max={4} />
@@ -162,7 +195,7 @@ export function TimeSeriesCard({ datastreams }: Props) {
         isLoading={isLoading}
         isFetching={isFetching}
         noDataMsg={selectedCodes.length === 0 ? t('timeSeries.noVars') : t('timeSeries.noData')}
-        chartKey={bucket}
+        chartKey={`${bucket}-${presetDays}`}
       />
     </div>
   );

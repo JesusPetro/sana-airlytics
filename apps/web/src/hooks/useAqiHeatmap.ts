@@ -16,10 +16,11 @@ export function useAqiHeatmap(
   const { from, to } = heatmapWindow();
 
   return useQuery({
-    queryKey:  ['heatmap', workspaceId, datastreamId, from],
-    queryFn:   () => getAggregations(workspaceId!, datastreamId!, from, to, '1h'),
-    enabled:   !!workspaceId && !!datastreamId,
-    staleTime: 5 * 60 * 1000,
-    gcTime:    10 * 60 * 1000,
+    queryKey:        ['heatmap', workspaceId, datastreamId, from],
+    queryFn:         () => getAggregations(workspaceId!, datastreamId!, from, to, '1h'),
+    enabled:         !!workspaceId && !!datastreamId,
+    staleTime:       0,
+    gcTime:          10 * 60 * 1000,
+    refetchInterval: 10_000,
   });
 }

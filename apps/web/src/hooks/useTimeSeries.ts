@@ -9,7 +9,7 @@ import type {
 
 export type BucketOption = '5m' | '15m' | '30m' | '1h' | '6h' | '1d' | 'raw';
 
-const BUCKET_DAYS: Record<BucketOption, number> = {
+export const BUCKET_DAYS: Record<BucketOption, number> = {
   raw:   2,
   '5m':  2,
   '15m': 7,
@@ -22,9 +22,13 @@ const BUCKET_DAYS: Record<BucketOption, number> = {
 const STALE_TIME = 270 * 1000;
 const GC_TIME    = 600 * 1000;
 
-function computeWindow(bucket: BucketOption) {
-  const to = new Date();
-  to.setSeconds(0, 0); // floor to minute → stable query key across concurrent mounts
+function floorToMinute(d: Date) {
+  d.setSeconds(0, 0);
+  return d;
+}
+
+function defaultWindow(bucket: BucketOption) {
+  const to   = floorToMinute(new Date());
   const from = new Date(to);
   from.setDate(from.getDate() - BUCKET_DAYS[bucket]);
   return { from: from.toISOString(), to: to.toISOString() };
@@ -34,20 +38,27 @@ export function useTimeSeries(
   workspaceId:   string | undefined,
   datastreamIds: string[],
   bucket:        BucketOption,
+  explicitFrom?: string,
+  explicitTo?:   string,
 ): { data: Record<string, ChartPoint[]>; isLoading: boolean; isFetching: boolean } {
-  const { from, to } = useMemo(() => computeWindow(bucket), [bucket]);
+  const defaultW = useMemo(() => defaultWindow(bucket), [bucket]);
+
+  const from = explicitFrom ?? defaultW.from;
+  const to   = explicitTo   ?? defaultW.to;
+
   const isRaw = bucket === 'raw';
 
   const queries = useQueries({
     queries: datastreamIds.map((dsId) => ({
-      queryKey:        ['timeseries', workspaceId, dsId, bucket, from],
+      queryKey:        ['timeseries', workspaceId, dsId, bucket, from, to],
       queryFn:         isRaw
         ? () => getObservations(workspaceId!, dsId, from, to)
         : () => getAggregations(workspaceId!, dsId, from, to, bucket),
       enabled:         !!workspaceId && !!dsId,
-      staleTime:       STALE_TIME,
+      staleTime:       0,
       gcTime:          GC_TIME,
       placeholderData: keepPreviousData,
+      refetchInterval: 10_000,
     })),
   });
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { KpiDonut } from './KpiDonut';
 import { KPI_SPECS_NOTHRESH } from '@/lib/constants';
 import type { DashboardEntry } from '@/hooks/useDashboard';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function KpiGridNoThresh({ data, isLoading }: Props) {
+  const t = useTranslations();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <div
@@ -32,7 +34,7 @@ export function KpiGridNoThresh({ data, isLoading }: Props) {
         ))}
       </div>
       <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-disabled)' }}>
-        * Promedio del último día registrado
+        {t('kpiGrid.avgNote')}
       </p>
     </div>
   );

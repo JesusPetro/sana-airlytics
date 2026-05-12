@@ -10,9 +10,10 @@ import { HeatmapOverlay } from '@/components/map/HeatmapOverlay';
 import type { DeviceStatusResponse } from '@/types/sensor';
 
 interface MiniMapInnerProps {
-  devices: DeviceStatusResponse[];
-  pm2_5Map: Record<string, number | null>;
-  heatmap: boolean;
+  devices:          DeviceStatusResponse[];
+  pm2_5Map:         Record<string, number | null>;
+  heatmap:          boolean;
+  selectedSensorId?: string;
 }
 
 const CARTAGENA: [number, number] = [10.391, -75.479];
@@ -20,7 +21,7 @@ const CARTAGENA: [number, number] = [10.391, -75.479];
 const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
-export function MiniMapInner({ devices, pm2_5Map, heatmap }: MiniMapInnerProps) {
+export function MiniMapInner({ devices, pm2_5Map, heatmap, selectedSensorId }: MiniMapInnerProps) {
   const isDark = useDarkMode();
   const devicesWithCoords = useMemo(
     () => devices.filter((d) => d.latitude != null && d.longitude != null),
@@ -64,6 +65,7 @@ export function MiniMapInner({ devices, pm2_5Map, heatmap }: MiniMapInnerProps) 
           key={d.device_id}
           device={d}
           pm2_5={pm2_5Map[d.device_id]}
+          selected={!!selectedSensorId && d.device_id === selectedSensorId}
         />
       ))}
 

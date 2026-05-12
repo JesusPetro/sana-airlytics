@@ -51,7 +51,7 @@ export function VarChips({ vars, selected, onChange, max = 4 }: Props) {
         })}
       </div>
       <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-        * Podés seleccionar hasta {max} variables al mismo tiempo
+        {t('timeSeries.maxVarsNote', { max })}
       </span>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import gsap from 'gsap';
 import { useAqiHeatmap } from '@/hooks/useAqiHeatmap';
 import { KPI_SPECS_THRESH } from '@/lib/constants';
@@ -13,14 +13,22 @@ interface Props {
   datastreams:  DatastreamResponse[];
 }
 
-const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const HOURS      = Array.from({ length: 24 }, (_, i) => i);
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const LEVEL_IDS  = ['good', 'moderate', 'elevated', 'unhealthy', 'critical', 'hazardous'] as const;
 
 interface Tooltip { x: number; y: number; text: string }
 
 export function AqiHeatmap({ workspaceId, datastreams }: Props) {
-  const t = useTranslations();
+  const t      = useTranslations();
+  const locale = useLocale();
+
+  // Locale-aware day abbreviations: index 0=Sunday … 6=Saturday
+  const DAYS_SHORT = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    // Jan 7 2024 = Sunday, Jan 8 = Monday, … Jan 13 = Saturday
+    return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2024, 0, 7 + i)));
+  }, [locale]);
+
   const [selectedCode, setSelectedCode] = useState(KPI_SPECS_THRESH[0].code);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
