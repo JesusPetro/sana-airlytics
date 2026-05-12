@@ -6,7 +6,8 @@ export function useDeviceLatestSnapshot(deviceId: string, workspaceId: string | 
     queryKey:  ['device-latest-snapshot', deviceId],
     queryFn:   () => getDeviceSnapshot(deviceId),
     enabled:   !!deviceId && !!workspaceId,
-    staleTime: 5 * 60 * 1000,
-    gcTime:    10 * 60 * 1000,
+    staleTime:      30 * 1000,
+    gcTime:         5 * 60 * 1000,
+    refetchInterval: 30 * 1000,
   });
 }

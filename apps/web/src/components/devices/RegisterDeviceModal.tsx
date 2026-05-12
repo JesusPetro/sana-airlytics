@@ -31,6 +31,7 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
     mutationFn: () => claimDevice(found!.code, activeWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['devices', activeWorkspace?.workspace_id] });
+      queryClient.removeQueries({ queryKey: ['datastreams', activeWorkspace?.workspace_id] });
       setStep('success');
     },
   });
@@ -65,6 +66,8 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
       {/* Backdrop */}
       <div
         onClick={onClose}
+        role="presentation"
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(0,0,0,0.4)',

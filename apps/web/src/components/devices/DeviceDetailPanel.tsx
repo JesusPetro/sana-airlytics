@@ -69,6 +69,8 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
       <div
         ref={backdropRef}
         onClick={handleClose}
+        role="presentation"
+        onKeyDown={(e) => e.key === 'Escape' && handleClose()}
         style={{
           position: 'fixed',
           top: 'var(--topbar-h)', left: 0, right: 0, bottom: 0,
