@@ -37,16 +37,15 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
   const [profile, setProfile]     = useState<UserProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Estado del formulario
-  const [firstName,  setFirstName]  = useState('');
-  const [lastName,   setLastName]   = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [phone,      setPhone]      = useState('');
-  const [address,    setAddress]    = useState('');
+  // Campos del formulario agrupados
+  const [fields, setFields] = useState({
+    firstName: '', lastName: '', middleName: '', phone: '', address: '',
+  });
+  const { firstName, lastName, middleName, phone, address } = fields;
 
   // Estado de guardado
-  const [isSaving,     setIsSaving]     = useState(false);
-  const [saveMessage,  setSaveMessage]  = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isSaving,    setIsSaving]    = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Estado de eliminacion
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -63,11 +62,13 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
     getProfile()
       .then((data) => {
         setProfile(data);
-        setFirstName(data.first_name);
-        setLastName(data.last_name);
-        setMiddleName(data.middle_name ?? '');
-        setPhone(data.phone ?? '');
-        setAddress(data.address ?? '');
+        setFields({
+          firstName:  data.first_name,
+          lastName:   data.last_name,
+          middleName: data.middle_name ?? '',
+          phone:      data.phone ?? '',
+          address:    data.address ?? '',
+        });
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
@@ -87,11 +88,11 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
     setSaveMessage(null);
     try {
       await updateProfile({
-        first_name:  firstName.trim()  || null,
-        last_name:   lastName.trim()   || null,
-        middle_name: middleName.trim() || null,
-        phone:       phone.trim()      || null,
-        address:     address.trim()    || null,
+        first_name:  fields.firstName.trim()  || null,
+        last_name:   fields.lastName.trim()   || null,
+        middle_name: fields.middleName.trim() || null,
+        phone:       fields.phone.trim()      || null,
+        address:     fields.address.trim()    || null,
       });
       setSaveMessage({ type: 'success', text: t('saveSuccess') });
     } catch {
@@ -124,12 +125,9 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.35)',
-          zIndex: 1300,
-          backdropFilter: 'blur(3px)',
-        }}
+        role="presentation"
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 1300, backdropFilter: 'blur(3px)' }}
       />
 
       {/* Panel */}
@@ -211,7 +209,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                 <input
                   className={INPUT_CLS}
                   value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  onChange={(e) => setFields(prev => ({ ...prev, firstName: e.target.value }))}
                   placeholder={t('firstName')}
                 />
               </div>
@@ -221,7 +219,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                 <input
                   className={INPUT_CLS}
                   value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(e) => setFields(prev => ({ ...prev, lastName: e.target.value }))}
                   placeholder={t('lastName')}
                 />
               </div>
@@ -236,7 +234,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                 <input
                   className={INPUT_CLS}
                   value={middleName}
-                  onChange={(e) => setMiddleName(e.target.value)}
+                  onChange={(e) => setFields(prev => ({ ...prev, middleName: e.target.value }))}
                   placeholder={t('middleName')}
                 />
               </div>
@@ -251,7 +249,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                 <input
                   className={INPUT_CLS}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setFields(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="+57 300 000 0000"
                 />
               </div>
@@ -266,7 +264,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                 <input
                   className={INPUT_CLS}
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={(e) => setFields(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="Calle 1 # 2-3, Cartagena"
                 />
               </div>

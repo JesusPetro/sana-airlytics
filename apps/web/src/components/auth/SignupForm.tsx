@@ -95,6 +95,8 @@ const STRINGS = {
   },
 } as const;
 
+type Strings = { [K in keyof typeof STRINGS['es']]: string };
+
 /* ── Shared input / label classes ─────────────────────── */
 const INPUT_CLS = `
   w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all
@@ -106,7 +108,95 @@ const INPUT_CLS = `
 const LABEL_CLS =
   'block text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-secondary)]';
 
-/* ── Component ────────────────────────────────────────── */
+/* ── OrgSection sub-component ────────────────────────── */
+type OrgFields = { isOrg: boolean; orgName: string; orgDesc: string; orgType: 'commercial' | 'academic' | 'government' };
+type SetOrg = React.Dispatch<React.SetStateAction<OrgFields>>;
+
+function OrgSection({ orgRef, org, setOrg, s }: {
+  orgRef: React.RefObject<HTMLDivElement | null>;
+  org: OrgFields;
+  setOrg: SetOrg;
+  s: Strings;
+}) {
+  return (
+    <div data-a>
+      <label className="flex items-center gap-3 cursor-pointer select-none group">
+        <div className="relative flex-shrink-0">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={org.isOrg}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setOrg(prev => ({ ...prev, isOrg: checked }));
+              const el = orgRef.current;
+              if (!el) return;
+              if (checked) {
+                gsap.fromTo(el,
+                  { height: 0, opacity: 0 },
+                  { height: 'auto', opacity: 1, duration: 0.42, ease: 'power2.out' },
+                );
+              } else {
+                gsap.to(el, { height: 0, opacity: 0, duration: 0.3, ease: 'power2.in' });
+              }
+            }}
+          />
+          <div className="w-10 h-5 rounded-full border transition-all
+            bg-[var(--color-surface-2)] border-[var(--color-border)]
+            peer-checked:bg-[var(--color-primary)] peer-checked:border-[var(--color-primary)]" />
+          <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform
+            peer-checked:translate-x-5" />
+        </div>
+        <span className="text-sm text-[var(--color-text-primary)] font-medium">{s.isOrg}</span>
+      </label>
+
+      <div ref={orgRef} style={{ overflow: 'hidden', height: 0, opacity: 0 }}>
+        <div className="space-y-4 pt-4 border-t border-[var(--color-border-subtle)] mt-4">
+          <div className="space-y-1.5">
+            <label htmlFor="orgName" className={LABEL_CLS}>{s.orgName}</label>
+            <input
+              id="orgName" type="text"
+              placeholder={s.orgNamePh} value={org.orgName}
+              onChange={(e) => setOrg(prev => ({ ...prev, orgName: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="orgType" className={LABEL_CLS}>{s.orgType}</label>
+            <Select
+              value={org.orgType}
+              onChange={(v) => setOrg(prev => ({ ...prev, orgType: v as OrgFields['orgType'] }))}
+              options={[
+                { value: 'commercial', label: s.commercial },
+                { value: 'academic',   label: s.academic },
+                { value: 'government', label: s.government },
+              ]}
+              style={{ padding: '12px 16px', fontSize: '14px', borderRadius: '12px' }}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="orgDesc" className={LABEL_CLS}>
+              {s.orgDesc}
+              <span className="ml-1.5 normal-case tracking-normal font-normal opacity-60">
+                ({s.optional})
+              </span>
+            </label>
+            <textarea
+              id="orgDesc" rows={2}
+              placeholder={s.orgDescPh} value={org.orgDesc}
+              onChange={(e) => setOrg(prev => ({ ...prev, orgDesc: e.target.value }))}
+              className={`${INPUT_CLS} resize-none`}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── SignupForm ───────────────────────────────────────── */
 interface Props { locale: 'en' | 'es' }
 
 export function SignupForm({ locale }: Props) {
@@ -114,27 +204,18 @@ export function SignupForm({ locale }: Props) {
   const formRef = useRef<HTMLDivElement>(null);
   const orgRef  = useRef<HTMLDivElement>(null);
 
-  /* user fields */
-  const [firstName,  setFirstName]  = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [lastName,   setLastName]   = useState('');
-  const [email,      setEmail]      = useState('');
-  const [phone,      setPhone]      = useState('');
-  const [address,    setAddress]    = useState('');
-  const [password,   setPassword]   = useState('');
-  const [confirm,    setConfirm]    = useState('');
+  const [userFields, setUser] = useState({
+    firstName: '', middleName: '', lastName: '',
+    email: '', phone: '', address: '',
+    password: '', confirm: '',
+  });
+  const [org, setOrg] = useState<OrgFields>({
+    isOrg: false, orgName: '', orgDesc: '', orgType: 'commercial',
+  });
+  const [ui, setUi] = useState({ error: '', loading: false });
 
-  /* org fields */
-  const [isOrg,    setIsOrg]    = useState(false);
-  const [orgName,  setOrgName]  = useState('');
-  const [orgDesc,  setOrgDesc]  = useState('');
-  const [orgType,  setOrgType]  = useState<'commercial' | 'academic' | 'government'>('commercial');
+  const { firstName, middleName, lastName, email, phone, address, password, confirm } = userFields;
 
-  /* ui */
-  const [error,   setError]   = useState('');
-  const [loading, setLoading] = useState(false);
-
-  /* ── Entrance animation ─────────────────────────────── */
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -146,70 +227,48 @@ export function SignupForm({ locale }: Props) {
     return () => ctx.revert();
   }, []);
 
-  /* ── Org section toggle ─────────────────────────────── */
-  function toggleOrg(checked: boolean) {
-    setIsOrg(checked);
-    const el = orgRef.current;
-    if (!el) return;
-
-    if (checked) {
-      gsap.fromTo(el,
-        { height: 0, opacity: 0 },
-        { height: 'auto', opacity: 1, duration: 0.42, ease: 'power2.out' },
-      );
-    } else {
-      gsap.to(el, { height: 0, opacity: 0, duration: 0.3, ease: 'power2.in' });
-    }
-  }
-
-  /* ── Submit ─────────────────────────────────────────── */
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
+    setUi(prev => ({ ...prev, error: '' }));
 
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !confirm) {
-      setError(s.required);
+      setUi(prev => ({ ...prev, error: s.required }));
       return;
     }
-    if (!isStrongEnough(password)) { setError(s.weakPass);    return; }
-    if (password !== confirm)       { setError(s.mismatch);   return; }
-    if (isOrg && !orgName.trim())   { setError(s.orgRequired); return; }
+    if (!isStrongEnough(password)) { setUi(prev => ({ ...prev, error: s.weakPass }));    return; }
+    if (password !== confirm)       { setUi(prev => ({ ...prev, error: s.mismatch }));   return; }
+    if (org.isOrg && !org.orgName.trim()) { setUi(prev => ({ ...prev, error: s.orgRequired })); return; }
 
-    setLoading(true);
+    setUi(prev => ({ ...prev, loading: true }));
     try {
       await import('@/lib/api/auth').then(({ register }) =>
         register({ email: email.trim(), password, first_name: firstName.trim(), last_name: lastName.trim() })
       );
-      // auto-login after register
       await import('@/lib/api/auth').then(({ login }) => login(email.trim(), password));
       window.location.href = `/${locale}/dashboard`;
     } catch (err: any) {
-      setError(err?.status === 409 ? s.emailTaken : s.serverError);
-      setLoading(false);
+      setUi({ error: err?.status === 409 ? s.emailTaken : s.serverError, loading: false });
     }
   }
 
   const confirmMismatch = confirm.length > 0 && confirm !== password;
 
-  /* ── Render ─────────────────────────────────────────── */
   return (
     <div ref={formRef} className="w-full max-w-[440px]">
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
-        {/* Header */}
         <div data-a className="space-y-1 mb-6">
           <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">{s.title}</h1>
           <p className="text-sm text-[var(--color-text-secondary)]">{s.subtitle}</p>
         </div>
 
-        {/* First name + Last name */}
         <div data-a className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label htmlFor="firstName" className={LABEL_CLS}>{s.firstName}</label>
             <input
               id="firstName" type="text" autoComplete="given-name"
               placeholder={s.firstNamePh} value={firstName}
-              onChange={e => setFirstName(e.target.value)}
+              onChange={(e) => setUser(prev => ({ ...prev, firstName: e.target.value }))}
               className={INPUT_CLS}
             />
           </div>
@@ -218,13 +277,12 @@ export function SignupForm({ locale }: Props) {
             <input
               id="lastName" type="text" autoComplete="family-name"
               placeholder={s.lastNamePh} value={lastName}
-              onChange={e => setLastName(e.target.value)}
+              onChange={(e) => setUser(prev => ({ ...prev, lastName: e.target.value }))}
               className={INPUT_CLS}
             />
           </div>
         </div>
 
-        {/* Middle name (optional) */}
         <div data-a className="space-y-1.5">
           <label htmlFor="middleName" className={LABEL_CLS}>
             {s.middleName}
@@ -235,23 +293,21 @@ export function SignupForm({ locale }: Props) {
           <input
             id="middleName" type="text" autoComplete="additional-name"
             placeholder={s.middleNamePh} value={middleName}
-            onChange={e => setMiddleName(e.target.value)}
+            onChange={(e) => setUser(prev => ({ ...prev, middleName: e.target.value }))}
             className={INPUT_CLS}
           />
         </div>
 
-        {/* Email */}
         <div data-a className="space-y-1.5">
           <label htmlFor="email" className={LABEL_CLS}>{s.email}</label>
           <input
             id="email" type="email" autoComplete="email"
             placeholder="you@example.com" value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setUser(prev => ({ ...prev, email: e.target.value }))}
             className={INPUT_CLS}
           />
         </div>
 
-        {/* Phone */}
         <div data-a className="space-y-1.5">
           <label htmlFor="phone" className={LABEL_CLS}>
             {s.phone}
@@ -262,12 +318,11 @@ export function SignupForm({ locale }: Props) {
           <input
             id="phone" type="tel" autoComplete="tel"
             placeholder={s.phonePh} value={phone}
-            onChange={e => setPhone(e.target.value)}
+            onChange={(e) => setUser(prev => ({ ...prev, phone: e.target.value }))}
             className={INPUT_CLS}
           />
         </div>
 
-        {/* Address */}
         <div data-a className="space-y-1.5">
           <label htmlFor="address" className={LABEL_CLS}>
             {s.address}
@@ -278,28 +333,26 @@ export function SignupForm({ locale }: Props) {
           <input
             id="address" type="text" autoComplete="street-address"
             placeholder={s.addressPh} value={address}
-            onChange={e => setAddress(e.target.value)}
+            onChange={(e) => setUser(prev => ({ ...prev, address: e.target.value }))}
             className={INPUT_CLS}
           />
         </div>
 
-        {/* Password + strength */}
         <div data-a className="space-y-1.5">
           <label htmlFor="password" className={LABEL_CLS}>{s.passLabel}</label>
           <PasswordInput
             id="password" name="password" value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setUser(prev => ({ ...prev, password: e.target.value }))}
             autoComplete="new-password"
           />
           <PasswordStrength password={password} />
         </div>
 
-        {/* Confirm password */}
         <div data-a className="space-y-1.5">
           <label htmlFor="confirm" className={LABEL_CLS}>{s.confirmLabel}</label>
           <PasswordInput
             id="confirm" name="confirm" value={confirm}
-            onChange={e => setConfirm(e.target.value)}
+            onChange={(e) => setUser(prev => ({ ...prev, confirm: e.target.value }))}
             autoComplete="new-password"
           />
           {confirmMismatch && (
@@ -307,102 +360,25 @@ export function SignupForm({ locale }: Props) {
           )}
         </div>
 
-        {/* Organization toggle */}
-        <div data-a>
-          <label className="flex items-center gap-3 cursor-pointer select-none group">
-            <div className="relative flex-shrink-0">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={isOrg}
-                onChange={e => toggleOrg(e.target.checked)}
-              />
-              {/* track */}
-              <div className="w-10 h-5 rounded-full border transition-all
-                bg-[var(--color-surface-2)] border-[var(--color-border)]
-                peer-checked:bg-[var(--color-primary)] peer-checked:border-[var(--color-primary)]" />
-              {/* thumb */}
-              <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform
-                peer-checked:translate-x-5" />
-            </div>
-            <span className="text-sm text-[var(--color-text-primary)] font-medium">
-              {s.isOrg}
-            </span>
-          </label>
+        <OrgSection orgRef={orgRef} org={org} setOrg={setOrg} s={s} />
 
-          {/* Animated org section */}
-          <div
-            ref={orgRef}
-            style={{ overflow: 'hidden', height: 0, opacity: 0 }}
-          >
-            <div className="space-y-4 pt-4 border-t border-[var(--color-border-subtle)] mt-4">
-
-              {/* Org name */}
-              <div className="space-y-1.5">
-                <label htmlFor="orgName" className={LABEL_CLS}>{s.orgName}</label>
-                <input
-                  id="orgName" type="text"
-                  placeholder={s.orgNamePh} value={orgName}
-                  onChange={e => setOrgName(e.target.value)}
-                  className={INPUT_CLS}
-                />
-              </div>
-
-              {/* Org type */}
-              <div className="space-y-1.5">
-                <label htmlFor="orgType" className={LABEL_CLS}>{s.orgType}</label>
-                <Select
-                  value={orgType}
-                  onChange={v => setOrgType(v as typeof orgType)}
-                  options={[
-                    { value: 'commercial', label: s.commercial },
-                    { value: 'academic',   label: s.academic },
-                    { value: 'government', label: s.government },
-                  ]}
-                  style={{ padding: '12px 16px', fontSize: '14px', borderRadius: '12px' }}
-                />
-              </div>
-
-              {/* Org description */}
-              <div className="space-y-1.5">
-                <label htmlFor="orgDesc" className={LABEL_CLS}>
-                  {s.orgDesc}
-                  <span className="ml-1.5 normal-case tracking-normal font-normal opacity-60">
-                    ({s.optional})
-                  </span>
-                </label>
-                <textarea
-                  id="orgDesc" rows={2}
-                  placeholder={s.orgDescPh} value={orgDesc}
-                  onChange={e => setOrgDesc(e.target.value)}
-                  className={`${INPUT_CLS} resize-none`}
-                />
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <p className="text-xs text-[var(--color-aqi-critical)]">{error}</p>
+        {ui.error && (
+          <p className="text-xs text-[var(--color-aqi-critical)]">{ui.error}</p>
         )}
 
-        {/* Submit */}
         <div data-a className="pt-1">
           <button
             type="submit"
-            disabled={loading}
+            disabled={ui.loading}
             className="w-full py-3 rounded-xl text-sm font-medium text-white transition-all
               bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]
               active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed
               shadow-[0_2px_12px_rgba(21,93,252,0.35)]"
           >
-            {loading ? s.submitting : s.submit}
+            {ui.loading ? s.submitting : s.submit}
           </button>
         </div>
 
-        {/* Login link */}
         <p data-a className="text-center text-xs text-[var(--color-text-secondary)] pt-1">
           {s.hasAccount}{' '}
           <Link
