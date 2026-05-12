@@ -20,6 +20,7 @@ export async function apiClient<T>(
   const res = await fetch(`${base}${path}`, {
     ...fetchOptions,
     credentials: 'include',
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...fetchOptions?.headers,
