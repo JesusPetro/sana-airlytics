@@ -130,7 +130,7 @@ export function Select({
           ...style,
         }}
       >
-        <span style={{ flex: isChip ? undefined : 1 }}>
+        <span style={{ flex: isChip ? undefined : 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
           {selected?.label ?? placeholder ?? ''}
         </span>
         <ChevronDown
