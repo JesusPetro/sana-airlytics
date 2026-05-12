@@ -7,9 +7,10 @@ import type { DeviceStatusResponse } from '@/types/sensor';
 import { levelFromValue } from '@/lib/aqi';
 
 interface SensorMarkerProps {
-  device: DeviceStatusResponse;
-  pm2_5?: number | null;
-  onClick?: (device: DeviceStatusResponse) => void;
+  device:    DeviceStatusResponse;
+  pm2_5?:    number | null;
+  selected?: boolean;
+  onClick?:  (device: DeviceStatusResponse) => void;
 }
 
 function getMarkerColor(pm2_5?: number | null): string {
@@ -28,7 +29,7 @@ function resolveCssColor(cssVar: string): string {
   return '#10B981';
 }
 
-export function SensorMarker({ device, pm2_5, onClick }: SensorMarkerProps) {
+export function SensorMarker({ device, pm2_5, selected, onClick }: SensorMarkerProps) {
   const map = useMap();
   const markerRef = useRef<L.Marker | null>(null);
 
@@ -43,11 +44,16 @@ export function SensorMarker({ device, pm2_5, onClick }: SensorMarkerProps) {
       ? `<span class="sensor-pulse" style="--m-color:${color}"></span>`
       : '';
 
+    const ring = selected
+      ? `<span style="position:absolute;inset:-6px;border-radius:50%;border:2.5px solid ${color};opacity:0.7;pointer-events:none;"></span>`
+      : '';
+
     const icon = L.divIcon({
       className: '',
       html: `
         <div class="sensor-marker-wrap" style="--m-color:${color}">
           ${pulse}
+          ${ring}
           <div class="sensor-dot-core"></div>
         </div>
       `,
@@ -66,10 +72,11 @@ export function SensorMarker({ device, pm2_5, onClick }: SensorMarkerProps) {
     markerRef.current = marker;
 
     return () => {
+      marker.off('click');
       marker.remove();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [device.device_id, device.latitude, device.longitude, device.status, pm2_5]);
+  }, [device.device_id, device.latitude, device.longitude, device.status, pm2_5, selected]);
 
   return null;
 }

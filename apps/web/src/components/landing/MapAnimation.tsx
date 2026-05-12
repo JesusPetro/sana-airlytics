@@ -61,10 +61,11 @@ export function MapAnimation() {
     let destroyed = false;
     let observer: MutationObserver | null = null;
 
-    let currentTl:      gsap.core.Timeline | null = null;
-    const pulseTweens:  gsap.core.Tween[]         = [];
-    let delayedRestart: gsap.core.Tween    | null = null;
-    const fadeTweens:   gsap.core.Tween[]         = [];
+    let currentTl:        gsap.core.Timeline | null = null;
+    const pulseTweens:    gsap.core.Tween[]         = [];
+    let delayedRestart:   gsap.core.Tween    | null = null;
+    const fadeTweens:     gsap.core.Tween[]         = [];
+    let initTimeoutId:    ReturnType<typeof setTimeout> | null = null;
 
     (async () => {
       const L = (await import('leaflet')).default;
@@ -189,7 +190,7 @@ export function MapAnimation() {
       /* ── Wait for first tiles ─────────────────────── */
       await new Promise<void>(resolve => {
         map.once('load', () => resolve());
-        setTimeout(resolve, 1200);
+        initTimeoutId = setTimeout(resolve, 1200);
       });
       if (destroyed) return;
 
@@ -324,6 +325,7 @@ export function MapAnimation() {
 
     return () => {
       destroyed = true;
+      if (initTimeoutId !== null) clearTimeout(initTimeoutId);
       currentTl?.kill();
       pulseTweens.forEach(t => t.kill());
       delayedRestart?.kill();
