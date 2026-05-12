@@ -1,14 +1,101 @@
 services:
+
   db:
     build: ./infra/db
     environment:
-      POSTGRES_USER: sana
-      POSTGRES_PASSWORD: sana
-      POSTGRES_DB: sana_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${DB_USER:-sana}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-sana}
+      POSTGRES_DB: ${DB_NAME:-sana_db}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-sana} -d ${DB_NAME:-sana_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sana-net
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/python/Dockerfile
+      target: api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-sana}:${DB_PASSWORD:-sana}@db:5432/${DB_NAME:-sana_db}
+      ENVIRONMENT: production
+      LOG_FORMAT: json
+      FRONTEND_URL: http://localhost
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/python/Dockerfile
+      target: worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-sana}:${DB_PASSWORD:-sana}@db:5432/${DB_NAME:-sana_db}
+      LOG_FORMAT: json
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+  ingest:
+    build:
+      context: .
+      dockerfile: infra/python/Dockerfile
+      target: ingest
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-sana}:${DB_PASSWORD:-sana}@db:5432/${DB_NAME:-sana_db}
+      LOG_FORMAT: json
+    volumes:
+      - ./certs:/app/certs:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost/api
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+networks:
+  sana-net:
+    driver: bridge
 
 volumes:
   pgdata:
