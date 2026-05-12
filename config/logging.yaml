@@ -21,17 +21,17 @@ loggers:
   sqlalchemy.engine.Engine:
     level: WARNING
   uvicorn:
-    level: WARNING
-    propagate: false
+    level: INFO
+    propagate: true
   uvicorn.access:
-    level: WARNING
-    propagate: false
+    level: INFO
+    propagate: true
   uvicorn.error:
-    level: WARNING
-    propagate: false
+    level: INFO
+    propagate: true
 
 root:
-  level: WARNING
+  level: INFO
   handlers: [console]
 
 handlers:
