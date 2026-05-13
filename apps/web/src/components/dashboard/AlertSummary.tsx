@@ -91,7 +91,7 @@ export function AlertSummary() {
                   }}>
                     {ev.message}
                   </p>
-                  <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>
                     {formatRelative(ev.triggered_at, locale)}
                   </p>
                 </div>

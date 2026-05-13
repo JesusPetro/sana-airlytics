@@ -3,16 +3,16 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 import { formatRelative } from '@/lib/format';
-import { levelFromValue } from '@/lib/aqi';
 import type { DeviceStatusResponse } from '@/types/sensor';
 
 interface DeviceRowProps {
-  device:           DeviceStatusResponse;
-  pm2_5?:           number | null;
-  lastSeenFallback?: string | null;
-  isSelected:       boolean;
-  onClick:          (device: DeviceStatusResponse) => void;
-  onClose:          () => void;
+  device:               DeviceStatusResponse;
+  samplingInterval?:    number;
+  transmissionInterval?: number;
+  lastSeenFallback?:    string | null;
+  isSelected:           boolean;
+  onClick:              (device: DeviceStatusResponse) => void;
+  onClose:              () => void;
 }
 
 const STATUS_COLOR = {
@@ -27,12 +27,43 @@ const STATUS_LABEL = {
   INACTIVE: 'Offline',
 } as const;
 
-export function DeviceRow({ device, pm2_5, lastSeenFallback, isSelected, onClick, onClose }: DeviceRowProps) {
+function fmtSeconds(s: number): string {
+  return s >= 60 ? `${Math.round(s / 60)}m` : `${s}s`;
+}
+
+export function DeviceRow({ device, samplingInterval, transmissionInterval, lastSeenFallback, isSelected, onClick, onClose }: DeviceRowProps) {
   const t  = useTranslations('devices');
   const tc = useTranslations('common');
   const locale = useLocale();
-  const pm2_5Level = pm2_5 != null ? levelFromValue('pm2_5', pm2_5) : null;
   const statusColor = STATUS_COLOR[device.status] ?? 'var(--color-text-disabled)';
+
+  const closeBtnStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '5px',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    background: 'var(--color-primary-surface)',
+    border: '1px solid color-mix(in oklab, var(--color-primary) 30%, transparent)',
+    color: 'var(--color-primary)',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: 500,
+    transition: 'background 140ms',
+  };
+
+  const detailsBtnStyle: React.CSSProperties = {
+    fontSize: '12px',
+    fontWeight: 500,
+    color: 'var(--color-primary)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '5px 10px',
+    borderRadius: '6px',
+    transition: 'background 140ms',
+  };
 
   return (
     <tr
@@ -81,7 +112,7 @@ export function DeviceRow({ device, pm2_5, lastSeenFallback, isSelected, onClick
         <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
           {device.name}
         </div>
-        <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
           {device.code}
         </div>
       </td>
@@ -98,28 +129,14 @@ export function DeviceRow({ device, pm2_5, lastSeenFallback, isSelected, onClick
           : <span style={{ color: 'var(--color-text-disabled)' }}>{t('never')}</span>}
       </td>
 
-      {/* PM2.5 */}
-      <td style={td}>
-        {pm2_5 != null ? (
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '2px 8px',
-            borderRadius: '9999px',
-            fontSize: '11px',
-            fontWeight: 600,
-            fontFamily: 'var(--font-mono)',
-            background: pm2_5Level?.color
-              ? `color-mix(in oklab, ${pm2_5Level.color} 12%, transparent)`
-              : 'var(--color-surface-subtle)',
-            color: pm2_5Level?.color ?? 'var(--color-text-primary)',
-          }}>
-            {pm2_5.toFixed(1)} µg/m³
-          </span>
-        ) : (
-          <span style={{ color: 'var(--color-text-disabled)', fontSize: '12px' }}>—</span>
-        )}
+      {/* Sampling */}
+      <td style={{ ...td, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+        {samplingInterval != null ? fmtSeconds(samplingInterval) : '—'}
+      </td>
+
+      {/* Transmission */}
+      <td style={{ ...td, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+        {transmissionInterval != null ? fmtSeconds(transmissionInterval) : '—'}
       </td>
 
       {/* Action */}
@@ -127,21 +144,7 @@ export function DeviceRow({ device, pm2_5, lastSeenFallback, isSelected, onClick
         {isSelected ? (
           <button
             onClick={(e) => { e.stopPropagation(); onClose(); }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '5px',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              background: 'var(--color-primary-surface)',
-              border: '1px solid color-mix(in oklab, var(--color-primary) 30%, transparent)',
-              color: 'var(--color-primary)',
-              cursor: 'pointer',
-              fontSize: '11px',
-              fontWeight: 500,
-              transition: 'background 140ms',
-            }}
+            style={closeBtnStyle}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'color-mix(in oklab, var(--color-primary) 18%, transparent)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--color-primary-surface)')}
           >
@@ -151,17 +154,7 @@ export function DeviceRow({ device, pm2_5, lastSeenFallback, isSelected, onClick
         ) : (
           <button
             onClick={(e) => { e.stopPropagation(); onClick(device); }}
-            style={{
-              fontSize: '11px',
-              fontWeight: 500,
-              color: 'var(--color-primary)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '5px 10px',
-              borderRadius: '6px',
-              transition: 'background 140ms',
-            }}
+            style={detailsBtnStyle}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-primary-surface)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
           >

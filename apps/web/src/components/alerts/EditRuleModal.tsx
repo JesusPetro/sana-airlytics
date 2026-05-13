@@ -53,17 +53,10 @@ export function EditRuleModal({ rule, datastreams: _datastreams, onClose, onSave
         onClick={onClose}
         role="presentation"
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 300, backdropFilter: 'blur(4px)' }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, backdropFilter: 'blur(4px)' }}
       />
 
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 301, background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)', borderRadius: '14px',
-        boxShadow: 'var(--shadow-lg)', width: '480px',
-        maxWidth: 'calc(100vw - 32px)', maxHeight: '90vh', overflowY: 'auto',
-      }}>
+      <div style={modalStyle}>
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -83,16 +76,12 @@ export function EditRuleModal({ rule, datastreams: _datastreams, onClose, onSave
         </div>
 
         {done ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 20px' }}>
+          <div style={successPanelStyle}>
             <CheckCircle size={40} color="var(--color-aqi-good)" />
             <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)', margin: 0 }}>
               {t('editSuccess')}
             </p>
-            <button onClick={onClose} style={{
-              marginTop: '8px', padding: '9px 32px', fontSize: '13px', fontWeight: 600,
-              background: 'var(--color-primary)', color: '#fff',
-              border: 'none', borderRadius: '8px', cursor: 'pointer',
-            }}>
+            <button onClick={onClose} style={successBtnStyle}>
               {t('done')}
             </button>
           </div>
@@ -174,6 +163,25 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+const modalStyle: React.CSSProperties = {
+  position: 'fixed', top: '50%', left: '50%',
+  transform: 'translate(-50%, -50%)',
+  zIndex: 50, background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)', borderRadius: '14px',
+  boxShadow: 'var(--shadow-lg)', width: '480px',
+  maxWidth: 'calc(100vw - 32px)', maxHeight: '90vh', overflowY: 'auto',
+};
+
+const successPanelStyle: React.CSSProperties = {
+  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 20px',
+};
+
+const successBtnStyle: React.CSSProperties = {
+  marginTop: '8px', padding: '9px 32px', fontSize: '13px', fontWeight: 600,
+  background: 'var(--color-primary)', color: '#fff',
+  border: 'none', borderRadius: '8px', cursor: 'pointer',
+};
 
 const inputStyle: React.CSSProperties = {
   padding: '8px 10px', fontSize: '13px',

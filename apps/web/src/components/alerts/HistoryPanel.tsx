@@ -46,54 +46,33 @@ export function HistoryPanel() {
   ];
 
   return (
-    <div style={{
-      background: 'var(--color-surface)',
-      border: '1px solid var(--color-border)',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      boxShadow: 'var(--shadow-sm)',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <div style={styles.container}>
       {/* Header */}
-      <div style={{
-        padding: '14px 20px',
-        borderBottom: '1px solid var(--color-border-subtle)',
-        display: 'flex', flexDirection: 'column', gap: '10px', flexShrink: 0,
-      }}>
+      <div style={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-primary)' }}>
             {t('historyTitle')}
           </span>
           {!isLoading && (
-            <span style={{
-              fontSize: '11px', color: 'var(--color-text-secondary)',
-              background: 'var(--color-surface-subtle)',
-              borderRadius: '9999px', padding: '1px 8px',
-            }}>
+            <span style={styles.countBadge}>
               {filtered.length}
             </span>
           )}
         </div>
 
         {/* Filter pills */}
-        <div style={{
-          display: 'flex', gap: '4px',
-          background: 'var(--color-surface-subtle)',
-          borderRadius: '8px', padding: '3px',
-          width: 'fit-content',
-        }}>
+        <div style={styles.filterBar}>
           {FILTERS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => handleFilter(key)}
               style={{
-                padding: '4px 10px', fontSize: '11px', fontWeight: filter === key ? 600 : 400,
+                padding: '4px 10px', fontSize: '12px', fontWeight: filter === key ? 600 : 400,
                 borderRadius: '6px', border: 'none', cursor: 'pointer',
                 background: filter === key ? 'var(--color-surface)' : 'transparent',
                 color: filter === key ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                 boxShadow: filter === key ? 'var(--shadow-sm)' : 'none',
-                transition: 'all 0.15s',
+                transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
               }}
             >
               {label}
@@ -108,11 +87,7 @@ export function HistoryPanel() {
           <thead>
             <tr style={{ background: 'var(--color-surface-subtle)' }}>
               {[t('colSeverity'), t('colMessage'), t('colValue'), t('colTime')].map((h, i) => (
-                <th key={i} style={{
-                  padding: '9px 16px', textAlign: 'left',
-                  fontSize: '11px', fontWeight: 600, color: 'var(--color-text-secondary)',
-                  textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap',
-                }}>
+                <th key={i} style={styles.tableHeader}>
                   {h}
                 </th>
               ))}
@@ -195,6 +170,39 @@ export function HistoryPanel() {
     </div>
   );
 }
+
+const styles = {
+  container: {
+    background: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: 'var(--shadow-sm)',
+    display: 'flex',
+    flexDirection: 'column',
+  } as React.CSSProperties,
+  header: {
+    padding: '14px 20px',
+    borderBottom: '1px solid var(--color-border-subtle)',
+    display: 'flex', flexDirection: 'column', gap: '10px', flexShrink: 0,
+  } as React.CSSProperties,
+  countBadge: {
+    fontSize: '12px', color: 'var(--color-text-secondary)',
+    background: 'var(--color-surface-subtle)',
+    borderRadius: '9999px', padding: '1px 8px',
+  } as React.CSSProperties,
+  filterBar: {
+    display: 'flex', gap: '4px',
+    background: 'var(--color-surface-subtle)',
+    borderRadius: '8px', padding: '3px',
+    width: 'fit-content',
+  } as React.CSSProperties,
+  tableHeader: {
+    padding: '9px 16px', textAlign: 'left',
+    fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)',
+    textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap',
+  } as React.CSSProperties,
+};
 
 const tdStyle: React.CSSProperties = {
   padding: '11px 16px',

@@ -19,7 +19,7 @@ export async function FeaturesSection() {
       <div className="max-w-7xl mx-auto w-full">
         <div className="text-center mb-16">
           <h2
-            className="text-3xl lg:text-4xl font-bold tracking-tight"
+            className="text-3xl lg:text-4xl font-semibold tracking-tight"
             style={{ color: 'var(--color-text-primary)' }}
           >
             {t('sectionTitle')}
@@ -38,7 +38,7 @@ export async function FeaturesSection() {
               }}
             >
               <div
-                className="flex items-center justify-center w-12 h-12 rounded-2xl"
+                className="flex items-center justify-center size-12 rounded-2xl"
                 style={{ background: `color-mix(in srgb, ${color} 12%, transparent)` }}
               >
                 <Icon size={24} strokeWidth={1.8} style={{ color }} />

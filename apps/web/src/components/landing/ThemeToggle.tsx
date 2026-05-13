@@ -44,7 +44,8 @@ export function ThemeToggle() {
     if (stored === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)');
       const handler = (e: MediaQueryListEvent) => {
-        if ((localStorage.getItem('theme') ?? 'system') === 'system') {
+        const currentTheme = localStorage.getItem('theme') ?? 'system';
+        if (currentTheme === 'system') {
           e.matches
             ? document.documentElement.classList.add('dark')
             : document.documentElement.classList.remove('dark');
@@ -55,7 +56,7 @@ export function ThemeToggle() {
     }
   }, []);
 
-  function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
+  function cycleTheme(e: React.MouseEvent<HTMLButtonElement>) {
     const next = CYCLE[(CYCLE.indexOf(theme) + 1) % CYCLE.length];
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -80,7 +81,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-9 h-9 rounded-lg" />
+      <div className="size-9 rounded-lg" />
     );
   }
 
@@ -88,9 +89,9 @@ export function ThemeToggle() {
 
   return (
     <button
-      onClick={handleClick}
+      onClick={cycleTheme}
       aria-label={LABELS[theme]}
-      className="flex items-center justify-center w-9 h-9 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] transition-colors cursor-pointer"
+      className="flex items-center justify-center size-9 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] transition-colors cursor-pointer"
     >
       <Icon size={18} />
     </button>

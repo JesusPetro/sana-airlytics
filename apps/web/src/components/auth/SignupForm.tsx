@@ -144,7 +144,7 @@ function OrgSection({ orgRef, org, setOrg, s }: {
           <div className="w-10 h-5 rounded-full border transition-all
             bg-[var(--color-surface-2)] border-[var(--color-border)]
             peer-checked:bg-[var(--color-primary)] peer-checked:border-[var(--color-primary)]" />
-          <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform
+          <div className="absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform
             peer-checked:translate-x-5" />
         </div>
         <span className="text-sm text-[var(--color-text-primary)] font-medium">{s.isOrg}</span>

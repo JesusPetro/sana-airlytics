@@ -68,16 +68,20 @@ export function KpiCard({ spec, latestValue, buckets, isLoading }: Props) {
   const level       = latestValue !== null ? levelFromValue(spec.code, latestValue) : null;
   const accentColor = level ? colorFromLevel(level.id) : 'var(--color-text-disabled)';
 
+  const cardStyle: React.CSSProperties = {
+    background:    'var(--color-surface)',
+    borderRadius:  '14px',
+    padding:       '16px 16px 0',
+    boxShadow:     'var(--shadow-sm)',
+    overflow:      'hidden',
+    display:       'flex',
+    flexDirection: 'column',
+    gap:           '10px',
+  };
+
   if (isLoading) {
     return (
-      <div style={{
-        background:   'var(--color-surface)',
-        borderRadius: '14px',
-        padding:      '16px 16px 0',
-        boxShadow:    'var(--shadow-sm)',
-        overflow:     'hidden',
-        display:      'flex', flexDirection: 'column', gap: '10px',
-      }}>
+      <div style={cardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Skel w={52} h={9}  r={4} />
           <Skel w={44} h={18} r={9} />
@@ -89,19 +93,10 @@ export function KpiCard({ spec, latestValue, buckets, isLoading }: Props) {
   }
 
   return (
-    <div style={{
-      background:    'var(--color-surface)',
-      borderRadius:  '14px',
-      padding:       '16px 16px 0',
-      boxShadow:     'var(--shadow-sm)',
-      overflow:      'hidden',
-      display:       'flex',
-      flexDirection: 'column',
-      gap:           '6px',
-    }}>
+    <div style={{ ...cardStyle, gap: '6px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{
-          fontSize:      '11px',
+          fontSize:      '12px',
           fontWeight:    600,
           color:         'var(--color-text-secondary)',
           letterSpacing: '0.01em',

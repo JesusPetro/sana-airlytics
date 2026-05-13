@@ -12,14 +12,14 @@ function localeFromPath(path: string): Locale {
 
 export function LangToggle() {
   const pathname  = usePathname();
-  const router    = useRouter();
+  const { push }  = useRouter();
   const active    = localeFromPath(pathname);
 
   function switchTo(next: Locale) {
     if (next === active) return;
     const rest    = pathname.replace(/^\/(en|es)/, '') || '/';
     const newPath = `/${next}${rest === '/' ? '' : rest}`;
-    const navigate = () => router.push(newPath, { scroll: false });
+    const navigate = () => push(newPath, { scroll: false });
 
     if (!document.startViewTransition) { navigate(); return; }
 

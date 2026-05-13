@@ -41,13 +41,16 @@ export function HeatmapOverlay({ devices, readings, contaminant }: HeatmapOverla
   const overlayRef = useRef<L.Layer | null>(null);
 
   useEffect(() => {
-    const points: HeatPoint[] = devices
-      .filter((d) => d.latitude != null && d.longitude != null)
-      .map((d) => ({
-        lat: d.latitude!,
-        lng: d.longitude!,
-        value: readings[d.device_id]?.[contaminant] ?? null,
-      }));
+    const points: HeatPoint[] = [];
+    for (const d of devices) {
+      if (d.latitude != null && d.longitude != null) {
+        points.push({
+          lat: d.latitude,
+          lng: d.longitude,
+          value: readings[d.device_id]?.[contaminant] ?? null,
+        });
+      }
+    }
 
     if (points.length === 0) return;
 

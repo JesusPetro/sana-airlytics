@@ -26,6 +26,40 @@ interface DeviceDetailPanelProps {
   onClose: () => void;
 }
 
+const backdropStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 'var(--topbar-h)', left: 0, right: 0, bottom: 0,
+  background: 'rgba(0,0,0,0.25)',
+  zIndex: 50,
+  backdropFilter: 'blur(2px)',
+};
+
+const panelStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 'var(--topbar-h)', right: 0, bottom: 0,
+  width: '380px',
+  zIndex: 50,
+  background: 'var(--color-surface)',
+  borderLeft: '1px solid var(--color-border)',
+  boxShadow: 'var(--shadow-lg)',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+};
+
+const headerStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+  padding: '4px 8px',
+  borderBottom: '1px solid var(--color-border-subtle)',
+  flexShrink: 0,
+};
+
+const closeButtonStyle: React.CSSProperties = {
+  background: 'none', border: 'none', cursor: 'pointer',
+  color: 'var(--color-text-secondary)', padding: '4px',
+  borderRadius: '6px', display: 'flex',
+};
+
 export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -71,42 +105,16 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
         onClick={handleClose}
         role="presentation"
         onKeyDown={(e) => e.key === 'Escape' && handleClose()}
-        style={{
-          position: 'fixed',
-          top: 'var(--topbar-h)', left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.25)',
-          zIndex: 200,
-          backdropFilter: 'blur(2px)',
-        }}
+        style={backdropStyle}
       />
 
       {/* Panel */}
-      <div ref={panelRef} style={{
-        position: 'fixed',
-        top: 'var(--topbar-h)', right: 0, bottom: 0,
-        width: '380px',
-        zIndex: 201,
-        background: 'var(--color-surface)',
-        borderLeft: '1px solid var(--color-border)',
-        boxShadow: 'var(--shadow-lg)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
+      <div ref={panelRef} style={panelStyle}>
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          padding: '4px 8px',
-          borderBottom: '1px solid var(--color-border-subtle)',
-          flexShrink: 0,
-        }}>
+        <div style={headerStyle}>
           <button
             onClick={handleClose}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--color-text-secondary)', padding: '4px',
-              borderRadius: '6px', display: 'flex',
-            }}
+            style={closeButtonStyle}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
           >
@@ -161,14 +169,14 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
           <div>
             <div style={{ marginBottom: '10px' }}>
               <div style={{
-                fontSize: '11px', fontWeight: 700, color: 'var(--color-text-secondary)',
+                fontSize: '12px', fontWeight: 700, color: 'var(--color-text-secondary)',
                 textTransform: 'uppercase', letterSpacing: '0.05em',
               }}>
                 {t('devices.currentReadings')}
               </div>
             </div>
             {snapshot?.phenomenon_time && (
-              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <span>{new Date(snapshot.phenomenon_time).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' })}</span>
                 <span style={{ opacity: 0.6 }}>·</span>
                 <span>{formatRelative(snapshot.phenomenon_time, locale)}</span>
@@ -183,7 +191,7 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
                     borderRadius: '8px',
                     padding: '8px 10px',
                   }}>
-                    <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginBottom: '2px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '2px' }}>
                       {t(spec.labelKey as Parameters<typeof t>[0])}
                     </div>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
@@ -197,7 +205,7 @@ export function DeviceDetailPanel({ device, onClose }: DeviceDetailPanelProps) {
 
           {/* Identificadores MQTT */}
           <Section title={t('devices.mqttIdentifiers')}>
-            <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)', margin: '0 0 10px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '0 0 10px' }}>
               {t('devices.mqttNote')}
             </p>
             <InfoRow label={t('devices.deviceId')} value={device.device_id} mono />
@@ -213,7 +221,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <div>
       <div style={{
-        fontSize: '11px', fontWeight: 700, color: 'var(--color-text-secondary)',
+        fontSize: '12px', fontWeight: 700, color: 'var(--color-text-secondary)',
         textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px',
       }}>
         {title}

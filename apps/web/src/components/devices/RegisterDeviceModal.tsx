@@ -16,6 +16,77 @@ interface RegisterDeviceModalProps {
 
 type Step = 'search' | 'confirm' | 'success';
 
+const backdropStyle: React.CSSProperties = {
+  position: 'fixed', inset: 0,
+  background: 'rgba(0,0,0,0.4)',
+  zIndex: 40,
+  backdropFilter: 'blur(4px)',
+};
+
+const modalStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: '50%', left: '50%',
+  transform: 'translate(-50%, -50%)',
+  zIndex: 40,
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '14px',
+  boxShadow: 'var(--shadow-lg)',
+  width: '440px',
+  maxWidth: 'calc(100vw - 32px)',
+};
+
+const headerStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  padding: '18px 20px 14px',
+  borderBottom: '1px solid var(--color-border-subtle)',
+};
+
+const closeButtonStyle: React.CSSProperties = {
+  background: 'none', border: 'none', cursor: 'pointer',
+  color: 'var(--color-text-secondary)', display: 'flex',
+  padding: '4px', borderRadius: '6px',
+};
+
+const inputStyle: React.CSSProperties = {
+  flex: 1, padding: '8px 12px', fontSize: '13px',
+  background: 'var(--color-surface-subtle)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '8px', color: 'var(--color-text-primary)',
+  fontFamily: 'monospace',
+};
+
+const deviceCardStyle: React.CSSProperties = {
+  background: 'var(--color-surface-subtle)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '10px',
+  padding: '14px 16px',
+  display: 'flex', flexDirection: 'column', gap: '8px',
+};
+
+const mqttCardStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'var(--color-surface-subtle)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '10px',
+  padding: '12px 14px',
+  display: 'flex', flexDirection: 'column', gap: '8px',
+};
+
+const footerStyle: React.CSSProperties = {
+  display: 'flex', justifyContent: 'flex-end', gap: '8px',
+  padding: '14px 20px',
+  borderTop: '1px solid var(--color-border-subtle)',
+};
+
+const cancelBtnStyle: React.CSSProperties = {
+  padding: '7px 16px', fontSize: '13px',
+  background: 'var(--color-surface-subtle)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '8px', cursor: 'pointer',
+  color: 'var(--color-text-primary)',
+};
+
 export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
   const t = useTranslations('devices');
   const { activeWorkspace } = useWorkspace();
@@ -68,39 +139,19 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
         onClick={onClose}
         role="presentation"
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.4)',
-          zIndex: 300,
-          backdropFilter: 'blur(4px)',
-        }}
+        style={backdropStyle}
       />
 
       {/* Modal */}
-      <div style={{
-        position: 'fixed',
-        top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 301,
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: '14px',
-        boxShadow: 'var(--shadow-lg)',
-        width: '440px',
-        maxWidth: 'calc(100vw - 32px)',
-      }}>
+      <div style={modalStyle}>
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 20px 14px',
-          borderBottom: '1px solid var(--color-border-subtle)',
-        }}>
+        <div style={headerStyle}>
           <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)' }}>
             {t('claimDevice')}
           </span>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', padding: '4px', borderRadius: '6px' }}
+            style={closeButtonStyle}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
           >
@@ -123,13 +174,8 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
                   onChange={(e) => { setCode(e.target.value); setSearchError(null); setFound(null); if (step === 'confirm') setStep('search'); }}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder={t('searchPlaceholder')}
-                  style={{
-                    flex: 1, padding: '8px 12px', fontSize: '13px',
-                    background: 'var(--color-surface-subtle)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '8px', color: 'var(--color-text-primary)',
-                    outline: 'none', fontFamily: 'monospace',
-                  }}
+                  className="focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                  style={inputStyle}
                 />
                 <button
                   onClick={handleSearch}
@@ -164,19 +210,13 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
           {/* STEP: confirm */}
           {step === 'confirm' && found && (
             <div style={{ marginTop: '16px' }}>
-              <div style={{
-                background: 'var(--color-surface-subtle)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '10px',
-                padding: '14px 16px',
-                display: 'flex', flexDirection: 'column', gap: '8px',
-              }}>
+              <div style={deviceCardStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <StatusDot status={found.status} />
                   <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-text-primary)' }}>
                     {found.name}
                   </span>
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontFamily: 'monospace' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'monospace' }}>
                     {found.code}
                   </span>
                 </div>
@@ -201,14 +241,7 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
               <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textAlign: 'center', margin: 0 }}>
                 {t('mqttNote')}
               </p>
-              <div style={{
-                width: '100%',
-                background: 'var(--color-surface-subtle)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '10px',
-                padding: '12px 14px',
-                display: 'flex', flexDirection: 'column', gap: '8px',
-              }}>
+              <div style={mqttCardStyle}>
                 <MqttRow label={t('deviceId')} value={found.device_id} />
                 <MqttRow label={t('code')}     value={found.code} />
               </div>
@@ -218,20 +251,10 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
 
         {/* Footer */}
         {step !== 'success' && (
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', gap: '8px',
-            padding: '14px 20px',
-            borderTop: '1px solid var(--color-border-subtle)',
-          }}>
+          <div style={footerStyle}>
             <button
               onClick={onClose}
-              style={{
-                padding: '7px 16px', fontSize: '13px',
-                background: 'var(--color-surface-subtle)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px', cursor: 'pointer',
-                color: 'var(--color-text-primary)',
-              }}
+              style={cancelBtnStyle}
             >
               {t('cancel')}
             </button>
@@ -274,8 +297,8 @@ export function RegisterDeviceModal({ onClose }: RegisterDeviceModalProps) {
 function MqttRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
-      <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--color-text-primary)', wordBreak: 'break-all', textAlign: 'right' }}>
+      <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--color-text-primary)', wordBreak: 'break-all', textAlign: 'right' }}>
         {value}
       </span>
     </div>

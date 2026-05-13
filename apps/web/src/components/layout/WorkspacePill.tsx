@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Building2, ChevronDown, Check, Settings, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -73,7 +73,7 @@ export function WorkspacePill() {
             border: '1px solid var(--color-border)',
             borderRadius: '8px',
             boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            zIndex: 1300,
+            zIndex: 40,
             padding: '4px',
           }}>
             {/* Workspace list */}
@@ -108,8 +108,8 @@ export function WorkspacePill() {
               onClick={() => { setOpen(false); setShowCreate(true); }}
               className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-md text-sm transition-colors"
               style={{ background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-surface-hover)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-primary)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; }}
+              onMouseEnter={(e) => { Object.assign((e.currentTarget as HTMLButtonElement).style, { background: 'var(--color-surface-hover)', color: 'var(--color-text-primary)' }); }}
+              onMouseLeave={(e) => { Object.assign((e.currentTarget as HTMLButtonElement).style, { background: 'transparent', color: 'var(--color-text-secondary)' }); }}
             >
               <Plus size={13} style={{ flexShrink: 0 }} />
               <span style={{ fontSize: '12px' }}>{t('workspace.create')}</span>
@@ -122,8 +122,8 @@ export function WorkspacePill() {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-md text-sm transition-colors"
                 style={{ background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', textDecoration: 'none' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'var(--color-surface-hover)'; (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-primary)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'; (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-secondary)'; }}
+                onMouseEnter={(e) => { Object.assign((e.currentTarget as HTMLAnchorElement).style, { background: 'var(--color-surface-hover)', color: 'var(--color-text-primary)' }); }}
+                onMouseLeave={(e) => { Object.assign((e.currentTarget as HTMLAnchorElement).style, { background: 'transparent', color: 'var(--color-text-secondary)' }); }}
               >
                 <Settings size={13} style={{ flexShrink: 0 }} />
                 <span style={{ fontSize: '12px' }}>{t('workspace.settings')}</span>

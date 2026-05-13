@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -16,7 +17,7 @@ const INPUT_CLS = [
   'focus:border-[var(--color-primary)] focus:shadow-[0_0_0_3px_rgba(21,93,252,0.12)]',
 ].join(' ');
 
-const LABEL_CLS = 'block text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-secondary)] mb-1';
+const LABEL_CLS = 'block text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)] mb-1';
 
 function initials(email: string): string {
   const parts = email.split('@')[0].split(/[._-]/);
@@ -120,6 +121,65 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
 
   if (!isOpen) return null;
 
+  const panelStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: 0, right: 0,
+    height: '100vh',
+    width: '400px',
+    maxWidth: 'calc(100vw - 32px)',
+    zIndex: 30,
+    background: 'var(--color-surface)',
+    borderLeft: '1px solid var(--color-border)',
+    boxShadow: 'var(--shadow-lg)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflowY: 'auto',
+  };
+
+  const avatarStyle: React.CSSProperties = {
+    flexShrink: 0,
+    width: '44px', height: '44px',
+    borderRadius: '50%',
+    background: 'var(--color-primary)',
+    color: '#fff',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '16px', fontWeight: 700,
+  };
+
+  const saveBtnStyle: React.CSSProperties = {
+    width: '100%', padding: '10px', fontSize: '13px', fontWeight: 600,
+    background: 'var(--color-primary)', color: '#fff',
+    border: 'none', borderRadius: '10px',
+    cursor: isSaving ? 'not-allowed' : 'pointer',
+    opacity: isSaving ? 0.7 : 1,
+    transition: 'opacity 150ms',
+  };
+
+  const deleteAccountBtnStyle: React.CSSProperties = {
+    width: '100%', padding: '9px', fontSize: '13px', fontWeight: 600,
+    background: 'transparent',
+    color: 'var(--color-error, #dc2626)',
+    border: '1px solid var(--color-error, #dc2626)',
+    borderRadius: '10px', cursor: 'pointer',
+    transition: 'background 150ms',
+  };
+
+  const cancelBtnStyle: React.CSSProperties = {
+    flex: 1, padding: '8px', fontSize: '13px', fontWeight: 500,
+    background: 'var(--color-surface-subtle)',
+    color: 'var(--color-text-primary)',
+    border: '1px solid var(--color-border)',
+    borderRadius: '8px', cursor: 'pointer',
+  };
+
+  const confirmDeleteBtnStyle: React.CSSProperties = {
+    flex: 1, padding: '8px', fontSize: '13px', fontWeight: 600,
+    background: 'var(--color-error, #dc2626)', color: '#fff',
+    border: 'none', borderRadius: '8px',
+    cursor: isDeleting ? 'not-allowed' : 'pointer',
+    opacity: isDeleting ? 0.7 : 1,
+  };
+
   return createPortal(
     <>
       {/* Backdrop */}
@@ -127,26 +187,11 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
         onClick={onClose}
         role="presentation"
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 1300, backdropFilter: 'blur(3px)' }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 20, backdropFilter: 'blur(3px)' }}
       />
 
       {/* Panel */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0, right: 0,
-          height: '100vh',
-          width: '400px',
-          maxWidth: 'calc(100vw - 32px)',
-          zIndex: 1301,
-          background: 'var(--color-surface)',
-          borderLeft: '1px solid var(--color-border)',
-          boxShadow: 'var(--shadow-lg)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflowY: 'auto',
-        }}
-      >
+      <div style={panelStyle}>
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -180,15 +225,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
 
             {/* Info del usuario */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <span style={{
-                flexShrink: 0,
-                width: '44px', height: '44px',
-                borderRadius: '50%',
-                background: 'var(--color-primary)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '15px', fontWeight: 700,
-              }}>
+              <span style={avatarStyle}>
                 {initials(profile.email) || '?'}
               </span>
               <div>
@@ -227,7 +264,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
               <div>
                 <label className={LABEL_CLS}>
                   {t('middleName')}{' '}
-                  <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '10px' }}>
+                  <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '12px' }}>
                     ({t('optional')})
                   </span>
                 </label>
@@ -242,7 +279,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
               <div>
                 <label className={LABEL_CLS}>
                   {t('phone')}{' '}
-                  <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '10px' }}>
+                  <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '12px' }}>
                     ({t('optional')})
                   </span>
                 </label>
@@ -257,7 +294,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
               <div>
                 <label className={LABEL_CLS}>
                   {t('address')}{' '}
-                  <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '10px' }}>
+                  <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '12px' }}>
                     ({t('optional')})
                   </span>
                 </label>
@@ -287,14 +324,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                style={{
-                  width: '100%', padding: '10px', fontSize: '13px', fontWeight: 600,
-                  background: 'var(--color-primary)', color: '#fff',
-                  border: 'none', borderRadius: '10px',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  opacity: isSaving ? 0.7 : 1,
-                  transition: 'opacity 150ms',
-                }}
+                style={saveBtnStyle}
               >
                 {isSaving ? t('saving') : t('saveChanges')}
               </button>
@@ -307,7 +337,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
               display: 'flex', flexDirection: 'column', gap: '12px',
             }}>
               <span style={{
-                fontSize: '11px', fontWeight: 600,
+                fontSize: '12px', fontWeight: 600,
                 textTransform: 'uppercase', letterSpacing: '0.05em',
                 color: 'var(--color-text-secondary)',
               }}>
@@ -317,14 +347,7 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
               {!confirmDelete ? (
                 <button
                   onClick={() => setConfirmDelete(true)}
-                  style={{
-                    width: '100%', padding: '9px', fontSize: '13px', fontWeight: 600,
-                    background: 'transparent',
-                    color: 'var(--color-error, #dc2626)',
-                    border: '1px solid var(--color-error, #dc2626)',
-                    borderRadius: '10px', cursor: 'pointer',
-                    transition: 'background 150ms',
-                  }}
+                  style={deleteAccountBtnStyle}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(220,38,38,0.06)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
@@ -354,26 +377,14 @@ export function ProfileSheet({ isOpen, onClose, locale }: ProfileSheetProps) {
                     <button
                       onClick={() => { setConfirmDelete(false); setDeleteError(null); }}
                       disabled={isDeleting}
-                      style={{
-                        flex: 1, padding: '8px', fontSize: '13px', fontWeight: 500,
-                        background: 'var(--color-surface-subtle)',
-                        color: 'var(--color-text-primary)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '8px', cursor: 'pointer',
-                      }}
+                      style={cancelBtnStyle}
                     >
                       {t('deleteCancel')}
                     </button>
                     <button
                       onClick={handleDelete}
                       disabled={isDeleting}
-                      style={{
-                        flex: 1, padding: '8px', fontSize: '13px', fontWeight: 600,
-                        background: 'var(--color-error, #dc2626)', color: '#fff',
-                        border: 'none', borderRadius: '8px',
-                        cursor: isDeleting ? 'not-allowed' : 'pointer',
-                        opacity: isDeleting ? 0.7 : 1,
-                      }}
+                      style={confirmDeleteBtnStyle}
                     >
                       {isDeleting ? t('deleting') : t('deleteConfirm')}
                     </button>

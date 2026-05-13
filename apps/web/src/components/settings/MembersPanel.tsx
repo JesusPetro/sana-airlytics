@@ -64,11 +64,7 @@ export function MembersPanel() {
               {t('title')}
             </span>
             {!isLoading && (
-              <span style={{
-                fontSize: '11px', color: 'var(--color-text-secondary)',
-                background: 'var(--color-surface-subtle)',
-                borderRadius: '9999px', padding: '1px 8px',
-              }}>
+              <span style={countBadgeStyle}>
                 {collaborators.length}
               </span>
             )}
@@ -96,7 +92,7 @@ export function MembersPanel() {
                 {[t('colUser'), t('colRole'), t('colActions')].map((h, i) => (
                   <th key={i} style={{
                     padding: '9px 16px', textAlign: i === 2 ? 'right' : 'left',
-                    fontSize: '11px', fontWeight: 600, color: 'var(--color-text-secondary)',
+                    fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)',
                     textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap',
                   }}>
                     {h}
@@ -135,20 +131,14 @@ export function MembersPanel() {
                     {/* User */}
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                          width: '26px', height: '26px', borderRadius: '9999px', flexShrink: 0,
-                          background: 'var(--color-primary)', border: '1px solid var(--color-border)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '10px', fontWeight: 700, color: '#fff',
-                          userSelect: 'none',
-                        }}>
+                        <div style={avatarStyle}>
                           {c.first_name.charAt(0).toUpperCase()}{c.last_name.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                             {c.first_name} {c.last_name}
                           </div>
-                          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                             {c.email}
                           </div>
                         </div>
@@ -158,7 +148,7 @@ export function MembersPanel() {
                     {/* Role selector */}
                     <td style={tdStyle}>
                       {confirmRevoke === c.collaborator_id ? (
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>—</span>
+                        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{'—'}</span>
                       ) : (
                         <Select
                           variant="chip"
@@ -181,7 +171,7 @@ export function MembersPanel() {
                             onClick={() => revoke.mutate(c.user_id)}
                             disabled={revoke.isPending}
                             style={{
-                              fontSize: '11px', fontWeight: 600, padding: '4px 8px',
+                              fontSize: '12px', fontWeight: 600, padding: '4px 8px',
                               borderRadius: '6px', border: 'none', cursor: 'pointer',
                               background: 'var(--color-aqi-critical)', color: '#fff',
                               opacity: revoke.isPending ? 0.6 : 1,
@@ -192,7 +182,7 @@ export function MembersPanel() {
                           <button
                             onClick={() => setConfirmRevoke(null)}
                             style={{
-                              fontSize: '11px', padding: '4px 8px', borderRadius: '6px',
+                              fontSize: '12px', padding: '4px 8px', borderRadius: '6px',
                               border: '1px solid var(--color-border)', cursor: 'pointer',
                               background: 'none', color: 'var(--color-text-secondary)',
                             }}
@@ -204,20 +194,14 @@ export function MembersPanel() {
                         <button
                           onClick={() => setConfirmRevoke(c.collaborator_id)}
                           style={{
-                            fontSize: '11px', fontWeight: 500, padding: '4px 10px',
+                            fontSize: '12px', fontWeight: 500, padding: '4px 10px',
                             borderRadius: '6px',
                             border: '1px solid var(--color-border)',
                             background: 'none', color: 'var(--color-text-secondary)',
                             cursor: 'pointer',
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = 'var(--color-aqi-critical)';
-                            e.currentTarget.style.borderColor = 'var(--color-aqi-critical)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = 'var(--color-text-secondary)';
-                            e.currentTarget.style.borderColor = 'var(--color-border)';
-                          }}
+                          onMouseEnter={(e) => Object.assign(e.currentTarget.style, { color: 'var(--color-aqi-critical)', borderColor: 'var(--color-aqi-critical)' })}
+                          onMouseLeave={(e) => Object.assign(e.currentTarget.style, { color: 'var(--color-text-secondary)', borderColor: 'var(--color-border)' })}
                         >
                           {t('revoke')}
                         </button>
@@ -244,4 +228,18 @@ export function MembersPanel() {
 const tdStyle: React.CSSProperties = {
   padding: '10px 16px',
   verticalAlign: 'middle',
+};
+
+const countBadgeStyle: React.CSSProperties = {
+  fontSize: '12px', color: 'var(--color-text-secondary)',
+  background: 'var(--color-surface-subtle)',
+  borderRadius: '9999px', padding: '1px 8px',
+};
+
+const avatarStyle: React.CSSProperties = {
+  width: '26px', height: '26px', borderRadius: '9999px', flexShrink: 0,
+  background: 'var(--color-primary)', border: '1px solid var(--color-border)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontSize: '12px', fontWeight: 700, color: '#fff',
+  userSelect: 'none',
 };

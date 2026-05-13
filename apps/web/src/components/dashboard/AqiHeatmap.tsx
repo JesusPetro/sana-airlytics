@@ -22,10 +22,8 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
   const t      = useTranslations();
   const locale = useLocale();
 
-  // Locale-aware day abbreviations: index 0=Sunday … 6=Saturday
   const DAYS_SHORT = useMemo(() => {
     const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-    // Jan 7 2024 = Sunday, Jan 8 = Monday, … Jan 13 = Saturday
     return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2024, 0, 7 + i)));
   }, [locale]);
 
@@ -82,7 +80,7 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
               style={{
                 padding:      '4px 10px',
                 borderRadius: 'var(--radius-full)',
-                fontSize:     '11px',
+                fontSize:     '12px',
                 fontWeight:   600,
                 cursor:       'pointer',
                 border:       '1px solid var(--color-border)',
@@ -102,7 +100,7 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
         <div style={{ width: 26, flexShrink: 0 }} />
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '2px' }}>
           {HOURS.map(h => (
-            <div key={h} style={{ fontSize: '9px', color: 'var(--color-text-disabled)', textAlign: 'center' }}>
+            <div key={h} style={{ fontSize: '12px', color: 'var(--color-text-disabled)', textAlign: 'center' }}>
               {h % 6 === 0 ? String(h).padStart(2, '0') : ''}
             </div>
           ))}
@@ -116,7 +114,7 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
             <div style={{
               width:        26,
               flexShrink:   0,
-              fontSize:     '10px',
+              fontSize:     '12px',
               color:        'var(--color-text-disabled)',
               fontWeight:   500,
               textAlign:    'right',
@@ -161,7 +159,7 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
 
       {/* Legend */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '9px', color: 'var(--color-text-disabled)', marginRight: 2 }}>
+        <span style={{ fontSize: '12px', color: 'var(--color-text-disabled)', marginRight: 2 }}>
           {t('aqiLevel.good')}
         </span>
         {LEVEL_IDS.map(id => (
@@ -170,7 +168,7 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
             style={{ width: 10, height: 10, borderRadius: '2px', background: colorFromLevel(id), flexShrink: 0 }}
           />
         ))}
-        <span style={{ fontSize: '9px', color: 'var(--color-text-disabled)', marginLeft: 2 }}>
+        <span style={{ fontSize: '12px', color: 'var(--color-text-disabled)', marginLeft: 2 }}>
           {t('aqiLevel.hazardous')}
         </span>
       </div>
@@ -186,7 +184,7 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
           border:        '1px solid var(--color-border)',
           borderRadius:  '6px',
           padding:       '4px 8px',
-          fontSize:      '11px',
+          fontSize:      '12px',
           fontWeight:    500,
           color:         'var(--color-text-primary)',
           whiteSpace:    'nowrap',

@@ -11,8 +11,8 @@ export async function LandingNav({ locale }: { locale: string }) {
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-14"
       style={{
         background: 'color-mix(in srgb, var(--color-bg) 80%, transparent)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         borderBottom: '1px solid var(--color-border-subtle)',
       }}
     >

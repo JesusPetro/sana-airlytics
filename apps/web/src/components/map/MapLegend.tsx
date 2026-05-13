@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useTranslations } from 'next-intl';
 
 type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
@@ -26,31 +27,44 @@ interface MapLegendProps {
   contaminant: ContaminantCode;
 }
 
+const legendStyle: React.CSSProperties = {
+  position:   'absolute',
+  bottom:     '24px',
+  right:      '12px',
+  zIndex:     20,
+  background: 'var(--color-surface)',
+  border:     '1px solid var(--color-border)',
+  borderRadius: '12px',
+  boxShadow:  'var(--shadow-md)',
+  padding:    '10px 12px 8px',
+  width:      '220px',
+};
+
+const legendContaminantLabelStyle: React.CSSProperties = {
+  fontSize:      '12px',
+  fontWeight:    600,
+  color:         'var(--color-text-secondary)',
+  marginBottom:  '8px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+};
+
+const tickLabelStyle: React.CSSProperties = {
+  fontSize:  '12px',
+  fontWeight: 500,
+  color:     'var(--color-text-secondary)',
+  textAlign: 'center',
+  lineHeight: 1.2,
+  whiteSpace: 'nowrap',
+};
+
 export function MapLegend({ contaminant }: MapLegendProps) {
   const t = useTranslations();
 
   return (
-    <div style={{
-      position:   'absolute',
-      bottom:     '24px',
-      right:      '12px',
-      zIndex:     1000,
-      background: 'var(--color-surface)',
-      border:     '1px solid var(--color-border)',
-      borderRadius: '12px',
-      boxShadow:  'var(--shadow-md)',
-      padding:    '10px 12px 8px',
-      width:      '220px',
-    }}>
+    <div style={legendStyle}>
       {/* Contaminant label */}
-      <div style={{
-        fontSize:      '10px',
-        fontWeight:    600,
-        color:         'var(--color-text-secondary)',
-        marginBottom:  '8px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-      }}>
+      <div style={legendContaminantLabelStyle}>
         {CONTAMINANT_LABEL[contaminant]}
       </div>
 
@@ -82,14 +96,7 @@ export function MapLegend({ contaminant }: MapLegendProps) {
               borderRadius: '1px',
               opacity:      0.7,
             }} />
-            <span style={{
-              fontSize:  '8px',
-              fontWeight: 500,
-              color:     'var(--color-text-secondary)',
-              textAlign: 'center',
-              lineHeight: 1.2,
-              whiteSpace: 'nowrap',
-            }}>
+            <span style={tickLabelStyle}>
               {t(level.labelKey)}
             </span>
           </div>

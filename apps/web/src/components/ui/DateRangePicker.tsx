@@ -88,8 +88,8 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
   const [viewYear,    setViewYear]    = useState(parseYMD(from)?.getFullYear() ?? today.getFullYear());
   const [viewMonth,   setViewMonth]   = useState(parseYMD(from)?.getMonth()    ?? today.getMonth());
   const [hoverDate,   setHoverDate]   = useState<Date | null>(null);
-  const [pendingFrom, setPendingFrom] = useState<Date | null>(parseYMD(from));
-  const [pendingTo,   setPendingTo]   = useState<Date | null>(parseYMD(to));
+  const [pendingFrom, setPendingFrom] = useState<Date | null>(() => parseYMD(from));
+  const [pendingTo,   setPendingTo]   = useState<Date | null>(() => parseYMD(to));
 
   /* ── refs for GSAP ── */
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -264,7 +264,7 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
           ref={(el) => { popoverRef.current = el; refs.setFloating(el); }}
           style={{
             ...floatingStyles,
-            zIndex:       500,
+            zIndex:       50,
             background:   'var(--color-surface)',
             border:       '1px solid var(--color-border)',
             borderRadius: '14px',
@@ -276,7 +276,7 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
           {...getFloatingProps()}
         >
           {/* Month header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }} role="group">
             <button
               onClick={prevMonth}
               style={NAV_BTN}
@@ -307,7 +307,7 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '4px' }}>
             {weekDays.map((d, i) => (
               <div key={i} style={{
-                textAlign: 'center', fontSize: '10px', fontWeight: 600,
+                textAlign: 'center', fontSize: '12px', fontWeight: 600,
                 color: 'var(--color-text-disabled)', paddingBottom: '6px',
                 textTransform: 'uppercase', letterSpacing: '0.05em',
               }}>
@@ -326,8 +326,11 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
               return (
                 <div
                   key={idx}
+                  role="button"
+                  tabIndex={0}
                   style={dayStyle(cell)}
                   onClick={() => handleDayClick(cell)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDayClick(cell); } }}
                   onMouseEnter={() => waitingEnd && cell <= maxD && setHoverDate(cell)}
                   onMouseLeave={() => setHoverDate(null)}
                 >
@@ -340,7 +343,7 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
           {/* Hint */}
           {waitingEnd && (
             <p style={{
-              margin: '12px 0 0', fontSize: '11px',
+              margin: '12px 0 0', fontSize: '12px',
               color: 'var(--color-text-secondary)', textAlign: 'center',
             }}>
               {t('timeSeries.pickEndDate')}
@@ -352,30 +355,40 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
     : null;
 
   /* ── Trigger ─────────────────────────────────────────────────────────── */
+  const triggerStyle: React.CSSProperties = {
+    display:      'inline-flex',
+    alignItems:   'center',
+    gap:          '6px',
+    height:       '32px',
+    padding:      '0 10px',
+    borderRadius: 'var(--radius-full)',
+    fontSize:     '0.75rem',
+    fontWeight:   isActive ? 600 : 400,
+    border:       `1px solid ${isActive ? 'var(--color-primary)' : 'var(--color-border-subtle)'}`,
+    background:   isActive
+      ? 'color-mix(in oklab, var(--color-primary) 9%, transparent)'
+      : 'var(--color-surface-subtle)',
+    color:        isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+    cursor:       'pointer',
+    whiteSpace:   'nowrap',
+    transition:   'background 140ms, border-color 140ms, color 140ms',
+    flexShrink:   0,
+  };
+
+  const clearBtnStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    marginLeft: '2px', width: '14px', height: '14px',
+    borderRadius: '50%',
+    background: 'color-mix(in oklab, var(--color-primary) 18%, transparent)',
+    color: 'var(--color-primary)', flexShrink: 0,
+  };
+
   return (
     <>
       <button
         ref={refs.setReference}
         onClick={isOpen ? animateClose : openPicker}
-        style={{
-          display:      'inline-flex',
-          alignItems:   'center',
-          gap:          '6px',
-          height:       '32px',
-          padding:      '0 10px',
-          borderRadius: 'var(--radius-full)',
-          fontSize:     '0.75rem',
-          fontWeight:   isActive ? 600 : 400,
-          border:       `1px solid ${isActive ? 'var(--color-primary)' : 'var(--color-border-subtle)'}`,
-          background:   isActive
-            ? 'color-mix(in oklab, var(--color-primary) 9%, transparent)'
-            : 'var(--color-surface-subtle)',
-          color:        isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-          cursor:       'pointer',
-          whiteSpace:   'nowrap',
-          transition:   'background 140ms, border-color 140ms, color 140ms',
-          flexShrink:   0,
-        }}
+        style={triggerStyle}
         {...getReferenceProps()}
       >
         <CalendarDays size={13} style={{ flexShrink: 0 }} />
@@ -384,15 +397,11 @@ export function DateRangePicker({ from, to, onChange, onClear, maxDate }: DateRa
         {isActive && (
           <span
             role="button"
+            tabIndex={0}
             aria-label={t('common.close')}
             onClick={(e) => { e.stopPropagation(); onClear(); }}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginLeft: '2px', width: '14px', height: '14px',
-              borderRadius: '50%',
-              background: 'color-mix(in oklab, var(--color-primary) 18%, transparent)',
-              color: 'var(--color-primary)', flexShrink: 0,
-            }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onClear(); } }}
+            style={clearBtnStyle}
           >
             <X size={9} />
           </span>

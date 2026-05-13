@@ -31,7 +31,8 @@ function initForm(ws: WorkspaceSummary | null): FormState {
 
 export function GeneralSettings() {
   const t = useTranslations('settings');
-  const { activeWorkspace, refreshWorkspaces, setActiveWorkspace, workspaces } = useWorkspace();
+  const workspace = useWorkspace();
+  const { activeWorkspace, refreshWorkspaces, setActiveWorkspace, workspaces } = workspace;
   const router = useRouter();
   const pathname = usePathname();
 
@@ -122,12 +123,7 @@ export function GeneralSettings() {
           {/* Workspace ID — read-only, copyable */}
           <Field label={t('workspaceId')}>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <span style={{
-                flex: 1, padding: '8px 10px', fontSize: '12px', fontFamily: 'monospace',
-                background: 'var(--color-surface-subtle)', border: '1px solid var(--color-border)',
-                borderRadius: '8px', color: 'var(--color-text-secondary)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
+              <span style={wsIdDisplayStyle}>
                 {activeWorkspace.workspace_id}
               </span>
               <button
@@ -201,12 +197,7 @@ export function GeneralSettings() {
               </div>
               <button
                 onClick={() => setForm(prev => ({ ...prev, showDeleteZone: true }))}
-                style={{
-                  padding: '7px 14px', fontSize: '12px', fontWeight: 600,
-                  background: 'none', color: 'var(--color-aqi-critical)',
-                  border: '1px solid var(--color-aqi-critical)',
-                  borderRadius: '8px', cursor: 'pointer', flexShrink: 0,
-                }}
+                style={deleteZoneTriggerStyle}
               >
                 {t('deleteBtn')}
               </button>
@@ -268,6 +259,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+const wsIdDisplayStyle: React.CSSProperties = {
+  flex: 1, padding: '8px 10px', fontSize: '12px', fontFamily: 'monospace',
+  background: 'var(--color-surface-subtle)', border: '1px solid var(--color-border)',
+  borderRadius: '8px', color: 'var(--color-text-secondary)',
+  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+};
+
+const deleteZoneTriggerStyle: React.CSSProperties = {
+  padding: '7px 14px', fontSize: '12px', fontWeight: 600,
+  background: 'none', color: 'var(--color-aqi-critical)',
+  border: '1px solid var(--color-aqi-critical)',
+  borderRadius: '8px', cursor: 'pointer', flexShrink: 0,
+};
 
 const inputStyle: React.CSSProperties = {
   padding: '8px 10px', fontSize: '13px',

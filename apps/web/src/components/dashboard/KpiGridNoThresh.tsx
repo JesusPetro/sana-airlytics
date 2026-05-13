@@ -33,7 +33,7 @@ export function KpiGridNoThresh({ data, isLoading }: Props) {
           />
         ))}
       </div>
-      <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-disabled)' }}>
+      <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-disabled)' }}>
         {t('kpiGrid.avgNote')}
       </p>
     </div>

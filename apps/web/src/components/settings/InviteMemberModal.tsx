@@ -38,17 +38,10 @@ export function InviteMemberModal({ workspaceId, onClose }: InviteMemberModalPro
         onClick={onClose}
         role="presentation"
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 300, backdropFilter: 'blur(4px)' }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, backdropFilter: 'blur(4px)' }}
       />
 
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 301, background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)', borderRadius: '14px',
-        boxShadow: 'var(--shadow-lg)', width: '400px',
-        maxWidth: 'calc(100vw - 32px)',
-      }}>
+      <div style={modalStyle}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px 14px', borderBottom: '1px solid var(--color-border-subtle)',
@@ -64,16 +57,12 @@ export function InviteMemberModal({ workspaceId, onClose }: InviteMemberModalPro
         </div>
 
         {done ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 20px' }}>
+          <div style={successPanelStyle}>
             <CheckCircle size={40} color="var(--color-aqi-good)" />
             <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-text-primary)', margin: 0 }}>
               {t('inviteSuccess')}
             </p>
-            <button onClick={onClose} style={{
-              marginTop: '8px', padding: '9px 32px', fontSize: '13px', fontWeight: 600,
-              background: 'var(--color-primary)', color: '#fff',
-              border: 'none', borderRadius: '8px', cursor: 'pointer',
-            }}>
+            <button onClick={onClose} style={successBtnStyle}>
               {t('done')}
             </button>
           </div>
@@ -88,7 +77,7 @@ export function InviteMemberModal({ workspaceId, onClose }: InviteMemberModalPro
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@example.com"
                   style={inputStyle}
-                  autoFocus
+
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -139,6 +128,25 @@ export function InviteMemberModal({ workspaceId, onClose }: InviteMemberModalPro
     </>
   );
 }
+
+const modalStyle: React.CSSProperties = {
+  position: 'fixed', top: '50%', left: '50%',
+  transform: 'translate(-50%, -50%)',
+  zIndex: 50, background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)', borderRadius: '14px',
+  boxShadow: 'var(--shadow-lg)', width: '400px',
+  maxWidth: 'calc(100vw - 32px)',
+};
+
+const successPanelStyle: React.CSSProperties = {
+  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 20px',
+};
+
+const successBtnStyle: React.CSSProperties = {
+  marginTop: '8px', padding: '9px 32px', fontSize: '13px', fontWeight: 600,
+  background: 'var(--color-primary)', color: '#fff',
+  border: 'none', borderRadius: '8px', cursor: 'pointer',
+};
 
 const labelStyle: React.CSSProperties = {
   fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)',

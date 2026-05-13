@@ -15,26 +15,33 @@ interface DevicesTableProps {
 }
 
 function latestBucketForDevice(dashData: Record<string, DashboardEntry>, deviceId: string): string | null {
-  return Object.values(dashData)
-    .filter((e) => e.datastream.sensor_id === deviceId)
-    .flatMap((e) => e.buckets)
-    .filter((b) => b.avg_value !== null)
-    .map((b) => b.bucket)
-    .sort()
-    .at(-1) ?? null;
+  let latest: string | null = null;
+  for (const e of Object.values(dashData)) {
+    if (e.datastream.sensor_id !== deviceId) continue;
+    for (const b of e.buckets) {
+      if (b.avg_value !== null && (latest === null || b.bucket > latest)) {
+        latest = b.bucket;
+      }
+    }
+  }
+  return latest;
 }
 
-const HEADERS = ['devices.colStatus', 'devices.colName', 'devices.colModel', 'devices.colLastSeen', 'devices.colPm25', ''];
+const HEADERS = ['devices.colStatus', 'devices.colName', 'devices.colModel', 'devices.colLastSeen', 'devices.colSampling', 'devices.colTransmission', ''];
+
+const thStyle: React.CSSProperties = {
+  padding: '11px 16px',
+  fontWeight: 600,
+  fontSize: '12px',
+  color: 'var(--color-text-secondary)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  whiteSpace: 'nowrap',
+  borderBottom: '1px solid var(--color-border-subtle)',
+};
 
 export function DevicesTable({ devices, dashData, isLoading, onSelectDevice, onCloseDevice, selectedDeviceId }: DevicesTableProps) {
   const t = useTranslations();
-
-  function pm2_5ForDevice(device: DeviceStatusResponse): number | null {
-    const entry = dashData['pm2_5'];
-    if (!entry) return null;
-    if (entry.datastream.sensor_code !== device.code) return null;
-    return entry.latestValue;
-  }
 
   return (
     <div style={{
@@ -50,15 +57,8 @@ export function DevicesTable({ devices, dashData, isLoading, onSelectDevice, onC
             <tr style={{ background: 'var(--color-surface-subtle)' }}>
               {HEADERS.map((h, i) => (
                 <th key={i} style={{
-                  padding: '11px 16px',
+                  ...thStyle,
                   textAlign: i === HEADERS.length - 1 ? 'right' : 'left',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  whiteSpace: 'nowrap',
-                  borderBottom: '1px solid var(--color-border-subtle)',
                 }}>
                   {h ? t(h as Parameters<typeof t>[0]) : ''}
                 </th>
@@ -84,7 +84,8 @@ export function DevicesTable({ devices, dashData, isLoading, onSelectDevice, onC
                 <DeviceRow
                   key={d.device_id}
                   device={d}
-                  pm2_5={pm2_5ForDevice(d)}
+                  samplingInterval={d.sampling_interval_seconds}
+                  transmissionInterval={d.transmission_interval_seconds}
                   lastSeenFallback={latestBucketForDevice(dashData, d.device_id)}
                   isSelected={d.device_id === selectedDeviceId}
                   onClick={onSelectDevice}
@@ -102,7 +103,7 @@ export function DevicesTable({ devices, dashData, isLoading, onSelectDevice, onC
 function SkeletonRow() {
   return (
     <tr>
-      {[32, 180, 100, 110, 80, 60].map((w, i) => (
+      {[32, 180, 100, 110, 70, 70, 60].map((w, i) => (
         <td key={i} style={{ padding: '14px 16px', borderBottom: '1px solid var(--color-border-subtle)' }}>
           <div style={{
             height: '11px',

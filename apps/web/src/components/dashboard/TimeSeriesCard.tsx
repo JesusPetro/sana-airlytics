@@ -72,14 +72,12 @@ export function TimeSeriesCard({ datastreams, selectedSensorId }: Props) {
     return { resolvedFrom: from.toISOString(), resolvedTo: to.toISOString() };
   }, [presetDays]);
 
-  const datastreamIds = selectedCodes
-    .map((code) =>
-      datastreams.find(
-        (d) => d.property_code.toLowerCase() === code && (!selectedSensorId || d.sensor_id === selectedSensorId),
-      ),
-    )
-    .filter(Boolean)
-    .map((d) => d!.datastream_id);
+  const datastreamIds = selectedCodes.flatMap((code) => {
+    const d = datastreams.find(
+      (d) => d.property_code.toLowerCase() === code && (!selectedSensorId || d.sensor_id === selectedSensorId),
+    );
+    return d ? [d.datastream_id] : [];
+  });
 
   const { data, isLoading, isFetching } = useTimeSeries(
     activeWorkspace?.workspace_id,
@@ -89,21 +87,19 @@ export function TimeSeriesCard({ datastreams, selectedSensorId }: Props) {
     resolvedTo,
   );
 
-  const series = selectedCodes
-    .map((code) => {
-      const tsVar = TS_VARS.find((v) => v.code === code);
-      const ds    = datastreams.find(
-        (d) => d.property_code.toLowerCase() === code && (!selectedSensorId || d.sensor_id === selectedSensorId),
-      );
-      if (!tsVar || !ds) return null;
-      return {
-        code,
-        label: t(tsVar.labelKey),
-        color: tsVar.color,
-        data:  (data[ds.datastream_id] ?? []) as ChartPoint[],
-      };
-    })
-    .filter(Boolean) as { code: string; label: string; color: string; data: ChartPoint[] }[];
+  const series = selectedCodes.flatMap((code) => {
+    const tsVar = TS_VARS.find((v) => v.code === code);
+    const ds    = datastreams.find(
+      (d) => d.property_code.toLowerCase() === code && (!selectedSensorId || d.sensor_id === selectedSensorId),
+    );
+    if (!tsVar || !ds) return [];
+    return [{
+      code,
+      label: t(tsVar.labelKey),
+      color: tsVar.color,
+      data:  (data[ds.datastream_id] ?? []) as ChartPoint[],
+    }];
+  });
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     height:       '26px',

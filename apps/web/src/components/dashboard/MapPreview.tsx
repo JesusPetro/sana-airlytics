@@ -33,7 +33,7 @@ interface MapPreviewProps {
 
 export function MapPreview({ selectedSensorId }: MapPreviewProps) {
   const t = useTranslations();
-  const router = useRouter();
+  const { push } = useRouter();
   const locale = useLocale();
   const { activeWorkspace } = useWorkspace();
   const [heatmap, setHeatmap] = useState(false);
@@ -85,28 +85,28 @@ export function MapPreview({ selectedSensorId }: MapPreviewProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Points / Heatmap pill toggle — GSAP animated indicator */}
           <div style={{
-            position: 'relative',
-            display: 'inline-flex',
-            alignItems: 'center',
-            background: 'var(--color-surface-subtle)',
-            border: '1px solid var(--color-border-subtle)',
+            position:    'relative',
+            display:     'inline-flex',
+            alignItems:  'center',
+            background:  'var(--color-surface-subtle)',
+            border:      '1px solid var(--color-border-subtle)',
             borderRadius: '9999px',
-            padding: '4px',
-            gap: '4px',
+            padding:     '4px',
+            gap:         '4px',
           }}>
             {/* Sliding indicator */}
             <span
               ref={indicatorRef}
               style={{
-                position: 'absolute',
-                top: '4px',
-                left: '4px',
-                height: 'calc(100% - 8px)',
-                borderRadius: '9999px',
-                background: 'var(--color-surface)',
-                boxShadow: 'var(--shadow-sm)',
+                position:      'absolute',
+                top:           '4px',
+                left:          '4px',
+                height:        'calc(100% - 8px)',
+                borderRadius:  '9999px',
+                background:    'var(--color-surface)',
+                boxShadow:     'var(--shadow-sm)',
                 pointerEvents: 'none',
-                width: '60px',
+                width:         '60px',
               }}
             />
             {([false, true] as const).map((isHeat, i) => (
@@ -115,20 +115,20 @@ export function MapPreview({ selectedSensorId }: MapPreviewProps) {
                 ref={pillRefs[i]}
                 onClick={() => setHeatmap(isHeat)}
                 style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  padding: '0 16px',
-                  height: '28px',
-                  fontSize: '12px',
-                  fontFamily: 'inherit',
-                  fontWeight: 500,
+                  position:     'relative',
+                  zIndex:       1,
+                  padding:      '0 16px',
+                  height:       '28px',
+                  fontSize:     '12px',
+                  fontFamily:   'inherit',
+                  fontWeight:   500,
                   borderRadius: '9999px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: 'transparent',
-                  color: heatmap === isHeat ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  transition: 'color 0.2s',
-                  whiteSpace: 'nowrap',
+                  border:       'none',
+                  cursor:       'pointer',
+                  background:   'transparent',
+                  color:        heatmap === isHeat ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  transition:   'color 0.2s',
+                  whiteSpace:   'nowrap',
                 }}
               >
                 {isHeat ? t('map.heatmap') : t('map.points')}
@@ -153,23 +153,23 @@ export function MapPreview({ selectedSensorId }: MapPreviewProps) {
               document.documentElement.style.setProperty('--vt-x', `${x}px`);
               document.documentElement.style.setProperty('--vt-y', `${y}px`);
               if ('startViewTransition' in document) {
-                (document as any).startViewTransition(() => router.push(`/${locale}/mapa`));
+                (document as any).startViewTransition(() => push(`/${locale}/mapa`));
               } else {
-                router.push(`/${locale}/mapa`);
+                push(`/${locale}/mapa`);
               }
             }}
             style={{
-              display: 'inline-flex',
+              display:    'inline-flex',
               alignItems: 'center',
-              gap: '4px',
-              fontSize: '12px',
+              gap:        '4px',
+              fontSize:   '12px',
               fontFamily: 'inherit',
               fontWeight: 500,
-              color: 'var(--color-text-secondary)',
+              color:      'var(--color-text-secondary)',
               background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0',
+              border:     'none',
+              cursor:     'pointer',
+              padding:    '0',
               transition: 'color 0.15s',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-primary)')}

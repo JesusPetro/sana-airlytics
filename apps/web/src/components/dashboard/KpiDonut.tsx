@@ -38,14 +38,23 @@ export function KpiDonut({ spec, latestValue, isLoading, size = 88 }: Props) {
   const fName = Math.max(10, Math.round(size * 11 / 88));
   const fRange = Math.max(9, Math.round(size * 10 / 88));
 
+  const donutCardStyle: React.CSSProperties = {
+    background:     'var(--color-surface)',
+    borderRadius:   '14px',
+    padding:        `${pad}px ${Math.round(pad * 0.75)}px`,
+    boxShadow:      'var(--shadow-sm)',
+    display:        'flex',
+    flexDirection:  'column',
+    alignItems:     'center',
+    gap:            '10px',
+    flex:           '1 1 130px',
+    minWidth:       '130px',
+    justifyContent: 'center',
+  };
+
   if (isLoading) {
     return (
-      <div style={{
-        background: 'var(--color-surface)', borderRadius: '14px',
-        padding: `${pad}px ${Math.round(pad * 0.75)}px`, boxShadow: 'var(--shadow-sm)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
-        flex: '1 1 130px', minWidth: '130px', justifyContent: 'center',
-      }}>
+      <div style={donutCardStyle}>
         <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
           <svg width={SIZE} height={SIZE}>
             <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--color-surface-2)" strokeWidth={SW} />
@@ -60,19 +69,7 @@ export function KpiDonut({ spec, latestValue, isLoading, size = 88 }: Props) {
   }
 
   return (
-    <div style={{
-      background:     'var(--color-surface)',
-      borderRadius:   '14px',
-      padding:        `${pad}px ${Math.round(pad * 0.75)}px`,
-      boxShadow:      'var(--shadow-sm)',
-      display:        'flex',
-      flexDirection:  'column',
-      alignItems:     'center',
-      justifyContent: 'center',
-      gap:            '10px',
-      flex:           '1 1 130px',
-      minWidth:       '130px',
-    }}>
+    <div style={donutCardStyle}>
       <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
         <svg width={SIZE} height={SIZE}>
           <defs>

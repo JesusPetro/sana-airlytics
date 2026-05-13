@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CircleMarker, useMapEvents } from 'react-leaflet';
@@ -151,24 +152,26 @@ export function TrackPoints({ tracks, contaminant }: Props) {
 
       {active && typeof document !== 'undefined' && (() => {
         const { topbarH, sidebarW } = getMapBounds();
+        const portalLayerStyle: React.CSSProperties = {
+          position: 'fixed',
+          top: topbarH,
+          left: sidebarW,
+          right: 0,
+          bottom: 0,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+          zIndex: 30,
+        };
+        const bubbleAnchorStyle: React.CSSProperties = {
+          position: 'absolute',
+          left: active.pixelX - sidebarW,
+          top: active.pixelY - topbarH,
+          transform: 'translate(-50%, calc(-100% - 14px))',
+          pointerEvents: 'auto',
+        };
         return createPortal(
-          <div style={{
-            position: 'fixed',
-            top: topbarH,
-            left: sidebarW,
-            right: 0,
-            bottom: 0,
-            overflow: 'hidden',
-            pointerEvents: 'none',
-            zIndex: 2000,
-          }}>
-            <div style={{
-              position: 'absolute',
-              left: active.pixelX - sidebarW,
-              top: active.pixelY - topbarH,
-              transform: 'translate(-50%, calc(-100% - 14px))',
-              pointerEvents: 'auto',
-            }}>
+          <div style={portalLayerStyle}>
+            <div style={bubbleAnchorStyle}>
               <TrackPointBubble
                 snapshot={active.snapshot}
                 deviceCode={active.deviceCode}

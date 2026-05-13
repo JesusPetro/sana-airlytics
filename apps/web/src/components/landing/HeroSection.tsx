@@ -48,7 +48,7 @@ export function HeroSection({ locale }: { locale: string }) {
       >
         {/* Headline */}
         <h1
-          className="font-bold leading-[1.05] tracking-tight mb-5"
+          className="font-semibold leading-[1.05] tracking-tight mb-5"
           style={{
             fontSize:   'clamp(2.4rem, 6vw, 5rem)',
             color:      '#ffffff',
@@ -104,16 +104,16 @@ export function HeroSection({ locale }: { locale: string }) {
           right:         'clamp(32px, 5vw, 64px)',
           zIndex:        2,
           color:         'rgba(255,255,255,0.45)',
-          fontSize:      '11px',
+          fontSize:      '12px',
           fontFamily:    'var(--font-mono)',
-          letterSpacing: '0.08em',
+          letterSpacing: 'normal',
           display:       'flex',
           flexDirection: 'column',
           alignItems:    'center',
           gap:           '4px',
         }}
       >
-        <span className="animate-bounce" style={{ fontSize: '16px', opacity: 0.6 }}>↓</span>
+        <span className="animate-[slideIn_0.6s_cubic-bezier(0.16,1,0.3,1)_both]" style={{ fontSize: '16px', opacity: 0.6 }}>↓</span>
         scroll
       </div>
     </section>

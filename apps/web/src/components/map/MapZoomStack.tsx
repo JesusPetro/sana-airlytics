@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useMap } from 'react-leaflet';
 
 export function MapZoomStack() {
@@ -28,7 +29,7 @@ export function MapZoomStack() {
       position: 'absolute',
       top: '12px',
       right: '12px',
-      zIndex: 1000,
+      zIndex: 10,
       boxShadow: 'var(--shadow-sm)',
       borderRadius: '8px',
     }}>

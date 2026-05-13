@@ -49,11 +49,7 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
             {t('rulesTitle')}
           </span>
           {!isLoading && (
-            <span style={{
-              fontSize: '11px', color: 'var(--color-text-secondary)',
-              background: 'var(--color-surface-subtle)',
-              borderRadius: '9999px', padding: '1px 8px',
-            }}>
+            <span style={countBadgeStyle}>
               {rules.length}
             </span>
           )}
@@ -61,12 +57,7 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
         {onNewRule && (
           <button
             onClick={onNewRule}
-            style={{
-              fontSize: '12px', fontWeight: 600,
-              background: 'var(--color-primary)', color: '#fff',
-              border: 'none', borderRadius: '8px', padding: '7px 14px',
-              cursor: 'pointer', transition: 'background 0.15s',
-            }}
+            style={newRuleBtnStyle}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-primary-dark)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
           >
@@ -129,3 +120,16 @@ export function RulesPanel({ onNewRule }: RulesPanelProps) {
     </div>
   );
 }
+
+const countBadgeStyle: React.CSSProperties = {
+  fontSize: '12px', color: 'var(--color-text-secondary)',
+  background: 'var(--color-surface-subtle)',
+  borderRadius: '9999px', padding: '1px 8px',
+};
+
+const newRuleBtnStyle: React.CSSProperties = {
+  fontSize: '12px', fontWeight: 600,
+  background: 'var(--color-primary)', color: '#fff',
+  border: 'none', borderRadius: '8px', padding: '7px 14px',
+  cursor: 'pointer', transition: 'background 0.15s',
+};

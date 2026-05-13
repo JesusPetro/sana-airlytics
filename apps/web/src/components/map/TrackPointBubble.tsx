@@ -28,16 +28,18 @@ export function TrackPointBubble({ snapshot, deviceCode, onClose }: Props) {
     timeStyle: 'short',
   });
 
+  const bubbleStyle: React.CSSProperties = {
+    width: '240px',
+    fontFamily: 'inherit',
+    background: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
+    borderRadius: '12px',
+    boxShadow: 'var(--shadow-lg)',
+    overflow: 'hidden',
+  };
+
   return (
-    <div ref={ref} style={{
-      width: '240px',
-      fontFamily: 'inherit',
-      background: 'var(--color-surface)',
-      border: '1px solid var(--color-border)',
-      borderRadius: '12px',
-      boxShadow: 'var(--shadow-lg)',
-      overflow: 'hidden',
-    }}>
+    <div ref={ref} style={bubbleStyle}>
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -50,7 +52,7 @@ export function TrackPointBubble({ snapshot, deviceCode, onClose }: Props) {
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
             {deviceCode}
           </div>
-          <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
             {time}
           </div>
         </div>
@@ -64,8 +66,8 @@ export function TrackPointBubble({ snapshot, deviceCode, onClose }: Props) {
             color: 'var(--color-text-disabled)',
             transition: 'background 140ms, color 140ms',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-subtle)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-disabled)'; }}
+          onMouseEnter={(e) => { Object.assign(e.currentTarget.style, { background: 'var(--color-surface-subtle)', color: 'var(--color-text-primary)' }); }}
+          onMouseLeave={(e) => { Object.assign(e.currentTarget.style, { background: 'transparent', color: 'var(--color-text-disabled)' }); }}
         >
           <X size={12} />
         </button>
@@ -101,7 +103,7 @@ export function TrackPointBubble({ snapshot, deviceCode, onClose }: Props) {
 
               <span style={{
                 flex: 1,
-                fontSize: '10px',
+                fontSize: '12px',
                 color: 'var(--color-text-secondary)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -111,7 +113,7 @@ export function TrackPointBubble({ snapshot, deviceCode, onClose }: Props) {
               </span>
 
               <span style={{
-                fontSize: '11px',
+                fontSize: '12px',
                 fontFamily: 'var(--font-mono)',
                 fontWeight: 600,
                 color: color ?? 'var(--color-text-disabled)',

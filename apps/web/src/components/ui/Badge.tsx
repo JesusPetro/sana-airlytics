@@ -19,21 +19,21 @@ export function Badge({ level, severity, label }: BadgeProps) {
     ? SEVERITY_COLOR[severity]
     : 'var(--color-surface-subtle)';
 
+  const badgeStyle = {
+    display:       'inline-flex',
+    alignItems:    'center',
+    padding:       '2px 8px',
+    borderRadius:  '999px',
+    fontSize:      '12px',
+    fontWeight:    600,
+    letterSpacing: '0.02em',
+    background:    bg,
+    color:         '#fff',
+    whiteSpace:    'nowrap',
+  } as const;
+
   return (
-    <span
-      style={{
-        display:       'inline-flex',
-        alignItems:    'center',
-        padding:       '2px 8px',
-        borderRadius:  '999px',
-        fontSize:      '11px',
-        fontWeight:    600,
-        letterSpacing: '0.02em',
-        background:    bg,
-        color:         '#fff',
-        whiteSpace:    'nowrap',
-      }}
-    >
+    <span style={badgeStyle}>
       {label}
     </span>
   );

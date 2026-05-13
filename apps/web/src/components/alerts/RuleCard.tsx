@@ -44,25 +44,44 @@ export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isTogg
     ? `${metricLabel} ${opSymbol} ${rule.threshold}`
     : metricLabel;
 
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--color-surface)',
+    border: `1px solid ${rule.is_active ? 'var(--color-border)' : 'var(--color-border-subtle)'}`,
+    borderRadius: '10px',
+    padding: '14px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    opacity: rule.is_active ? 1 : 0.55,
+    transition: 'opacity 0.2s, border-color 0.2s',
+  };
+
+  const iconStyle: React.CSSProperties = {
+    width: 36, height: 36, borderRadius: '8px', flexShrink: 0,
+    background: rule.is_active ? 'var(--color-primary-surface)' : 'var(--color-surface-subtle)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: rule.is_active ? 'var(--color-primary)' : 'var(--color-text-disabled)',
+  };
+
+  const toggleStyle: React.CSSProperties = {
+    width: 32, height: 18, borderRadius: '9999px', border: 'none',
+    cursor: isToggling ? 'wait' : 'pointer',
+    background: rule.is_active ? 'var(--color-primary)' : 'var(--color-border)',
+    position: 'relative', transition: 'background 0.2s',
+    opacity: isToggling ? 0.6 : 1, flexShrink: 0,
+  };
+
+  const thumbStyle: React.CSSProperties = {
+    position: 'absolute', top: 3,
+    left: rule.is_active ? 16 : 3,
+    width: 12, height: 12, borderRadius: '50%',
+    background: '#fff', transition: 'left 0.2s',
+  };
+
   return (
-    <div style={{
-      background: 'var(--color-surface)',
-      border: `1px solid ${rule.is_active ? 'var(--color-border)' : 'var(--color-border-subtle)'}`,
-      borderRadius: '10px',
-      padding: '14px 16px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      opacity: rule.is_active ? 1 : 0.55,
-      transition: 'opacity 0.2s, border-color 0.2s',
-    }}>
+    <div style={cardStyle}>
       {/* Icon */}
-      <div style={{
-        width: 36, height: 36, borderRadius: '8px', flexShrink: 0,
-        background: rule.is_active ? 'var(--color-primary-surface)' : 'var(--color-surface-subtle)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: rule.is_active ? 'var(--color-primary)' : 'var(--color-text-disabled)',
-      }}>
+      <div style={iconStyle}>
         <Icon size={16} />
       </div>
 
@@ -74,7 +93,7 @@ export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isTogg
         }}>
           {rule.name}
         </div>
-        <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px', fontFamily: 'monospace' }}>
+        <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px', fontFamily: 'monospace' }}>
           {description}
         </div>
       </div>
@@ -87,7 +106,7 @@ export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isTogg
               onClick={() => { onDelete(rule.rule_id); setConfirmDelete(false); }}
               disabled={isDeleting}
               style={{
-                fontSize: '11px', fontWeight: 600, padding: '4px 8px',
+                fontSize: '12px', fontWeight: 600, padding: '4px 8px',
                 borderRadius: '6px', border: 'none', cursor: 'pointer',
                 background: 'var(--color-aqi-critical)', color: '#fff',
                 opacity: isDeleting ? 0.6 : 1,
@@ -98,7 +117,7 @@ export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isTogg
             <button
               onClick={() => setConfirmDelete(false)}
               style={{
-                fontSize: '11px', padding: '4px 8px', borderRadius: '6px',
+                fontSize: '12px', padding: '4px 8px', borderRadius: '6px',
                 border: '1px solid var(--color-border)', cursor: 'pointer',
                 background: 'none', color: 'var(--color-text-secondary)',
               }}
@@ -114,20 +133,9 @@ export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isTogg
               aria-checked={rule.is_active}
               onClick={() => onToggle(rule.rule_id, !rule.is_active)}
               disabled={isToggling}
-              style={{
-                width: 32, height: 18, borderRadius: '9999px', border: 'none',
-                cursor: isToggling ? 'wait' : 'pointer',
-                background: rule.is_active ? 'var(--color-primary)' : 'var(--color-border)',
-                position: 'relative', transition: 'background 0.2s',
-                opacity: isToggling ? 0.6 : 1, flexShrink: 0,
-              }}
+              style={toggleStyle}
             >
-              <span style={{
-                position: 'absolute', top: 3,
-                left: rule.is_active ? 16 : 3,
-                width: 12, height: 12, borderRadius: '50%',
-                background: '#fff', transition: 'left 0.2s',
-              }} />
+              <span style={thumbStyle} />
             </button>
 
             {/* Edit */}
@@ -137,14 +145,8 @@ export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isTogg
                 background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
                 color: 'var(--color-text-disabled)', borderRadius: '6px', display: 'flex',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--color-primary)';
-                e.currentTarget.style.background = 'var(--color-surface-subtle)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--color-text-disabled)';
-                e.currentTarget.style.background = 'none';
-              }}
+              onMouseEnter={(e) => Object.assign(e.currentTarget.style, { color: 'var(--color-primary)', background: 'var(--color-surface-subtle)' })}
+              onMouseLeave={(e) => Object.assign(e.currentTarget.style, { color: 'var(--color-text-disabled)', background: 'none' })}
             >
               <Pencil size={14} />
             </button>
@@ -156,14 +158,8 @@ export function RuleCard({ rule, datastreams, onToggle, onEdit, onDelete, isTogg
                 background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
                 color: 'var(--color-text-disabled)', borderRadius: '6px', display: 'flex',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--color-aqi-critical)';
-                e.currentTarget.style.background = 'var(--color-surface-subtle)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--color-text-disabled)';
-                e.currentTarget.style.background = 'none';
-              }}
+              onMouseEnter={(e) => Object.assign(e.currentTarget.style, { color: 'var(--color-aqi-critical)', background: 'var(--color-surface-subtle)' })}
+              onMouseLeave={(e) => Object.assign(e.currentTarget.style, { color: 'var(--color-text-disabled)', background: 'none' })}
             >
               <Trash2 size={14} />
             </button>

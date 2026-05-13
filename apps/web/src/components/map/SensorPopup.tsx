@@ -21,7 +21,7 @@ function ReadingRow({ label, value, unit, code }: { label: string; value?: numbe
   const level = value != null ? levelFromValue(code, value) : null;
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-      <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>{label}</span>
+      <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px' }}>{label}</span>
       <span style={{ fontWeight: 600, fontSize: '12px', color: level?.color ?? 'var(--color-text-primary)' }}>
         {value != null ? `${value.toFixed(1)} ${unit}` : '—'}
       </span>
@@ -55,7 +55,7 @@ export function SensorPopup({ device, readings, onClose }: SensorPopupProps) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor, flexShrink: 0, display: 'inline-block' }} />
-            <span style={{ fontSize: '10px', color: 'var(--color-text-secondary)' }}>{device.status}</span>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{device.status}</span>
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '0 0 0 8px', fontSize: '14px', lineHeight: 1 }} aria-label={t('common.close')}>
@@ -71,7 +71,7 @@ export function SensorPopup({ device, readings, onClose }: SensorPopupProps) {
       </div>
 
       {device.site_type && (
-        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--color-border-subtle)', fontSize: '10px', color: 'var(--color-text-disabled)' }}>
+        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--color-border-subtle)', fontSize: '12px', color: 'var(--color-text-disabled)' }}>
           {device.site_type}
         </div>
       )}

@@ -125,10 +125,10 @@ export function Select({
           ...triggerBase,
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.5 : 1,
-          outline: 'none',
           userSelect: 'none',
           ...style,
         }}
+        className="focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
       >
         <span style={{ flex: isChip ? undefined : 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
           {selected?.label ?? placeholder ?? ''}
@@ -156,28 +156,29 @@ export function Select({
             border: '1px solid var(--color-border)',
             borderRadius: '10px',
             boxShadow: 'var(--shadow-md)',
-            zIndex: 9999,
+            zIndex: 40,
             padding: '4px',
             overflow: 'hidden',
           }}
         >
           {options.map((opt) => {
             const active = opt.value === value;
+            const optStyle: CSSProperties = {
+              display: 'block', width: '100%', textAlign: 'left',
+              padding: isChip ? '5px 10px' : '7px 10px',
+              fontSize: isChip ? '12px' : '13px',
+              fontWeight: active ? 600 : 400,
+              background: active ? 'var(--color-primary-surface)' : 'transparent',
+              color: active ? 'var(--color-primary)' : 'var(--color-text-primary)',
+              border: 'none', borderRadius: '7px', cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            };
             return (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => { onChange(opt.value); close(); }}
-                style={{
-                  display: 'block', width: '100%', textAlign: 'left',
-                  padding: isChip ? '5px 10px' : '7px 10px',
-                  fontSize: isChip ? '11px' : '13px',
-                  fontWeight: active ? 600 : 400,
-                  background: active ? 'var(--color-primary-surface)' : 'transparent',
-                  color: active ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                  border: 'none', borderRadius: '7px', cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
+                style={optStyle}
                 onMouseEnter={e => {
                   if (!active) e.currentTarget.style.background = 'var(--color-surface-subtle)';
                 }}

@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -83,12 +84,15 @@ export function MapStage() {
     return <EmptyWorkspace msg={t('dashboard.noWorkspace')} />;
   }
 
+  const mapContainerStyle: React.CSSProperties = { position: 'relative', width: '100%', height: '100%' };
+  const mapStyle: React.CSSProperties = { width: '100%', height: '100%' };
+
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={mapContainerStyle}>
       <MapContainer
         center={center}
         zoom={13}
-        style={{ width: '100%', height: '100%' }}
+        style={mapStyle}
         zoomControl={false}
         attributionControl={true}
       >
@@ -135,32 +139,38 @@ export function MapStage() {
       </MapContainer>
 
       {/* Sensor popup — rendered outside MapContainer to use CSS vars */}
-      {selectedDevice && (
-        <div style={{
-          position: 'absolute', top: '60px', left: '172px', zIndex: 1100,
+      {selectedDevice && (() => {
+        const popupStyle: React.CSSProperties = {
+          position: 'absolute', top: '60px', left: '172px', zIndex: 30,
           opacity: popupVisible ? 1 : 0,
           transform: popupVisible ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(-8px)',
           transformOrigin: 'top left',
           transition: 'opacity 0.18s ease, transform 0.18s ease',
-        }}>
+        };
+        return (
+        <div style={popupStyle}>
           <SensorPopup
             device={selectedDevice}
             readings={readings[selectedDevice.device_id]}
             onClose={closePopup}
           />
         </div>
-      )}
+        );
+      })()}
 
-      {devLoading && (
-        <div style={{
+      {devLoading && (() => {
+        const loadingStyle: React.CSSProperties = {
           position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
           background: 'var(--color-surface)', border: '1px solid var(--color-border)',
           borderRadius: '9999px', padding: '4px 12px', fontSize: '12px',
-          color: 'var(--color-text-secondary)', zIndex: 1100, boxShadow: 'var(--shadow-sm)',
-        }}>
+          color: 'var(--color-text-secondary)', zIndex: 20, boxShadow: 'var(--shadow-sm)',
+        };
+        return (
+        <div style={loadingStyle}>
           {t('common.loading')}
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

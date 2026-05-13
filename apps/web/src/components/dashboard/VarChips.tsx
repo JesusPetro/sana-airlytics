@@ -33,16 +33,16 @@ export function VarChips({ vars, selected, onChange, max = 4 }: Props) {
               onClick={() => toggle(v.code)}
               disabled={disabled}
               style={{
-                padding:       '4px 10px',
-                borderRadius:  '999px',
-                fontSize:      '12px',
-                fontWeight:    500,
-                cursor:        disabled ? 'not-allowed' : 'pointer',
-                border:        `1.5px solid ${active ? v.color : 'var(--color-border)'}`,
-                background:    active ? v.color + '22' : 'transparent',
-                color:         active ? v.color : 'var(--color-text-secondary)',
-                opacity:       disabled ? 0.4 : 1,
-                transition:    'all 150ms ease',
+                padding:      '4px 10px',
+                borderRadius: '999px',
+                fontSize:     '12px',
+                fontWeight:   500,
+                cursor:       disabled ? 'not-allowed' : 'pointer',
+                border:       `1.5px solid ${active ? v.color : 'var(--color-border)'}`,
+                background:   active ? v.color + '22' : 'transparent',
+                color:        active ? v.color : 'var(--color-text-secondary)',
+                opacity:      disabled ? 0.4 : 1,
+                transition:   'border-color 150ms ease, background 150ms ease, color 150ms ease, opacity 150ms ease',
               }}
             >
               {t(v.labelKey)}
@@ -50,7 +50,7 @@ export function VarChips({ vars, selected, onChange, max = 4 }: Props) {
           );
         })}
       </div>
-      <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+      <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
         {t('timeSeries.maxVarsNote', { max })}
       </span>
     </div>
