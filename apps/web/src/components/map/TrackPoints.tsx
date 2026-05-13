@@ -3,9 +3,10 @@
 import type React from 'react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CircleMarker, useMapEvents } from 'react-leaflet';
+import { CircleMarker, Polyline, useMapEvents } from 'react-leaflet';
 import type { LeafletMouseEvent } from 'leaflet';
 import type { DeviceTrack } from '@/hooks/useDeviceTracks';
+import { useSnappedTracks } from '@/hooks/useSnappedTracks';
 import { getDeviceSnapshot, type Snapshot } from '@/lib/api/devices';
 import { levelFromValue } from '@/lib/aqi';
 import { TrackPointBubble } from './TrackPointBubble';
@@ -125,13 +126,32 @@ function TrackCircle({
 interface Props {
   tracks: DeviceTrack[];
   contaminant?: string;
+  trajectory?: boolean;
 }
 
-export function TrackPoints({ tracks, contaminant }: Props) {
+export function TrackPoints({ tracks, contaminant, trajectory }: Props) {
   const [active, setActive] = useState<ActiveBubble | null>(null);
+  const snapped = useSnappedTracks(tracks, trajectory ?? false);
 
   return (
     <>
+      {trajectory && snapped.map(({ deviceId, color, segments }) =>
+        segments.map((positions, segIdx) => (
+          <Polyline
+            key={`line-${deviceId}-${segIdx}`}
+            positions={positions}
+            pathOptions={{
+              color,
+              weight: 4,
+              opacity: 0.85,
+              dashArray: '10, 8',
+              lineJoin: 'round',
+              lineCap: 'round',
+            }}
+          />
+        ))
+      )}
+
       {tracks.flatMap(({ device, points }) =>
         points.map((pt, i) => (
           <TrackCircle

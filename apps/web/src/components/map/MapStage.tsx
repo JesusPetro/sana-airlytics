@@ -13,6 +13,7 @@ import { TrackPoints } from './TrackPoints';
 import { SensorMarker } from './SensorMarker';
 import { HeatmapOverlay } from './HeatmapOverlay';
 import { MapControlPanel } from './MapControlPanel';
+import { TrackRangePill, trackRangeToISO, type TrackRange } from './TrackRangePill';
 import { MapZoomStack } from './MapZoomStack';
 import { MapLegend } from './MapLegend';
 import { SensorPopup } from './SensorPopup';
@@ -38,8 +39,10 @@ export function MapStage() {
 
   const { data: devices = [], isLoading: devLoading } = useDevices(activeWorkspace?.workspace_id);
   const { data: dashData } = useDashboard(activeWorkspace?.workspace_id);
-  const tracks = useDeviceTracks(devices, contaminant);
   const [trajectory, setTrajectory] = useState(false);
+  const [trackRange, setTrackRange] = useState<TrackRange>('1D');
+  const { from: trackFrom, to: trackTo } = trackRangeToISO(trackRange);
+  const tracks = useDeviceTracks(devices, trackFrom, trackTo, contaminant);
   const [selectedDevice, setSelectedDevice] = useState<DeviceStatusResponse | null>(null);
   const [popupVisible, setPopupVisible]     = useState(false);
   const popupAnchorRef = useRef<{ x: number; y: number } | null>(null);
@@ -84,7 +87,7 @@ export function MapStage() {
     return <EmptyWorkspace msg={t('dashboard.noWorkspace')} />;
   }
 
-  const mapContainerStyle: React.CSSProperties = { position: 'relative', width: '100%', height: '100%' };
+  const mapContainerStyle: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', zIndex: 0 };
   const mapStyle: React.CSSProperties = { width: '100%', height: '100%' };
 
   return (
@@ -105,7 +108,7 @@ export function MapStage() {
             : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}
         />
 
-        <TrackPoints tracks={tracks} contaminant={contaminant} />
+        <TrackPoints tracks={tracks} contaminant={contaminant} trajectory={trajectory} />
 
         {layer === 'points' && devicesWithCoords.map((d) => (
           <SensorMarker
@@ -124,19 +127,21 @@ export function MapStage() {
           />
         )}
 
-        <MapControlPanel
-          layer={layer}
-          onLayerChange={setLayer}
-          contaminant={contaminant}
-          onContaminantChange={setContaminant}
-          trajectory={trajectory}
-          onTrajectoryChange={setTrajectory}
-        />
-
         <MapZoomStack />
-
-        <MapLegend contaminant={contaminant} />
       </MapContainer>
+
+      <MapControlPanel
+        layer={layer}
+        onLayerChange={setLayer}
+        contaminant={contaminant}
+        onContaminantChange={setContaminant}
+        trajectory={trajectory}
+        onTrajectoryChange={setTrajectory}
+      />
+
+      <TrackRangePill value={trackRange} onChange={setTrackRange} />
+
+      <MapLegend contaminant={contaminant} />
 
       {/* Sensor popup — rendered outside MapContainer to use CSS vars */}
       {selectedDevice && (() => {
