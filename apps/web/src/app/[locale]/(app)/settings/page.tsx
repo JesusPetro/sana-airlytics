@@ -40,12 +40,12 @@ export default function SettingsPage() {
           width: '42px', height: '42px', borderRadius: '10px', flexShrink: 0,
           background: 'var(--color-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '18px', fontWeight: 700, color: '#fff', userSelect: 'none',
+          fontSize: '18px', fontWeight: 600, color: '#fff', userSelect: 'none',
         }}>
           {activeWorkspace.name.charAt(0).toUpperCase()}
         </div>
         <div>
-          <h1 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 2px' }}>
+          <h1 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 2px' }}>
             {activeWorkspace.name}
           </h1>
           <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0 }}>
@@ -61,7 +61,7 @@ export default function SettingsPage() {
         background: 'var(--color-surface-subtle)',
         borderRadius: '8px', padding: '3px',
         width: 'fit-content', marginBottom: '24px',
-      }}>
+      } as const}>
         {(['general', 'members'] as Tab[]).map((key) => (
           <button
             key={key}
@@ -72,7 +72,7 @@ export default function SettingsPage() {
               background: tab === key ? 'var(--color-surface)' : 'transparent',
               color: tab === key ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               boxShadow: tab === key ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.15s',
+              transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
             }}
           >
             {t(key === 'general' ? 'tabGeneral' : 'tabMembers')}

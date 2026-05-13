@@ -48,7 +48,7 @@ export default function DispositivosPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <h1 style={{
           fontSize: '22px',
-          fontWeight: 700,
+          fontWeight: 600,
           letterSpacing: '-0.01em',
           color: 'var(--color-text-primary)',
           margin: 0,
@@ -70,7 +70,7 @@ export default function DispositivosPage() {
             fontWeight: 500,
             color: 'var(--color-text-secondary)',
             fontFamily: 'var(--font-mono)',
-          }}>
+          } as const}>
             {devices.length}
           </span>
         )}
@@ -79,20 +79,21 @@ export default function DispositivosPage() {
         {!devLoading && (['ACTIVE', 'PENDING', 'INACTIVE'] as SensorStatus[]).map((s) => {
           const count = counts[s] ?? 0;
           if (!count) return null;
+          const chipStyle = {
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            height: '24px',
+            padding: '0 10px',
+            borderRadius: '9999px',
+            background: `color-mix(in oklab, ${STATUS_COLORS[s]} 10%, transparent)`,
+            border: `1px solid color-mix(in oklab, ${STATUS_COLORS[s]} 30%, transparent)`,
+            fontSize: '12px',
+            fontWeight: 500,
+            color: STATUS_COLORS[s],
+          };
           return (
-            <span key={s} style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              height: '24px',
-              padding: '0 10px',
-              borderRadius: '9999px',
-              background: `color-mix(in oklab, ${STATUS_COLORS[s]} 10%, transparent)`,
-              border: `1px solid color-mix(in oklab, ${STATUS_COLORS[s]} 30%, transparent)`,
-              fontSize: '11px',
-              fontWeight: 500,
-              color: STATUS_COLORS[s],
-            }}>
+            <span key={s} style={chipStyle}>
               <span style={{
                 width: '6px', height: '6px',
                 borderRadius: '50%',
@@ -123,7 +124,7 @@ export default function DispositivosPage() {
             fontWeight: 600,
             cursor: 'pointer',
             transition: 'background 160ms',
-          }}
+          } as const}
           onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-primary-dark)')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
         >

@@ -48,8 +48,8 @@ const STRINGS = {
 } as const;
 
 function ResetPasswordInner() {
-  const params       = useParams<{ locale: string }>();
-  const locale       = (params.locale ?? 'es') as 'en' | 'es';
+  const { locale: rawLocale } = useParams<{ locale: string }>();
+  const locale       = (rawLocale ?? 'es') as 'en' | 'es';
   const s            = STRINGS[locale] ?? STRINGS.es;
   const searchParams = useSearchParams();
   const token        = searchParams.get('token');
