@@ -61,3 +61,41 @@ export interface HeatmapPointResponse {
   longitude: number;
   avg_value: number;
 }
+
+export interface ZoneResponse {
+  zone_id: string;
+  workspace_id: string;
+  name: string;
+  center_lat: number;
+  center_lon: number;
+  radius_m: number;
+  created_by: string;
+  created_at: string;
+}
+
+export interface CreateZoneRequest {
+  name: string;
+  center_lat: number;
+  center_lon: number;
+  radius_m: number;
+}
+
+export interface UpdateZoneRequest {
+  name?: string;
+  center_lat?: number;
+  center_lon?: number;
+  radius_m?: number;
+}
+
+export interface ZoneHealthVariableResponse {
+  property_code: string;
+  avg_value: number;
+  verdict: string;
+}
+
+export interface ZoneHealthResponse {
+  zone_id: string;
+  zone_name: string;
+  overall_verdict: string;
+  variables: ZoneHealthVariableResponse[];
+}
