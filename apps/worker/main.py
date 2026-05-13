@@ -37,13 +37,13 @@ _EVAL_INTERVAL_SECONDS: int = 300  # 5 minutos
 
 def _make_email_service() -> EmailService:
     return EmailService(
-        api_key=os.environ["RESEND_API_KEY"],
-        from_email=os.environ["RESEND_FROM_EMAIL"],
-        frontend_url=os.environ["FRONTEND_URL"],
-        template_reset_password=os.environ["RESEND_TEMPLATE_RESET_PASSWORD"],
-        template_account_created=os.environ["RESEND_TEMPLATE_ACCOUNT_CREATED"],
-        template_alert_event=os.environ["RESEND_TEMPLATE_ALERT_EVENT"],
-        template_collaborator_added=os.environ["RESEND_TEMPLATE_COLLABORATOR_ADDED"],
+        api_key=os.environ.get("RESEND_API_KEY", ""),
+        from_email=os.environ.get("RESEND_FROM_EMAIL", "noreply@mg.airlytics.tech"),
+        frontend_url=os.environ.get("FRONTEND_URL", "http://localhost:3000"),
+        template_reset_password=os.environ.get("RESEND_TEMPLATE_RESET_PASSWORD", ""),
+        template_account_created=os.environ.get("RESEND_TEMPLATE_ACCOUNT_CREATED", ""),
+        template_alert_event=os.environ.get("RESEND_TEMPLATE_ALERT_EVENT", ""),
+        template_collaborator_added=os.environ.get("RESEND_TEMPLATE_COLLABORATOR_ADDED", ""),
     )
 
 

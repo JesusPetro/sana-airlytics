@@ -81,13 +81,8 @@ class AlertEventModel(Base):
 
 
 class ZoneModel(Base):
-    """
-    Modelo ORM para la tabla zones.
-    La columna geom (PostGIS) se agrega en una migracion futura
-    sin necesidad de modificar este modelo — se mapea como columna adicional.
-    """
-
     __tablename__ = "zones"
+    __table_args__ = (Index("idx_zones_workspace", "workspace_id"),)
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
     workspace_id: Mapped[UUID] = mapped_column(

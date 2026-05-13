@@ -156,7 +156,8 @@ class ZoneRepository(Protocol):
     async def find_health(
         self,
         zone: Zone,
-        hours: int,
+        from_dt: datetime,
+        to_dt: datetime,
     ) -> list[dict]: ...
 
     async def update(

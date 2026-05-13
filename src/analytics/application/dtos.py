@@ -205,9 +205,8 @@ class ZoneDTO:
 
 @dataclass(frozen=True)
 class ZoneHealthDTO:
-    """Veredicto de calidad del aire para una zona."""
+    """Veredicto de calidad del aire para una zona en un rango temporal."""
     zone_id: str
     zone_name: str
-    overall_verdict: str          # 'good' | 'moderate' | 'poor' | 'unknown'
-    variables: list[dict]         # [{property_code, avg_value, verdict}]
-    evaluated_hours: int
+    overall_verdict: str   # 'good' | 'moderate' | 'poor' | 'unknown'
+    variables: list[dict]  # [{property_code, avg_value, verdict}]

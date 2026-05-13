@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from ..domain.aqi_thresholds import AqiThresholds
@@ -14,25 +15,20 @@ class ZoneNotFoundError(Exception):
 class GetZoneHealthUseCase:
     """
     Caso de uso: calcular el veredicto de calidad del aire de una zona.
-    Evalua el promedio de las ultimas `hours` horas para los sensores
-    dentro del radio de la zona y clasifica con AqiThresholds.
+    Agrupa las mediciones tomadas dentro del radio en el rango temporal
+    indicado y las clasifica con AqiThresholds.
     """
-
-    DEFAULT_HOURS = 24
 
     def __init__(self, repo: ZoneRepository) -> None:
         self._repo = repo
 
-    async def execute(self, zone_id: str, hours: int = DEFAULT_HOURS) -> ZoneHealthDTO:
-        """
-        Lanza ZoneNotFoundError si la zona no existe.
-        El veredicto general es el peor clasificado entre todas las variables.
-        """
+    async def execute(self, zone_id: str, from_dt: datetime, to_dt: datetime) -> ZoneHealthDTO:
+        """Lanza ZoneNotFoundError si la zona no existe."""
         zone = await self._repo.find_by_id(UUID(zone_id))
         if zone is None:
             raise ZoneNotFoundError(f"Zone not found: {zone_id!r}")
 
-        rows = await self._repo.find_health(zone, hours)
+        rows = await self._repo.find_health(zone, from_dt, to_dt)
 
         variables = []
         verdicts = []
@@ -52,7 +48,6 @@ class GetZoneHealthUseCase:
             zone_name=zone.name,
             overall_verdict=overall,
             variables=variables,
-            evaluated_hours=hours,
         )
 
     def _overall_verdict(self, verdicts: list[str]) -> str:

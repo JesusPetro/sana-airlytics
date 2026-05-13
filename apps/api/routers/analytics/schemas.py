@@ -179,9 +179,8 @@ class ZoneHealthVariableResponse(BaseModel):
 
 
 class ZoneHealthResponse(BaseModel):
-    """Veredicto de calidad del aire de una zona."""
+    """Veredicto de calidad del aire de una zona en un rango temporal."""
     zone_id: str
     zone_name: str
     overall_verdict: str
     variables: list[ZoneHealthVariableResponse]
-    evaluated_hours: int

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import delete, select, text, update
@@ -46,12 +47,13 @@ class PostgresZoneRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [self._to_domain(r) for r in rows]
 
-    async def find_health(self, zone: Zone, hours: int) -> list[dict]:
+    async def find_health(self, zone: Zone, from_dt: datetime, to_dt: datetime) -> list[dict]:
         """
-        Retorna el promedio de cada variable en las ultimas `hours` horas
-        para todos los sensores dentro del radio de la zona.
-        Usa la formula haversine en SQL para calcular la distancia.
-        No requiere PostGIS.
+        Retorna el promedio de cada variable en el rango temporal indicado
+        para las mediciones tomadas dentro del radio de la zona.
+        Usa la posicion historica del sensor en el momento de la medicion,
+        no la posicion actual — un sensor movil sigue aportando a la zona
+        donde estaba cuando midio.
         """
         query = text("""
             SELECT
@@ -61,16 +63,24 @@ class PostgresZoneRepository:
             JOIN datastreams ds  ON o.datastream_id = ds.id
             JOIN observed_properties op ON ds.observed_property_id = op.id
             JOIN sensors s      ON ds.sensor_id = s.id
-            JOIN locations l    ON l.sensor_id = s.id
+            JOIN LATERAL (
+                SELECT latitude, longitude
+                FROM historical_locations hl
+                WHERE hl.sensor_id = s.id
+                  AND hl.recorded_at <= o.phenomenon_time
+                ORDER BY hl.recorded_at DESC
+                LIMIT 1
+            ) loc ON true
             WHERE s.workspace_id = :workspace_id
-              AND o.phenomenon_time >= NOW() - (:hours * INTERVAL '1 hour')
+              AND o.phenomenon_time >= :from_dt
+              AND o.phenomenon_time <= :to_dt
               AND o.qualifier != 'SENSOR_OUT_OF_RANGE'
               AND (
                 6371000 * acos(
                   LEAST(1.0,
-                    cos(radians(:lat)) * cos(radians(l.latitude)) *
-                    cos(radians(l.longitude) - radians(:lon)) +
-                    sin(radians(:lat)) * sin(radians(l.latitude))
+                    cos(radians(:lat)) * cos(radians(loc.latitude)) *
+                    cos(radians(loc.longitude) - radians(:lon)) +
+                    sin(radians(:lat)) * sin(radians(loc.latitude))
                   )
                 )
               ) <= :radius_m
@@ -81,7 +91,8 @@ class PostgresZoneRepository:
             "lat": zone.center_lat,
             "lon": zone.center_lon,
             "radius_m": zone.radius_m,
-            "hours": hours,
+            "from_dt": from_dt,
+            "to_dt": to_dt,
         }
         rows = (await self._session.execute(query, params)).mappings().all()
         return [dict(r) for r in rows]

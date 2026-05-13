@@ -837,14 +837,15 @@ async def get_zone_health(
     zone_id: str,
     current_user: _CurrentUser,
     use_case: _GetZoneHealthUC,
-    hours: int = Query(24),
+    from_dt: datetime = Query(..., alias="from"),
+    to_dt:   datetime = Query(..., alias="to"),
 ) -> ZoneHealthResponse:
     """
-    Retorna el veredicto de calidad del aire de la zona para las ultimas `hours` horas.
+    Retorna el veredicto de calidad del aire de la zona para el rango temporal indicado.
     Solo requiere autenticacion.
     """
     try:
-        dto = await use_case.execute(zone_id, hours)
+        dto = await use_case.execute(zone_id, from_dt, to_dt)
     except ZoneNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     return ZoneHealthResponse(
@@ -855,5 +856,4 @@ async def get_zone_health(
             {"property_code": v["property_code"], "avg_value": v["avg_value"], "verdict": v["verdict"]}
             for v in dto.variables
         ],
-        evaluated_hours=dto.evaluated_hours,
     )
