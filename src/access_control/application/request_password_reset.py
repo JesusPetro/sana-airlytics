@@ -60,22 +60,21 @@ class RequestPasswordResetUseCase:
             reset_token=reset_token,
         )
 
-        if self._is_dev and not self._resend_ok:
+        if email_sent:
+            logger.info(
+                "Email de reset enviado correctamente.", extra={"email": user.email}
+            )
+        elif self._is_dev and not self._resend_ok:
             logger.debug(
-                "SMTP no configurado en development — token de reset expuesto en respuesta."
+                "Resend no configurado en development — token de reset expuesto en respuesta."
             )
             return RequestPasswordResetOutput(
                 message=generic_message,
                 reset_token=reset_token,
                 dev_note=(
-                    "SMTP not configured -- token exposed for development testing only. "
-                    "Configure RESEND_* variables in .env to test real email sending."
+                    "Resend not configured -- token exposed for development testing only. "
+                    "Set RESEND_API_KEY in .env to enable real email sending."
                 ),
-            )
-
-        if email_sent:
-            logger.info(
-                "Email de reset enviado correctamente.", extra={"email": user.email}
             )
         else:
             logger.error(
