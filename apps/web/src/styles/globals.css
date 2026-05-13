@@ -72,6 +72,7 @@
   --color-primary-surface: #EEF2FF;
 
   /* Accent */
+  --color-accent:        #4F39F6;
   --color-accent-violet: #4F39F6;
   --color-accent-teal:   #0097A7;
   --color-accent-cyan:   #46ECD5;
@@ -473,3 +474,5 @@ html {
     width: var(--sidebar-w-expanded) !important;
   }
 }
+
+.zone-heatmap-fill { filter: blur(14px); }

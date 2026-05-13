@@ -31,13 +31,14 @@ const legendStyle: React.CSSProperties = {
   position:   'absolute',
   bottom:     '24px',
   right:      '12px',
-  zIndex:     20,
+  zIndex:     1000,
   background: 'var(--color-surface)',
   border:     '1px solid var(--color-border)',
   borderRadius: '12px',
   boxShadow:  'var(--shadow-md)',
   padding:    '10px 12px 8px',
-  width:      '220px',
+  width:      '340px',
+  fontFamily: 'var(--font-sans, inherit)',
 };
 
 const legendContaminantLabelStyle: React.CSSProperties = {
@@ -50,12 +51,12 @@ const legendContaminantLabelStyle: React.CSSProperties = {
 };
 
 const tickLabelStyle: React.CSSProperties = {
-  fontSize:  '12px',
+  fontSize:   '10px',
   fontWeight: 500,
-  color:     'var(--color-text-secondary)',
-  textAlign: 'center',
+  color:      'var(--color-text-secondary)',
+  textAlign:  'center',
   lineHeight: 1.2,
-  whiteSpace: 'nowrap',
+  wordBreak:  'break-word',
 };
 
 export function MapLegend({ contaminant }: MapLegendProps) {

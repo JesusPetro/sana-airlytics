@@ -97,25 +97,25 @@ export function MapControlPanel({
       {/* Layer toggle */}
       <div style={layerToggleStyle}>
         {(['points', 'heatmap'] as LayerMode[]).map((l) => {
-          const layerBtnStyle: React.CSSProperties = {
-            padding: '4px 0',
-            fontSize: '12px',
-            fontFamily: 'inherit',
-            fontWeight: layer === l ? 600 : 400,
-            borderRadius: '6px',
-            border: 'none',
-            cursor: 'pointer',
-            background: layer === l ? 'var(--color-surface)' : 'transparent',
-            color: layer === l ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-            boxShadow: layer === l ? 'var(--shadow-sm)' : 'none',
-            transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
-          };
-          return (
-            <button key={l} onClick={() => onLayerChange(l)} style={layerBtnStyle}>
-              {t(l)}
-            </button>
-          );
-        })}
+            const layerBtnStyle: React.CSSProperties = {
+              padding: '4px 0',
+              fontSize: '12px',
+              fontFamily: 'inherit',
+              fontWeight: layer === l ? 600 : 400,
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              background: layer === l ? 'var(--color-surface)' : 'transparent',
+              color: layer === l ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+              boxShadow: layer === l ? 'var(--shadow-sm)' : 'none',
+              transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
+            };
+            return (
+              <button key={l} onClick={() => onLayerChange(l)} style={layerBtnStyle}>
+                {t(l)}
+              </button>
+            );
+          })}
       </div>
 
       {/* Contaminant selector */}

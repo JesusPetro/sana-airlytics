@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { CreateWorkspaceModal } from '@/components/workspace/CreateWorkspaceModal';
 import { Skel } from '@/components/ui/Skeleton';
+import { isAdminOrOwner } from '@/lib/roles';
 
 export function WorkspacePill() {
   const t = useTranslations();
@@ -115,8 +116,8 @@ export function WorkspacePill() {
               <span style={{ fontSize: '12px' }}>{t('workspace.create')}</span>
             </button>
 
-            {/* Settings link */}
-            {activeWorkspace && (
+            {/* Settings link — solo admin/owner */}
+            {activeWorkspace && isAdminOrOwner(activeWorkspace) && (
               <Link
                 href={`/${locale}/settings`}
                 onClick={() => setOpen(false)}

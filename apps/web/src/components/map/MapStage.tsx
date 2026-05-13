@@ -21,13 +21,16 @@ import type { DeviceStatusResponse } from '@/types/sensor';
 import { useTranslations } from 'next-intl';
 import { EmptyWorkspace } from '@/components/ui/EmptyWorkspace';
 import { useDeviceTracks } from '@/hooks/useDeviceTracks';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useZones } from '@/hooks/useZones';
+import { ZoneHealthLayer } from './ZoneHealthLayer';
 
 type LayerMode = 'points' | 'heatmap';
 type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
 
 const CARTAGENA: [number, number] = [10.391, -75.479];
 
-const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
 export function MapStage() {
@@ -38,9 +41,10 @@ export function MapStage() {
   const [contaminant, setContaminant] = useState<ContaminantCode>('pm2_5');
 
   const { data: devices = [], isLoading: devLoading } = useDevices(activeWorkspace?.workspace_id);
+  const { data: zones = [] } = useZones(activeWorkspace?.workspace_id);
   const { data: dashData } = useDashboard(activeWorkspace?.workspace_id);
-  const [trajectory, setTrajectory] = useState(false);
-  const [trackRange, setTrackRange] = useState<TrackRange>('1D');
+  const [trajectory, setTrajectory] = useLocalStorage<boolean>('map.trajectory', false);
+  const [trackRange, setTrackRange] = useLocalStorage<TrackRange>('map.trackRange', '1D');
   const { from: trackFrom, to: trackTo } = trackRangeToISO(trackRange);
   const tracks = useDeviceTracks(devices, trackFrom, trackTo, contaminant);
   const [selectedDevice, setSelectedDevice] = useState<DeviceStatusResponse | null>(null);
@@ -105,7 +109,7 @@ export function MapStage() {
           url={isDark ? TILE_DARK : TILE_LIGHT}
           attribution={isDark
             ? '&copy; <a href="https://carto.com/">CARTO</a>'
-            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}
+            : '&copy; <a href="https://carto.com/">CARTO</a>'}
         />
 
         <TrackPoints tracks={tracks} contaminant={contaminant} trajectory={trajectory} />
@@ -120,11 +124,7 @@ export function MapStage() {
         ))}
 
         {layer === 'heatmap' && (
-          <HeatmapOverlay
-            devices={devicesWithCoords}
-            readings={readings}
-            contaminant={contaminant}
-          />
+          <ZoneHealthLayer zones={zones} fromDt={trackFrom} toDt={trackTo} contaminant={contaminant} />
         )}
 
         <MapZoomStack />

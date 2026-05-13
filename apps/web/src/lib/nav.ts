@@ -1,4 +1,4 @@
-import { LayoutDashboard, Map as MapIcon, Cpu, Bell, Settings } from 'lucide-react';
+import { LayoutDashboard, Map as MapIcon, Cpu, Bell, Settings, Layers } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -29,6 +29,12 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dispositivos',
     icon: Cpu,
     labelKey: 'nav.devices',
+  },
+  {
+    id: 'zonas',
+    href: '/zonas',
+    icon: Layers,
+    labelKey: 'nav.zones',
   },
   {
     id: 'alertas',

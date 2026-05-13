@@ -18,7 +18,7 @@ interface MiniMapInnerProps {
 
 const CARTAGENA: [number, number] = [10.391, -75.479];
 
-const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
 export function MiniMapInner({ devices, pm2_5Map, heatmap, selectedSensorId }: MiniMapInnerProps) {

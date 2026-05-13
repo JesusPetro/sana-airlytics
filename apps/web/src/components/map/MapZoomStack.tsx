@@ -29,7 +29,7 @@ export function MapZoomStack() {
       position: 'absolute',
       top: '12px',
       right: '12px',
-      zIndex: 10,
+      zIndex: 1000,
       boxShadow: 'var(--shadow-sm)',
       borderRadius: '8px',
     }}>
