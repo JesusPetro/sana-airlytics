@@ -26,7 +26,7 @@ const panelStyle: React.CSSProperties = {
   position: 'absolute',
   top: '12px',
   left: '12px',
-  zIndex: 10,
+  zIndex: 1000,
   background: 'var(--color-surface)',
   border: '1px solid var(--color-border)',
   borderRadius: '10px',
@@ -111,11 +111,7 @@ export function MapControlPanel({
             transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
           };
           return (
-            <button
-              key={l}
-              onClick={() => onLayerChange(l)}
-              style={layerBtnStyle}
-            >
+            <button key={l} onClick={() => onLayerChange(l)} style={layerBtnStyle}>
               {t(l)}
             </button>
           );
@@ -124,9 +120,7 @@ export function MapControlPanel({
 
       {/* Contaminant selector */}
       <div style={contaminantSectionStyle}>
-        <span style={contaminantLabelStyle}>
-          {t('contaminant')}
-        </span>
+        <span style={contaminantLabelStyle}>{t('contaminant')}</span>
         <div style={contaminantListStyle}>
           {CONTAMINANTS.map((c) => {
             const contBtnStyle: React.CSSProperties = {
@@ -143,11 +137,7 @@ export function MapControlPanel({
               transition: 'background 0.12s, color 0.12s',
             };
             return (
-              <button
-                key={c.code}
-                onClick={() => onContaminantChange(c.code)}
-                style={contBtnStyle}
-              >
+              <button key={c.code} onClick={() => onContaminantChange(c.code)} style={contBtnStyle}>
                 {c.label}
               </button>
             );
@@ -157,9 +147,7 @@ export function MapControlPanel({
 
       {/* Trajectory toggle */}
       <div style={trajectoryRowStyle}>
-        <span style={trajectoryLabelStyle}>
-          {t('trajectory')}
-        </span>
+        <span style={trajectoryLabelStyle}>{t('trajectory')}</span>
         <button
           role="switch"
           aria-checked={trajectory}
