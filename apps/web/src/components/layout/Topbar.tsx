@@ -19,7 +19,7 @@ export function Topbar({ locale }: TopbarProps) {
       className="fixed top-0 left-0 right-0 flex items-center gap-3 px-4"
       style={{
         height: 'var(--topbar-h)',
-        zIndex: 1201,
+        zIndex: 40,
         background: 'color-mix(in srgb, var(--color-surface) 95%, transparent)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
@@ -29,7 +29,7 @@ export function Topbar({ locale }: TopbarProps) {
       {/* Hamburger — solo móvil */}
       <button
         onClick={toggle}
-        className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+        className="md:hidden flex items-center justify-center size-8 rounded-lg flex-shrink-0"
         style={{
           background: 'none',
           border:     'none',

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { PanelLeft, LogOut, User } from 'lucide-react';
+import { PanelLeftOpen, PanelLeftClose, LogOut, User } from 'lucide-react';
 import { ProfileSheet } from '@/components/profile/ProfileSheet';
 import { NAV_ITEMS, type NavItem } from '@/lib/nav';
 import { useAuth } from '@/context/AuthContext';
@@ -41,43 +41,53 @@ function NavLink({ item, expanded, locale, isActive, onClick }: {
   const label = t(item.labelKey);
   const hasBadge = item.badge === 'alertCount' && ALERT_COUNT > 0;
 
+  const navLinkStyles = {
+    link: {
+      padding: expanded ? '10px 12px' : '10px 0',
+      justifyContent: expanded ? 'flex-start' : 'center',
+      gap: expanded ? '12px' : '0',
+      background: isActive ? 'var(--color-primary-surface)' : 'transparent',
+      color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+      fontWeight: isActive ? 600 : 400,
+    } as React.CSSProperties,
+    labelSpan: { opacity: expanded ? 1 : 0, maxWidth: expanded ? '200px' : '0px' } as React.CSSProperties,
+    tooltip: {
+      zIndex: 40,
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-border)',
+      color: 'var(--color-text-primary)',
+      boxShadow: 'var(--shadow-md)',
+    } as React.CSSProperties,
+  };
+
   return (
     <li className="group relative">
       <Link
         href={`/${locale}${item.href}`}
         onClick={onClick}
         className="flex items-center rounded-[10px] transition-colors duration-150"
-        style={{
-          padding: expanded ? '10px 12px' : '10px 0',
-          justifyContent: expanded ? 'flex-start' : 'center',
-          gap: expanded ? '12px' : '0',
-          background: isActive ? 'var(--color-primary-surface)' : 'transparent',
-          color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-          fontWeight: isActive ? 600 : 400,
-        }}
+        style={navLinkStyles.link}
         onMouseEnter={(e) => {
           if (!isActive) {
-            (e.currentTarget as HTMLAnchorElement).style.background = 'var(--color-surface-subtle)';
-            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-primary)';
+            Object.assign((e.currentTarget as HTMLAnchorElement).style, { background: 'var(--color-surface-subtle)', color: 'var(--color-text-primary)' });
           }
         }}
         onMouseLeave={(e) => {
           if (!isActive) {
-            (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
-            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-secondary)';
+            Object.assign((e.currentTarget as HTMLAnchorElement).style, { background: 'transparent', color: 'var(--color-text-secondary)' });
           }
         }}
       >
         <span className="relative flex-shrink-0">
           <item.icon size={20} />
           {!expanded && hasBadge && (
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ background: '#EF4444' }} />
+            <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full" style={{ background: '#EF4444' }} />
           )}
         </span>
 
         <span
           className="overflow-hidden whitespace-nowrap text-sm transition-all duration-200"
-          style={{ opacity: expanded ? 1 : 0, maxWidth: expanded ? '200px' : '0px' }}
+          style={navLinkStyles.labelSpan}
         >
           {label}
         </span>
@@ -85,7 +95,7 @@ function NavLink({ item, expanded, locale, isActive, onClick }: {
         {expanded && hasBadge && (
           <span
             className="ml-auto text-xs font-medium px-1.5 py-0.5 rounded-full"
-            style={{ background: '#EF4444', color: '#fff', fontSize: '10px', lineHeight: 1 }}
+            style={{ background: '#EF4444', color: '#fff', fontSize: '12px', lineHeight: 1 }}
           >
             {ALERT_COUNT}
           </span>
@@ -97,13 +107,7 @@ function NavLink({ item, expanded, locale, isActive, onClick }: {
           className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2
             px-2.5 py-1.5 text-xs rounded-lg whitespace-nowrap
             opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-          style={{
-            zIndex: 60,
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-primary)',
-            boxShadow: 'var(--shadow-md)',
-          }}
+          style={navLinkStyles.tooltip}
         >
           {label}
         </span>
@@ -135,36 +139,78 @@ function UserFooter({ user, expanded, locale, onLogout }: {
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [popoverOpen]);
 
+  const styles = {
+    wrapper: { borderTop: '1px solid var(--color-border-subtle)', padding: '8px', position: 'relative' } as React.CSSProperties,
+    popover: {
+      position: 'absolute', bottom: 'calc(100% + 8px)', left: '0',
+      width: '230px', background: 'var(--color-surface)',
+      border: '1px solid var(--color-border)', borderRadius: '12px',
+      boxShadow: 'var(--shadow-lg)', zIndex: 50, overflow: 'hidden',
+    } as React.CSSProperties,
+    popoverHeader: {
+      padding: '14px 14px 12px', background: 'var(--color-surface-subtle)',
+      borderBottom: '1px solid var(--color-border-subtle)',
+      display: 'flex', alignItems: 'center', gap: '10px',
+    } as React.CSSProperties,
+    avatar: {
+      flexShrink: 0, width: '36px', height: '36px', borderRadius: '50%',
+      background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent-violet, #7c3aed))',
+      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '13px', fontWeight: 700, letterSpacing: '0.02em',
+    } as React.CSSProperties,
+    emailPrimary: { fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as React.CSSProperties,
+    emailSecondary: { fontSize: '12px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as React.CSSProperties,
+    profileBtn: {
+      display: 'flex', alignItems: 'center', gap: '9px',
+      width: '100%', padding: '8px 10px',
+      background: 'none', border: 'none', borderRadius: '8px',
+      cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-primary)', textAlign: 'left',
+    } as React.CSSProperties,
+    logoutBtn: {
+      display: 'flex', alignItems: 'center', gap: '9px',
+      width: '100%', padding: '8px 10px',
+      background: 'none', border: 'none', borderRadius: '8px',
+      cursor: 'pointer', fontSize: '13px', color: 'var(--color-error, #dc2626)', textAlign: 'left',
+    } as React.CSSProperties,
+    toggleBtn: {
+      display: 'flex', alignItems: 'center', gap: '10px',
+      padding: expanded ? '6px 8px' : '6px 0',
+      justifyContent: expanded ? 'flex-start' : 'center',
+      borderRadius: '8px', width: '100%',
+      background: popoverOpen ? 'var(--color-surface-subtle)' : 'none',
+      border: 'none', cursor: 'pointer', transition: 'background 140ms',
+    } as React.CSSProperties,
+    miniAvatar: {
+      flexShrink: 0, width: '28px', height: '28px', borderRadius: '50%',
+      background: 'var(--color-primary)', color: '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '12px', fontWeight: 700, letterSpacing: '0.02em',
+    } as React.CSSProperties,
+    emailLabel: {
+      overflow: 'hidden', opacity: expanded ? 1 : 0,
+      maxWidth: expanded ? '160px' : '0px',
+      transition: 'opacity 200ms, max-width 200ms',
+      fontSize: '12px', color: 'var(--color-text-secondary)',
+      whiteSpace: 'nowrap', textOverflow: 'ellipsis', textAlign: 'left',
+    } as React.CSSProperties,
+  };
+
   return (
     <div
       ref={popoverRef}
-      style={{ borderTop: '1px solid var(--color-border-subtle)', padding: '8px', position: 'relative' }}
+      style={styles.wrapper}
     >
       {popoverOpen && (
-        <div style={{
-          position: 'absolute', bottom: 'calc(100% + 8px)', left: '0',
-          width: '230px', background: 'var(--color-surface)',
-          border: '1px solid var(--color-border)', borderRadius: '12px',
-          boxShadow: 'var(--shadow-lg)', zIndex: 1300, overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '14px 14px 12px', background: 'var(--color-surface-subtle)',
-            borderBottom: '1px solid var(--color-border-subtle)',
-            display: 'flex', alignItems: 'center', gap: '10px',
-          }}>
-            <span style={{
-              flexShrink: 0, width: '36px', height: '36px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent-violet, #7c3aed))',
-              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '13px', fontWeight: 700, letterSpacing: '0.02em',
-            }}>
+        <div style={styles.popover}>
+          <div style={styles.popoverHeader}>
+            <span style={styles.avatar}>
               {initials(user.email) || '?'}
             </span>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={styles.emailPrimary}>
                 {user.email.split('@')[0]}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={styles.emailSecondary}>
                 {user.email}
               </div>
             </div>
@@ -173,12 +219,7 @@ function UserFooter({ user, expanded, locale, onLogout }: {
           <div style={{ padding: '6px' }}>
             <button
               onClick={() => { setPopoverOpen(false); setProfileOpen(true); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '9px',
-                width: '100%', padding: '8px 10px',
-                background: 'none', border: 'none', borderRadius: '8px',
-                cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-primary)', textAlign: 'left',
-              }}
+              style={styles.profileBtn}
               onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-subtle)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
             >
@@ -190,12 +231,7 @@ function UserFooter({ user, expanded, locale, onLogout }: {
 
             <button
               onClick={onLogout}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '9px',
-                width: '100%', padding: '8px 10px',
-                background: 'none', border: 'none', borderRadius: '8px',
-                cursor: 'pointer', fontSize: '13px', color: 'var(--color-error, #dc2626)', textAlign: 'left',
-              }}
+              style={styles.logoutBtn}
               onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(220,38,38,0.07)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
             >
@@ -208,33 +244,15 @@ function UserFooter({ user, expanded, locale, onLogout }: {
 
       <button
         onClick={() => setPopoverOpen((prev) => !prev)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          padding: expanded ? '6px 8px' : '6px 0',
-          justifyContent: expanded ? 'flex-start' : 'center',
-          borderRadius: '8px', width: '100%',
-          background: popoverOpen ? 'var(--color-surface-subtle)' : 'none',
-          border: 'none', cursor: 'pointer', transition: 'background 140ms',
-        }}
+        style={styles.toggleBtn}
         onMouseEnter={(e) => { if (!popoverOpen) e.currentTarget.style.background = 'var(--color-surface-subtle)'; }}
         onMouseLeave={(e) => { if (!popoverOpen) e.currentTarget.style.background = 'none'; }}
       >
-        <span style={{
-          flexShrink: 0, width: '28px', height: '28px', borderRadius: '50%',
-          background: 'var(--color-primary)', color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em',
-        }}>
+        <span style={styles.miniAvatar}>
           {initials(user.email) || '?'}
         </span>
 
-        <span style={{
-          overflow: 'hidden', opacity: expanded ? 1 : 0,
-          maxWidth: expanded ? '160px' : '0px',
-          transition: 'opacity 200ms, max-width 200ms',
-          fontSize: '12px', color: 'var(--color-text-secondary)',
-          whiteSpace: 'nowrap', textOverflow: 'ellipsis', textAlign: 'left',
-        }}>
+        <span style={styles.emailLabel}>
           {user.email}
         </span>
       </button>
@@ -254,7 +272,7 @@ export function Sidebar({ locale }: SidebarProps) {
   const { user, logout } = useAuth();
   const { activeWorkspace } = useWorkspace();
   const { mobileOpen, close: closeMobileNav } = useMobileNav();
-  const router = useRouter();
+  const { push } = useRouter();
 
   const MIN_LEVELS: Record<string, number> = { editor: 1, admin: 2 };
   const visibleItems = (bottom: boolean) =>
@@ -266,7 +284,7 @@ export function Sidebar({ locale }: SidebarProps) {
 
   async function handleLogout() {
     await logout();
-    router.push(`/${locale}/login`);
+    push(`/${locale}/login`);
   }
 
   useLayoutEffect(() => {
@@ -288,6 +306,31 @@ export function Sidebar({ locale }: SidebarProps) {
     setSidebarCssVar(next);
   }
 
+  const sidebarStyles = {
+    backdrop: { background: 'rgba(0,0,0,0.4)', zIndex: 20, backdropFilter: 'blur(2px)' } as React.CSSProperties,
+    aside: {
+      top:        'var(--topbar-h)',
+      left:       0,
+      height:     'calc(100vh - var(--topbar-h))',
+      width:      expanded ? 'var(--sidebar-w-expanded)' : 'var(--sidebar-w-collapsed)',
+      zIndex:     30,
+      background: 'var(--color-surface)',
+      borderRight: '1px solid var(--color-border-subtle)',
+      transition:  'width 200ms ease, transform 250ms ease',
+      visibility:  mounted ? 'visible' : 'hidden',
+      transform:   mobileOpen ? 'translateX(0)' : undefined,
+    } as React.CSSProperties,
+    bottomList: { borderTop: '1px solid var(--color-border-subtle)', paddingTop: '8px', marginTop: '8px' } as React.CSSProperties,
+    toggleBtn: {
+      width: '28px', height: '28px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'none', border: 'none', borderRadius: '6px',
+      cursor: 'pointer', color: 'var(--color-text-secondary)',
+      transition: 'background 140ms, color 140ms',
+      flexShrink: 0,
+    } as React.CSSProperties,
+  };
+
   return (
     <>
       {mobileOpen && (
@@ -296,27 +339,28 @@ export function Sidebar({ locale }: SidebarProps) {
           role="presentation"
           onKeyDown={(e) => e.key === 'Escape' && closeMobileNav()}
           className="md:hidden fixed inset-0"
-          style={{ background: 'rgba(0,0,0,0.4)', zIndex: 1199, backdropFilter: 'blur(2px)' }}
+          style={sidebarStyles.backdrop}
         />
       )}
 
       <aside
         className="fixed flex flex-col"
-        style={{
-          top:        'var(--topbar-h)',
-          left:       0,
-          height:     'calc(100vh - var(--topbar-h))',
-          width:      expanded ? 'var(--sidebar-w-expanded)' : 'var(--sidebar-w-collapsed)',
-          zIndex:     1200,
-          background: 'var(--color-surface)',
-          borderRight: '1px solid var(--color-border-subtle)',
-          transition:  'width 200ms ease, transform 250ms ease',
-          visibility:  mounted ? 'visible' : 'hidden',
-          transform:   mobileOpen ? 'translateX(0)' : undefined,
-        }}
+        style={sidebarStyles.aside}
         data-mobile-open={mobileOpen ? 'true' : 'false'}
       >
-        <nav className="flex-1 py-3 px-2 flex flex-col justify-between">
+        <div className="flex justify-center px-1.5 pt-1.5">
+          <button
+            onClick={toggle}
+            aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            style={sidebarStyles.toggleBtn}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, { background: 'var(--color-surface-subtle)', color: 'var(--color-text-primary)' }); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, { background: 'none', color: 'var(--color-text-secondary)' }); }}
+          >
+            {expanded ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+          </button>
+        </div>
+
+        <nav className="flex-1 py-2 px-2 flex flex-col justify-between">
           <ul className="flex flex-col gap-0.5">
             {visibleItems(false).map((item) => (
               <NavLink
@@ -330,7 +374,7 @@ export function Sidebar({ locale }: SidebarProps) {
             ))}
           </ul>
 
-          <ul className="flex flex-col gap-0.5" style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: '8px', marginTop: '8px' }}>
+          <ul className="flex flex-col gap-0.5" style={sidebarStyles.bottomList}>
             {visibleItems(true).map((item) => (
               <NavLink
                 key={item.id}
@@ -342,23 +386,6 @@ export function Sidebar({ locale }: SidebarProps) {
             ))}
           </ul>
         </nav>
-
-        <button
-          onClick={toggle}
-          aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
-          style={{
-            position: 'absolute', top: '18px', right: '-40px', zIndex: 50,
-            width: '28px', height: '28px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none', borderRadius: '6px',
-            cursor: 'pointer', color: 'var(--color-text-secondary)',
-            transition: 'background 140ms, color 140ms',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-subtle)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
-        >
-          <PanelLeft size={15} />
-        </button>
 
         {user && (
           <UserFooter
