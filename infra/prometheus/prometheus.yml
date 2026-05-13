@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          droplet: 'backend'
+      - targets: ['cadvisor:8080']
+        labels:
+          droplet: 'backend'
+
+  - job_name: 'frontend'
+    static_configs:
+      - targets: ['DROPLET_A_PRIVATE_IP:9100']
+        labels:
+          droplet: 'frontend'
+      - targets: ['DROPLET_A_PRIVATE_IP:8080']
+        labels:
+          droplet: 'frontend'
+
+  - job_name: 'ingest'
+    static_configs:
+      - targets: ['DROPLET_C_PRIVATE_IP:9100']
+        labels:
+          droplet: 'ingest'
+      - targets: ['DROPLET_C_PRIVATE_IP:8080']
+        labels:
+          droplet: 'ingest'

@@ -1,0 +1,49 @@
+services:
+
+  ingest:
+    build:
+      context: .
+      dockerfile: infra/python/Dockerfile
+      target: ingest
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      LOG_FORMAT: json
+    volumes:
+      - ./certs:/app/certs:ro
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+    networks:
+      - sana-net
+
+networks:
+  sana-net:
+    driver: bridge
