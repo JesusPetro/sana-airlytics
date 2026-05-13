@@ -3,6 +3,7 @@
     "dashboard": "Dashboard",
     "map": "Map",
     "devices": "Devices",
+    "zones": "Zones",
     "alerts": "Alerts",
     "settings": "Settings",
     "profile": "My profile"
@@ -273,7 +274,8 @@
     "trajectory": "Trajectory",
     "expand": "Expand map",
     "noDevices": "No devices with coordinates",
-    "loading": "Loading map..."
+    "loading": "Loading map...",
+    "zones": "Zones"
   },
   "profile": {
     "title": "My profile",
@@ -298,5 +300,36 @@
     "deleteError": "Could not delete account. Please try again.",
     "editProfile": "Edit profile",
     "logout": "Sign out"
+  },
+  "zones": {
+    "title": "Monitoring zones",
+    "newZone": "New zone",
+    "noZones": "No zones configured",
+    "noZonesHint": "Create a zone to analyze air quality in a specific area",
+    "drawModeHint": "Click on the map to place the zone center",
+    "drawModeCancel": "Cancel",
+    "createTitle": "Create zone",
+    "fieldName": "Zone name",
+    "fieldNamePlaceholder": "e.g. Industrial zone",
+    "fieldRadius": "Radius",
+    "radiusUnit": "m",
+    "creating": "Creating…",
+    "createBtn": "Create zone",
+    "cancel": "Cancel",
+    "deleteConfirm": "Delete",
+    "deleting": "Deleting…",
+    "verdictSafe": "Safe",
+    "verdictWarning": "Warning",
+    "verdictCritical": "Critical",
+    "verdictNoData": "No data",
+    "healthTitle": "Air quality",
+    "evaluatedHours": "Last {hours}h",
+    "noSensors": "No sensors in this zone in the last 24h",
+    "editZone": "Edit zone",
+    "editSave": "Save",
+    "editSaving": "Saving…",
+    "verdictGood": "Good",
+    "verdictModerate": "Moderate",
+    "verdictPoor": "Poor"
   }
 }
