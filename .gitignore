@@ -28,7 +28,7 @@ htmlcov/
 # IDEs
 .vscode/
 .idea/
-*.swp
+*.swppor 
 
 # OS
 .DS_Store
@@ -36,7 +36,10 @@ Thumbs.db
 
 #Documentacion
 docs/
-auxDocs/
+#auxDocs/
+*Docs*
+#.agents
+#.Claude
 
 # Logs (solo si se activa el file handler en config/logging.yaml)
 logs/
