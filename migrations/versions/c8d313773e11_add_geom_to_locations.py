@@ -20,8 +20,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE EXTENSION IF NOT EXISTS postgis")
-
     # Fix index on alert_events (autogenerate detected expression drift)
     op.execute("DROP INDEX IF EXISTS idx_alert_events_triggered")
     op.execute("CREATE INDEX IF NOT EXISTS idx_alert_events_triggered ON alert_events (triggered_at DESC)")
