@@ -156,7 +156,7 @@ export function Select({
             border: '1px solid var(--color-border)',
             borderRadius: '10px',
             boxShadow: 'var(--shadow-md)',
-            zIndex: 40,
+            zIndex: 200,
             padding: '4px',
             overflow: 'hidden',
           }}
