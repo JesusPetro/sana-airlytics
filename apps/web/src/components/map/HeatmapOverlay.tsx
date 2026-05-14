@@ -12,7 +12,7 @@ interface HeatPoint {
   value: number | null;
 }
 
-type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
+type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index' | 'voc_index';
 
 interface HeatmapOverlayProps {
   devices: DeviceStatusResponse[];

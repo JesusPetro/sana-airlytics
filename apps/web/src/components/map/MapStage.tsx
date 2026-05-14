@@ -26,7 +26,7 @@ import { useZones } from '@/hooks/useZones';
 import { ZoneHealthLayer } from './ZoneHealthLayer';
 
 type LayerMode = 'points' | 'heatmap';
-type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
+type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index' | 'voc_index';
 
 const CARTAGENA: [number, number] = [10.391, -75.479];
 
@@ -74,6 +74,7 @@ export function MapStage() {
         pm10:      dashData['pm10']?.latestValue ?? null,
         co2:       dashData['co2']?.latestValue ?? null,
         nox_index: dashData['nox_index']?.latestValue ?? null,
+        voc_index: dashData['voc_index']?.latestValue ?? null,
       };
     }
     return map;
@@ -113,15 +114,6 @@ export function MapStage() {
         />
 
         <TrackPoints tracks={tracks} contaminant={contaminant} trajectory={trajectory} />
-
-        {layer === 'points' && devicesWithCoords.map((d) => (
-          <SensorMarker
-            key={d.device_id}
-            device={d}
-            pm2_5={readings[d.device_id]?.pm2_5}
-            onClick={openPopup}
-          />
-        ))}
 
         {layer === 'heatmap' && (
           <ZoneHealthLayer zones={zones} fromDt={trackFrom} toDt={trackTo} contaminant={contaminant} />

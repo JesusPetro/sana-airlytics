@@ -4,7 +4,7 @@ import type React from 'react';
 import { useTranslations } from 'next-intl';
 
 type LayerMode = 'points' | 'heatmap';
-type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
+type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index' | 'voc_index';
 
 interface MapControlPanelProps {
   layer: LayerMode;
@@ -20,6 +20,7 @@ const CONTAMINANTS: { code: ContaminantCode; label: string }[] = [
   { code: 'pm10',      label: 'PM10' },
   { code: 'co2',       label: 'CO₂' },
   { code: 'nox_index', label: 'NOx' },
+  { code: 'voc_index', label: 'VOC' },
 ];
 
 const panelStyle: React.CSSProperties = {

@@ -3,7 +3,7 @@
 import type React from 'react';
 import { useTranslations } from 'next-intl';
 
-type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index';
+type ContaminantCode = 'pm2_5' | 'pm10' | 'co2' | 'nox_index' | 'voc_index';
 
 const LEVELS = [
   { labelKey: 'aqiLevel.good',      color: '#10B981' },
@@ -21,6 +21,7 @@ const CONTAMINANT_LABEL: Record<ContaminantCode, string> = {
   pm10:      'PM10 · µg/m³',
   co2:       'CO₂ · ppm',
   nox_index: 'NOx Index',
+  voc_index: 'VOC Index',
 };
 
 interface MapLegendProps {
