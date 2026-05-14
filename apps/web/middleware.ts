@@ -1,23 +1,30 @@
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './src/i18n/routing';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const intlMiddleware = createMiddleware(routing);
 
 export default function middleware(request: NextRequest) {
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || '';
-  const proto = request.headers.get('x-forwarded-proto') || 'https';
-  const port = request.headers.get('x-forwarded-port');
+  const response = intlMiddleware(request);
 
-  const url = request.nextUrl.clone();
-  if (host) {
-    url.hostname = host.split(':')[0];
-    url.protocol = proto;
-    url.port = port && port !== '443' && port !== '80' ? port : '';
+  if (response.status === 307 || response.status === 308 || response.status === 301 || response.status === 302) {
+    const location = response.headers.get('location');
+    if (location) {
+      try {
+        const url = new URL(location);
+        const forwardedHost = request.headers.get('x-forwarded-host');
+        const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+        if (forwardedHost) {
+          url.hostname = forwardedHost.split(':')[0];
+          url.protocol = forwardedProto + ':';
+          url.port = '';
+          return NextResponse.redirect(url.toString(), { status: response.status });
+        }
+      } catch {}
+    }
   }
 
-  const rewritten = new NextRequest(url, request);
-  return intlMiddleware(rewritten);
+  return response;
 }
 
 export const config = {
