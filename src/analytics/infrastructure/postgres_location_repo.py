@@ -46,11 +46,6 @@ class PostgresLocationReadRepository:
         el valor de esa variable en cada punto (una sola query).
         """
         if contaminant:
-            # Misma lógica que find_snapshot: busca el valor más cercano
-            # en ±30s. Embebida como subconsulta correlacionada para que
-            # sea una sola query sin importar cuántos puntos haya.
-            # Los códigos en DB son uppercase (PM2_5, CO2…), el frontend
-            # manda lowercase — normalizamos acá.
             window = timedelta(seconds=30)
             value_subq = (
                 select(ObservationModel.result)
@@ -72,7 +67,6 @@ class PostgresLocationReadRepository:
                 .limit(1)
                 .scalar_subquery()
             )
-
             stmt = (
                 select(
                     HistoricalLocationModel.latitude,
