@@ -3,44 +3,62 @@ from __future__ import annotations
 
 class AqiThresholds:
     """
-    Umbrales de calidad del aire hardcodeados basados en guias OMS 2021.
-    Usados por el caso de uso get_zone_health para clasificar el veredicto.
+    Umbrales de calidad del aire alineados con el frontend (aqi.ts).
+    Cada contaminante tiene una lista de (minValue, nivel) en orden ascendente.
     Unidades: ug/m3 para PM, ppm para CO2, indice para VOC/NOx.
     """
 
-    PM2_5_GOOD       = 15.0   # por debajo: bueno
-    PM2_5_MODERATE   = 37.0   # por debajo: moderado; por encima: malo
-
-    PM10_GOOD        = 45.0
-    PM10_MODERATE    = 75.0
-
-    CO2_GOOD         = 1000.0
-    CO2_MODERATE     = 2000.0
-
-    VOC_GOOD         = 150.0
-    VOC_MODERATE     = 300.0
-
-    _THRESHOLDS: dict[str, tuple[float, float]] = {
-        "PM2_5":     (PM2_5_GOOD,   PM2_5_MODERATE),
-        "PM10":      (PM10_GOOD,    PM10_MODERATE),
-        "CO2":       (CO2_GOOD,     CO2_MODERATE),
-        "VOC_INDEX": (VOC_GOOD,     VOC_MODERATE),
+    # Lista de (minValue, verdict) — mismos valores que aqi.ts del frontend
+    _THRESHOLDS: dict[str, list[tuple[float, str]]] = {
+        "PM2_5": [
+            (0.0,   "good"),
+            (12.1,  "moderate"),
+            (35.5,  "elevated"),
+            (55.5,  "unhealthy"),
+            (150.5, "critical"),
+            (250.5, "hazardous"),
+        ],
+        "PM10": [
+            (0.0,  "good"),
+            (55.0, "moderate"),
+            (155.0,"elevated"),
+            (255.0,"unhealthy"),
+            (355.0,"critical"),
+            (425.0,"hazardous"),
+        ],
+        "CO2": [
+            (350.0,  "good"),
+            (801.0,  "moderate"),
+            (1001.0, "elevated"),
+            (1501.0, "unhealthy"),
+            (2500.0, "critical"),
+        ],
+        "VOC_INDEX": [
+            (1.0,   "good"),
+            (151.0, "moderate"),
+            (251.0, "elevated"),
+            (351.0, "unhealthy"),
+        ],
+        "NOX_INDEX": [
+            (1.0,   "good"),
+            (21.0,  "moderate"),
+            (51.0,  "elevated"),
+            (101.0, "unhealthy"),
+            (201.0, "critical"),
+        ],
     }
 
     @classmethod
     def classify(cls, variable_code: str, avg_value: float) -> str:
         """
-        Clasifica un valor promedio segun los umbrales OMS 2021.
+        Clasifica un valor promedio segun los umbrales del frontend.
         Retorna 'unknown' si la variable no tiene umbral definido.
-        La logica de clasificacion existe una sola vez — la tabla
-        _THRESHOLDS es el unico punto de configuracion.
         """
-        thresholds = cls._THRESHOLDS.get(variable_code.upper())
-        if thresholds is None:
+        levels = cls._THRESHOLDS.get(variable_code.upper())
+        if levels is None:
             return "unknown"
-        good_limit, moderate_limit = thresholds
-        if avg_value <= good_limit:
-            return "good"
-        if avg_value <= moderate_limit:
-            return "moderate"
-        return "poor"
+        verdict = levels[0][1]
+        for min_value, label in levels:
+            if avg_value >= min_value:
+                verdict = label
+        return verdict
