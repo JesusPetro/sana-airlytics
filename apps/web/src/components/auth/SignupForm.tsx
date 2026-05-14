@@ -7,15 +7,16 @@ import { PasswordInput }   from './PasswordInput';
 import { PasswordStrength } from './PasswordStrength';
 import { Select } from '@/components/ui/Select';
 
-/* ── Password rules ───────────────────────────────────── */
+/* ── Password rules (deben cumplirse TODAS, igual que el backend) ─ */
 const RULES = [
   (v: string) => v.length >= 8,
   (v: string) => /[A-Z]/.test(v),
   (v: string) => /[a-z]/.test(v),
   (v: string) => /\d/.test(v),
-  (v: string) => /[!@#$%^&*()\-_=+[\]{}|;:'",.<>/?\\`~]/.test(v),
+  (v: string) => /[!@#$%^&*(),.?":{}|<>]/.test(v),
 ];
-const isStrongEnough = (p: string) => RULES.filter(r => r(p)).length >= 4;
+const isStrongEnough = (p: string) => RULES.every(r => r(p));
+const isValidEmail   = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 /* ── i18n strings ─────────────────────────────────────── */
 const STRINGS = {
@@ -50,11 +51,14 @@ const STRINGS = {
     hasAccount:     '¿Ya tienes cuenta?',
     login:          'Iniciar sesión',
     required:       'Completa los campos obligatorios.',
-    weakPass:       'La contraseña es demasiado débil.',
+    invalidEmail:   'El correo electrónico no es válido.',
+    weakPass:       'La contraseña necesita mayúscula, minúscula, número y símbolo (!@#$%^&*(),.?":{}|<>).',
     mismatch:       'Las contraseñas no coinciden.',
     orgRequired:    'Completa los datos de la organización.',
-    emailTaken:     'Este correo ya está registrado.',
-    serverError:    'Ocurrió un error. Intenta de nuevo.',
+    emailTaken:     'Este correo ya está registrado. ¿Querés iniciar sesión?',
+    tooManyTries:   'Demasiados intentos seguidos. Esperá un momento y volvé a intentarlo.',
+    validationErr:  'Algunos datos no son válidos. Revisá el correo y la contraseña.',
+    serverError:    'No pudimos crear tu cuenta. Intenta de nuevo en unos segundos.',
   },
   en: {
     title:          'Create your account',
@@ -87,15 +91,18 @@ const STRINGS = {
     hasAccount:     'Already have an account?',
     login:          'Sign in',
     required:       'Please fill in all required fields.',
-    weakPass:       'Password is too weak.',
+    invalidEmail:   'Please enter a valid email address.',
+    weakPass:       'Password needs an uppercase letter, lowercase, number and symbol (!@#$%^&*(),.?":{}|<>).',
     mismatch:       'Passwords do not match.',
     orgRequired:    'Please complete the organization details.',
-    emailTaken:     'This email is already registered.',
-    serverError:    'Something went wrong. Please try again.',
+    emailTaken:     'This email is already registered. Want to sign in instead?',
+    tooManyTries:   'Too many attempts. Please wait a moment and try again.',
+    validationErr:  'Some fields are invalid. Check your email and password.',
+    serverError:    'We couldn\'t create your account. Please try again in a few seconds.',
   },
 } as const;
 
-type Strings = { [K in keyof typeof STRINGS['es']]: string };
+type Strings = { [K in keyof (typeof STRINGS)['es']]: string };
 
 /* ── Shared input / label classes ─────────────────────── */
 const INPUT_CLS = `
@@ -235,19 +242,45 @@ export function SignupForm({ locale }: Props) {
       setUi(prev => ({ ...prev, error: s.required }));
       return;
     }
-    if (!isStrongEnough(password)) { setUi(prev => ({ ...prev, error: s.weakPass }));    return; }
-    if (password !== confirm)       { setUi(prev => ({ ...prev, error: s.mismatch }));   return; }
-    if (org.isOrg && !org.orgName.trim()) { setUi(prev => ({ ...prev, error: s.orgRequired })); return; }
+    if (!isValidEmail(email.trim())) {
+      setUi(prev => ({ ...prev, error: s.invalidEmail }));
+      return;
+    }
+    if (!isStrongEnough(password)) {
+      setUi(prev => ({ ...prev, error: s.weakPass }));
+      return;
+    }
+    if (password !== confirm) {
+      setUi(prev => ({ ...prev, error: s.mismatch }));
+      return;
+    }
+    if (org.isOrg && !org.orgName.trim()) {
+      setUi(prev => ({ ...prev, error: s.orgRequired }));
+      return;
+    }
 
     setUi(prev => ({ ...prev, loading: true }));
     try {
       await import('@/lib/api/auth').then(({ register }) =>
-        register({ email: email.trim(), password, first_name: firstName.trim(), last_name: lastName.trim() })
+        register({
+          email:       email.trim(),
+          password,
+          first_name:  firstName.trim(),
+          last_name:   lastName.trim(),
+          middle_name: middleName.trim() || undefined,
+          phone:       phone.trim()      || undefined,
+          address:     address.trim()    || undefined,
+        })
       );
       await import('@/lib/api/auth').then(({ login }) => login(email.trim(), password));
       window.location.href = `/${locale}/dashboard`;
     } catch (err: any) {
-      setUi({ error: err?.status === 409 ? s.emailTaken : s.serverError, loading: false });
+      const status = err?.status;
+      let error: string = s.serverError;
+      if (status === 409) error = s.emailTaken;
+      else if (status === 429) error = s.tooManyTries;
+      else if (status === 422) error = s.validationErr;
+      setUi({ error, loading: false });
     }
   }
 

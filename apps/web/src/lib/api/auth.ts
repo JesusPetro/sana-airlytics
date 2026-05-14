@@ -27,6 +27,9 @@ export function register(body: {
   password: string;
   first_name: string;
   last_name: string;
+  middle_name?: string;
+  phone?: string;
+  address?: string;
 }): Promise<{ message: string; user_id: string }> {
   return apiClient('/api/v1/auth/register', {
     method: 'POST',
