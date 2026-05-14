@@ -5,6 +5,14 @@ import { useZoneHealth } from '@/hooks/useZoneHealth';
 import { VERDICT_COLOR } from '@/components/zones/ZoneVerdictBadge';
 import type { ZoneResponse } from '@/types/analytics';
 
+function resolveColor(cssVar: string): string {
+  if (!cssVar.startsWith('var(')) return cssVar;
+  const name = cssVar.replace(/^var\(/, '').replace(/\)$/, '').trim();
+  return typeof window !== 'undefined'
+    ? getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#6B7280'
+    : '#6B7280';
+}
+
 function verdictForContaminant(
   variables: { property_code: string; verdict: string }[],
   contaminant: string,
@@ -25,7 +33,7 @@ function ZoneHealthCircle({ zone, fromDt, toDt, contaminant }: ZoneHealthCircleP
   const verdict = health
     ? verdictForContaminant(health.variables, contaminant)
     : 'unknown';
-  const color = VERDICT_COLOR[verdict] ?? VERDICT_COLOR.unknown;
+  const color = resolveColor(VERDICT_COLOR[verdict] ?? VERDICT_COLOR.unknown);
 
   const center: [number, number] = [zone.center_lat, zone.center_lon];
 

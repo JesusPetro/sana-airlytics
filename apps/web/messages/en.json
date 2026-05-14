@@ -330,6 +330,10 @@
     "editSaving": "Saving…",
     "verdictGood": "Good",
     "verdictModerate": "Moderate",
+    "verdictElevated": "Elevated",
+    "verdictUnhealthy": "Unhealthy",
+    "verdictCritical": "Critical",
+    "verdictHazardous": "Hazardous",
     "verdictPoor": "Poor"
   }
 }

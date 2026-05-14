@@ -4,17 +4,23 @@ import type React from 'react';
 import { useTranslations } from 'next-intl';
 
 export const VERDICT_COLOR: Record<string, string> = {
-  good:     'var(--color-aqi-good)',
-  moderate: 'var(--color-aqi-moderate)',
-  poor:     'var(--color-aqi-critical)',
-  unknown:  '#6B7280',
+  good:      'var(--color-aqi-good)',
+  moderate:  'var(--color-aqi-moderate)',
+  elevated:  'var(--color-aqi-elevated)',
+  unhealthy: 'var(--color-aqi-unhealthy)',
+  critical:  'var(--color-aqi-critical)',
+  hazardous: 'var(--color-aqi-hazardous)',
+  unknown:   '#6B7280',
 };
 
 const VERDICT_BG: Record<string, string> = {
-  good:     'rgba(16,185,129,0.12)',
-  moderate: 'rgba(59,130,246,0.12)',
-  poor:     'rgba(239,68,68,0.12)',
-  unknown:  'rgba(107,114,128,0.12)',
+  good:      'rgba(16,185,129,0.12)',
+  moderate:  'rgba(59,130,246,0.12)',
+  elevated:  'rgba(139,92,246,0.12)',
+  unhealthy: 'rgba(236,72,153,0.12)',
+  critical:  'rgba(239,68,68,0.12)',
+  hazardous: 'rgba(153,27,27,0.12)',
+  unknown:   'rgba(107,114,128,0.12)',
 };
 
 interface ZoneVerdictBadgeProps {
@@ -28,10 +34,13 @@ export function ZoneVerdictBadge({ verdict, size = 'md' }: ZoneVerdictBadgeProps
   const bg    = VERDICT_BG[verdict]    ?? VERDICT_BG.unknown;
 
   const labelKey: Record<string, string> = {
-    good:     t('verdictGood'),
-    moderate: t('verdictModerate'),
-    poor:     t('verdictPoor'),
-    unknown:  t('verdictNoData'),
+    good:      t('verdictGood'),
+    moderate:  t('verdictModerate'),
+    elevated:  t('verdictElevated'),
+    unhealthy: t('verdictUnhealthy'),
+    critical:  t('verdictCritical'),
+    hazardous: t('verdictHazardous'),
+    unknown:   t('verdictNoData'),
   };
 
   const style: React.CSSProperties = {

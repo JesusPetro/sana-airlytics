@@ -306,6 +306,10 @@
     "editSaving": "Guardando…",
     "verdictGood": "Bueno",
     "verdictModerate": "Moderado",
+    "verdictElevated": "Elevado",
+    "verdictUnhealthy": "No saludable",
+    "verdictCritical": "Crítico",
+    "verdictHazardous": "Peligroso",
     "verdictPoor": "Malo"
   },
   "profile": {
