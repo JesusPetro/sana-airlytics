@@ -179,7 +179,8 @@ interface Props {
 
 export function TrackPoints({ tracks, contaminant, trajectory }: Props) {
   const [active, setActive] = useState<ActiveBubble | null>(null);
-  const snapped = useSnappedTracks(tracks, trajectory ?? false);
+  const filteredTracks = tracks.map(t => ({ ...t, points: deduplicateByProximity(t.points) }));
+  const snapped = useSnappedTracks(filteredTracks, trajectory ?? false);
 
   return (
     <>
