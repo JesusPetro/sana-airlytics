@@ -7,11 +7,54 @@ import { CircleMarker, Pane, Polyline, useMapEvents } from 'react-leaflet';
 import type { LeafletMouseEvent } from 'leaflet';
 import type { DeviceTrack } from '@/hooks/useDeviceTracks';
 import { useSnappedTracks } from '@/hooks/useSnappedTracks';
-import { getDeviceSnapshot, type Snapshot } from '@/lib/api/devices';
+import { getDeviceSnapshot, type Snapshot, type TrackPoint } from '@/lib/api/devices';
 import { levelFromValue } from '@/lib/aqi';
 import { TrackPointBubble } from './TrackPointBubble';
 
 const DEFAULT_COLOR = '#8B9BBC';
+
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6_371_000;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Agrupa puntos dentro de `threshold` metros del ancla; el representante lleva el promedio del grupo.
+function deduplicateByProximity(points: TrackPoint[], threshold = 30): TrackPoint[] {
+  if (points.length === 0) return [];
+
+  function flushGroup(last: TrackPoint, sum: number, count: number): TrackPoint {
+    return { ...last, contaminant_value: count > 0 ? sum / count : null };
+  }
+
+  const result: TrackPoint[] = [];
+  let anchor = points[0];
+  let groupLast = points[0];
+  const v0 = points[0].contaminant_value ?? null;
+  let groupSum = v0 ?? 0;
+  let groupCount = v0 != null ? 1 : 0;
+
+  for (let i = 1; i < points.length; i++) {
+    const d = haversineMeters(anchor.latitude, anchor.longitude, points[i].latitude, points[i].longitude);
+    const v = points[i].contaminant_value ?? null;
+    if (d > threshold) {
+      result.push(flushGroup(groupLast, groupSum, groupCount));
+      anchor = points[i];
+      groupSum = v ?? 0;
+      groupCount = v != null ? 1 : 0;
+    } else {
+      if (v != null) { groupSum += v; groupCount++; }
+    }
+    groupLast = points[i];
+  }
+  result.push(flushGroup(groupLast, groupSum, groupCount));
+  return result;
+}
+
 
 function resolveColor(cssVar: string): string {
   if (!cssVar.startsWith('var(')) return cssVar;
@@ -103,9 +146,14 @@ function TrackCircle({
     const p = map.latLngToContainerPoint([lat, lng]);
     const rect = map.getContainer().getBoundingClientRect();
     try {
-      const snapshot = await getDeviceSnapshot(deviceId, recordedAt);
+      let snapshot: Snapshot;
+      try {
+        snapshot = await getDeviceSnapshot(deviceId, recordedAt);
+      } catch {
+        snapshot = await getDeviceSnapshot(deviceId);
+      }
       onOpen({ deviceCode, snapshot, lat, lng, pixelX: rect.left + p.x, pixelY: rect.top + p.y });
-    } catch { /* sin mediciones */ }
+    } catch { /* sin datos disponibles */ }
   }
 
   return (
@@ -155,7 +203,7 @@ export function TrackPoints({ tracks, contaminant, trajectory }: Props) {
       </Pane>
 
       {tracks.flatMap(({ device, points }) =>
-        points.map((pt, i) => (
+        deduplicateByProximity(points).map((pt, i) => (
           <TrackCircle
             key={`${device.device_id}-${i}`}
             lat={pt.latitude}
