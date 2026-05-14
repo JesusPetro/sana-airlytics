@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-DOMAIN="airlytics.tech"
-EMAIL="petrojesus094@gmail.com"
+DOMAIN="${DOMAIN:-airlytics.tech}"
+EMAIL="${EMAIL:?ERROR: set EMAIL before running this script (e.g. EMAIL=you@example.com ./scripts/init-ssl.sh)}"
 COMPOSE_FILE="docker-compose.frontend.yml"
 NGINX_CONF="infra/nginx/nginx.conf"
 NGINX_CONF_BACKUP="${NGINX_CONF}.bak"
