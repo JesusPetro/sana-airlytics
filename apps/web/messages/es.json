@@ -312,6 +312,46 @@
     "verdictHazardous": "Peligroso",
     "verdictPoor": "Malo"
   },
+  "glossary": {
+    "title": "¿Qué mide SANA?",
+    "subtitle": "Guía de referencia de las variables atmosféricas y meteorológicas monitoreadas por el sensor SEN66.",
+    "trigger": "¿Qué miden?",
+    "types": {
+      "atmospheric":    "Atmosférico",
+      "index":          "Índice",
+      "meteorological": "Meteorológico"
+    },
+    "metrics": {
+      "pm2_5": {
+        "name": "PM2.5 — Material Particulado Fino",
+        "desc": "Partículas microscópicas menores a 2.5 micrómetros que evaden las defensas naturales del cuerpo, penetrando hasta los alvéolos y el torrente sanguíneo. Su exposición crónica es la principal responsable de enfermedades cardiovasculares, cáncer de pulmón y mortalidad prematura asociada a la contaminación."
+      },
+      "pm10": {
+        "name": "PM10 — Material Particulado Grueso",
+        "desc": "Partículas de polvo de hasta 10 micrómetros que se depositan en nariz, garganta y bronquios. Aunque no llegan al torrente sanguíneo con la facilidad del PM2.5, causan inflamación local severa que empeora el asma, las alergias e infecciones respiratorias agudas."
+      },
+      "pm1_pm4": {
+        "name": "PM1.0 y PM4.0 — Fracciones Ultrafinas e Intermedias",
+        "desc": "El PM1.0 abarca partículas nanométricas capaces de alcanzar el cerebro y el corazón, asociadas a estrés oxidativo. El PM4.0 sirve como indicador intermedio del tamaño del polvo. SANA las mide para diferenciar fuentes de contaminación: escapes de motores modernos frente a polvo de construcción."
+      },
+      "co2": {
+        "name": "CO₂ — Dióxido de Carbono",
+        "desc": "En espacios interiores, el CO₂ es el indicador principal de la calidad de la ventilación. Por encima de 1000 ppm —concentración que se alcanza con la respiración humana en lugares cerrados— provoca somnolencia, pérdida de concentración y aumenta drásticamente el riesgo de transmisión de patógenos aéreos."
+      },
+      "voc": {
+        "name": "VOC Index — Compuestos Orgánicos Volátiles",
+        "desc": "Evalúa la presencia de gases orgánicos tóxicos (benceno, tolueno, vapores de disolventes) provenientes de productos de limpieza, pinturas o cosméticos. Su acumulación genera el Síndrome del edificio enfermo: náuseas, mareos y dolor de cabeza a corto plazo."
+      },
+      "nox": {
+        "name": "NOx Index — Óxidos de Nitrógeno",
+        "desc": "Mide gases altamente reactivos (NO y NO₂) generados principalmente por la combustión de vehículos diésel. Al inhalarse, reaccionan con la humedad pulmonar formando ácido nítrico, destruyendo el tejido epitelial y desencadenando ataques rápidos y severos de asma."
+      },
+      "temp_hum": {
+        "name": "Temperatura y Humedad",
+        "desc": "No son contaminantes ni tienen umbrales tóxicos, pero son variables meteorológicas fundamentales. Permiten validar que el sensor opera correctamente dentro de las condiciones climáticas de Cartagena y ayudan a los algoritmos a compensar matemáticamente las lecturas de los demás contaminantes."
+      }
+    }
+  },
   "profile": {
     "title": "Mi perfil",
     "email": "Correo electronico",
