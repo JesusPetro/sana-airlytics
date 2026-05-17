@@ -301,6 +301,46 @@
     "editProfile": "Edit profile",
     "logout": "Sign out"
   },
+  "glossary": {
+    "title": "What does SANA measure?",
+    "subtitle": "Reference guide for the atmospheric and meteorological variables monitored by the SEN66 sensor.",
+    "trigger": "What do they measure?",
+    "types": {
+      "atmospheric":    "Atmospheric",
+      "index":          "Index",
+      "meteorological": "Meteorological"
+    },
+    "metrics": {
+      "pm2_5": {
+        "name": "PM2.5 — Fine Particulate Matter",
+        "desc": "Microscopic particles smaller than 2.5 micrometers that bypass the body's natural defenses, reaching the alveoli and bloodstream. Chronic exposure is the leading cause of cardiovascular disease, lung cancer, and premature mortality linked to air pollution."
+      },
+      "pm10": {
+        "name": "PM10 — Coarse Particulate Matter",
+        "desc": "Dust particles up to 10 micrometers that settle mainly in the nose, throat, and bronchi. Though they don't reach the bloodstream as easily as PM2.5, they cause severe local inflammation, worsening asthma, allergies, and acute respiratory infections."
+      },
+      "pm1_pm4": {
+        "name": "PM1.0 & PM4.0 — Ultrafine and Intermediate Fractions",
+        "desc": "PM1.0 covers nanometric particles capable of reaching the brain and heart, associated with oxidative stress. PM4.0 is an intermediate dust-size indicator. SANA measures both to distinguish pollution sources — modern engine exhaust vs. construction dust."
+      },
+      "co2": {
+        "name": "CO₂ — Carbon Dioxide",
+        "desc": "In indoor spaces, CO₂ is the primary indicator of ventilation quality. Above 1,000 ppm — a level easily reached by human breathing in enclosed areas — it causes drowsiness, loss of concentration, and dramatically increases the risk of airborne pathogen transmission."
+      },
+      "voc": {
+        "name": "VOC Index — Volatile Organic Compounds",
+        "desc": "Evaluates the presence of toxic organic gases (benzene, toluene, solvent vapors) from cleaning products, paints, or cosmetics. Accumulation causes Sick Building Syndrome: short-term nausea, dizziness, and headaches."
+      },
+      "nox": {
+        "name": "NOx Index — Nitrogen Oxides",
+        "desc": "Measures highly reactive gases (NO and NO₂) generated mainly by diesel vehicle combustion. When inhaled, they react with lung moisture to form nitric acid, destroying epithelial tissue and triggering rapid, severe asthma attacks."
+      },
+      "temp_hum": {
+        "name": "Temperature & Humidity",
+        "desc": "Not pollutants or toxic variables, but fundamental meteorological inputs. They verify the sensor is working correctly within Cartagena's climate conditions and help algorithms mathematically compensate readings from other pollutants."
+      }
+    }
+  },
   "zones": {
     "title": "Monitoring zones",
     "newZone": "New zone",
