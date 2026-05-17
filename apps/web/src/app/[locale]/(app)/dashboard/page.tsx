@@ -9,6 +9,7 @@ import { AqiHeatmap } from '@/components/dashboard/AqiHeatmap';
 import { TimeSeriesCard } from '@/components/dashboard/TimeSeriesCard';
 import { AlertSummary } from '@/components/dashboard/AlertSummary';
 import { MapPreview } from '@/components/dashboard/MapPreview';
+import { MetricsGlossaryDrawer } from '@/components/dashboard/MetricsGlossaryDrawer';
 import { EmptyWorkspace } from '@/components/ui/EmptyWorkspace';
 
 export default function DashboardPage() {
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const { activeWorkspace, isLoading: wsLoading } = useWorkspace();
 
   const [selectedSensorId, setSelectedSensorId] = useState<string>('');
+  const [glossaryOpen, setGlossaryOpen]         = useState(false);
 
   // First call: fetches datastreams + KPI data (no sensor filter yet on first render)
   const { data, isLoading, dsIsLoading, datastreams } = useDashboard(
@@ -92,25 +94,68 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-5 p-4 md:px-8 md:py-6">
 
-      {/* Sensor picker — global filter for all dashboard widgets */}
-      {devices.length > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', flexShrink: 0 }}>
-            {t('dashboard.sensor')}
-          </span>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {devices.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => setSelectedSensorId(d.id)}
-                style={pillStyle(d.id === selectedSensorId)}
-              >
-                {d.name}
-              </button>
-            ))}
+      {/* Top bar — sensor picker + glossary trigger */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        {devices.length > 1 ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)', flexShrink: 0 }}>
+              {t('dashboard.sensor')}
+            </span>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {devices.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setSelectedSensorId(d.id)}
+                  style={pillStyle(d.id === selectedSensorId)}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div />
+        )}
+
+        <button
+          onClick={() => setGlossaryOpen(true)}
+          style={{
+            display:     'flex',
+            alignItems:  'center',
+            gap:         '5px',
+            padding:     '5px 11px',
+            borderRadius: 'var(--radius-full, 9999px)',
+            border:      '1px solid var(--color-border)',
+            background:  'transparent',
+            cursor:      'pointer',
+            fontSize:    '12px',
+            fontWeight:  500,
+            color:       'var(--color-text-secondary)',
+            flexShrink:  0,
+            transition:  'all 140ms ease',
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLButtonElement;
+            el.style.background = 'var(--color-surface-subtle)';
+            el.style.color      = 'var(--color-text-primary)';
+            el.style.borderColor = 'var(--color-primary)';
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLButtonElement;
+            el.style.background  = 'transparent';
+            el.style.color       = 'var(--color-text-secondary)';
+            el.style.borderColor = 'var(--color-border)';
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="8" cy="8" r="7" />
+            <path d="M8 7v5M8 5.5v.5" />
+          </svg>
+          {t('glossary.trigger')}
+        </button>
+      </div>
+
+      <MetricsGlossaryDrawer open={glossaryOpen} onClose={() => setGlossaryOpen(false)} />
 
       {/* Row 1 — métricas sin umbral | heatmap AQI */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] md:items-stretch">
