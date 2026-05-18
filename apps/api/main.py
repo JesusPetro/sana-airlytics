@@ -151,7 +151,7 @@ def _configure_swagger_bearer(app: FastAPI) -> None:
 app = create_app()
 
 
-@app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 async def health() -> dict:
     """
     Verifica que la API esta corriendo correctamente.
