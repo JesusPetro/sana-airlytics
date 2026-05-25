@@ -9,9 +9,10 @@ const ALL_CODES = [
 ];
 
 export interface DashboardEntry {
-  datastream:  DatastreamResponse;
-  buckets:     AggregationBucketResponse[];
-  latestValue: number | null;
+  datastream:   DatastreamResponse;
+  buckets:      AggregationBucketResponse[];
+  latestValue:  number | null;
+  lastDayDate:  string | null;
 }
 
 const REFETCH_INTERVAL = 10_000;
@@ -20,7 +21,7 @@ function kpiWindow() {
   const to = new Date();
   to.setSeconds(0, 0); // floor al minuto para estabilizar el queryKey
   const from = new Date(to);
-  from.setDate(from.getDate() - 7);
+  from.setDate(from.getDate() - 90);
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
@@ -68,6 +69,7 @@ export function useDashboard(workspaceId: string | undefined, sensorId?: string)
       datastream:  ds,
       buckets,
       latestValue: lastDay?.avg_value ?? null,
+      lastDayDate: lastDay?.bucket     ?? null,
     };
   });
 
