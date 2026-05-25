@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { KpiDonut } from './KpiDonut';
 import { KPI_SPECS_NOTHRESH } from '@/lib/constants';
 import type { DashboardEntry } from '@/hooks/useDashboard';
@@ -11,7 +11,19 @@ interface Props {
 }
 
 export function KpiGridNoThresh({ data, isLoading }: Props) {
-  const t = useTranslations();
+  const t      = useTranslations();
+  const locale = useLocale();
+
+  const lastDate = KPI_SPECS_NOTHRESH
+    .map((s) => data[s.code]?.lastDayDate)
+    .filter((d): d is string => !!d)
+    .sort()
+    .at(-1);
+
+  const dateLabel = lastDate
+    ? new Date(lastDate).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
+    : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <div
@@ -34,7 +46,7 @@ export function KpiGridNoThresh({ data, isLoading }: Props) {
         ))}
       </div>
       <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-disabled)' }}>
-        {t('kpiGrid.avgNote')}
+        {t('kpiGrid.avgNote')}{dateLabel ? ` — ${dateLabel}` : ''}
       </p>
     </div>
   );
