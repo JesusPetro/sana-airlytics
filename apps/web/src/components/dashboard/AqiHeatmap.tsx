@@ -13,10 +13,17 @@ interface Props {
   datastreams:  DatastreamResponse[];
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const LEVEL_IDS  = ['good', 'moderate', 'elevated', 'unhealthy', 'critical', 'hazardous'] as const;
+const HOURS     = Array.from({ length: 24 }, (_, i) => i);
+const LEVEL_IDS = ['good', 'moderate', 'elevated', 'unhealthy', 'critical', 'hazardous'] as const;
 
 interface Tooltip { x: number; y: number; text: string }
+
+function weekAnchor(weekOffset: number): Date {
+  const d = new Date();
+  d.setSeconds(0, 0);
+  d.setDate(d.getDate() + weekOffset * 7);
+  return d;
+}
 
 export function AqiHeatmap({ workspaceId, datastreams }: Props) {
   const t      = useTranslations();
@@ -28,21 +35,33 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
   }, [locale]);
 
   const [selectedCode, setSelectedCode] = useState(KPI_SPECS_THRESH[0].code);
-  const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [weekOffset,   setWeekOffset]   = useState(0);
+  const [tooltip,      setTooltip]      = useState<Tooltip | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const ds = datastreams.find(d => d.property_code.toLowerCase() === selectedCode);
-  const { data: buckets, isLoading } = useAqiHeatmap(workspaceId, ds?.datastream_id);
+  const { data: buckets, isLoading } = useAqiHeatmap(workspaceId, ds?.datastream_id, weekOffset);
 
   const spec = KPI_SPECS_THRESH.find(s => s.code === selectedCode);
 
+  const weekLabel = useMemo(() => {
+    const anchor = weekAnchor(weekOffset);
+    const start  = new Date(anchor);
+    start.setDate(start.getDate() - 6);
+
+    const fmtShort = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+    const fmtFull  = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+
+    const sameYear = start.getFullYear() === anchor.getFullYear();
+    return `${fmtShort.format(start)} – ${sameYear ? fmtFull.format(anchor) : fmtFull.format(anchor)}`;
+  }, [weekOffset, locale]);
+
   const grid = useMemo(() => {
-    const today = new Date();
-    today.setSeconds(0, 0);
+    const anchor = weekAnchor(weekOffset);
 
     const days: { date: Date; label: string }[] = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
+      const d = new Date(anchor);
       d.setDate(d.getDate() - i);
       days.push({ date: d, label: DAYS_SHORT[d.getDay()] });
     }
@@ -64,13 +83,31 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
         return { val, color: level ? colorFromLevel(level.id) : 'var(--color-surface-2)' };
       }),
     }));
-  }, [buckets, selectedCode]);
+  }, [buckets, selectedCode, weekOffset, DAYS_SHORT]);
+
+  const navBtnStyle = (disabled: boolean): React.CSSProperties => ({
+    width:        24,
+    height:       24,
+    display:      'flex',
+    alignItems:   'center',
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-full)',
+    border:       '1px solid var(--color-border)',
+    background:   'transparent',
+    cursor:       disabled ? 'default' : 'pointer',
+    color:        disabled ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
+    fontSize:     '14px',
+    lineHeight:   1,
+    padding:      0,
+    flexShrink:   0,
+    opacity:      disabled ? 0.4 : 1,
+  });
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
 
-      {/* Pills */}
-      <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+      {/* Pills + week navigator */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap' }}>
         {KPI_SPECS_THRESH.map(s => {
           const active = s.code === selectedCode;
           return (
@@ -93,9 +130,39 @@ export function AqiHeatmap({ workspaceId, datastreams }: Props) {
             </button>
           );
         })}
+
+        {/* spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* Week navigator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+          <button
+            style={navBtnStyle(false)}
+            onClick={() => setWeekOffset(o => o - 1)}
+          >
+            ‹
+          </button>
+          <span style={{
+            fontSize:    '12px',
+            fontWeight:  500,
+            color:       'var(--color-text-secondary)',
+            whiteSpace:  'nowrap',
+            minWidth:    120,
+            textAlign:   'center',
+          }}>
+            {weekLabel}
+          </span>
+          <button
+            style={navBtnStyle(weekOffset >= 0)}
+            disabled={weekOffset >= 0}
+            onClick={() => setWeekOffset(o => o + 1)}
+          >
+            ›
+          </button>
+        </div>
       </div>
 
-      {/* Hour axis — same grid layout as rows so labels align */}
+      {/* Hour axis */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         <div style={{ width: 26, flexShrink: 0 }} />
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '2px' }}>
